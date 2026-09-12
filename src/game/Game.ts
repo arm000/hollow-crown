@@ -41,7 +41,12 @@ export class Game {
     const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE);
     this.scene.add(dungeonMesh.group);
     this.hideWallFace = dungeonMesh.hideWallFace;
-    this.scene.add(new THREE.AmbientLight(0x40405a, 0.7));
+    // Three.js has used physically-correct light units (candela, not the
+    // small ~0-2 range from older versions/tutorials) since well before
+    // this project's three@0.169 — there's no "legacy lights" toggle left
+    // to fall back on, so these intensities look tiny (a near-black scene)
+    // unless scaled up accordingly.
+    this.scene.add(new THREE.AmbientLight(0x40405a, 3));
     this.buildEntityMeshes(interactables);
 
     const start = dungeon.findStart();
@@ -49,7 +54,7 @@ export class Game {
     this.player = new Player(start.x, start.z, 1, TILE_SIZE, aspect);
     this.world = { player: this.player, dungeon, interactables, inventory };
 
-    const torch = new THREE.PointLight(0xffb46b, 1.6, 9, 2);
+    const torch = new THREE.PointLight(0xffb46b, 40, 12, 2);
     torch.position.set(0, 0.1, 0);
     this.player.camera.add(torch);
     this.scene.add(this.player.camera);
