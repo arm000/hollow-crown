@@ -200,8 +200,11 @@ habit rather than a formality.
   the boss should combine mechanics from 2-3 earlier monster types rather
   than introduce an unrelated new gimmick — it reads as "everything
   you've learned, at once" rather than one more new thing to learn cold.
-- Environmental art pass: real textures replacing flat wall/floor/ceiling
-  colors, varied lighting per room instead of just the carried torch.
+- Environmental art pass: pixel art textures and sprites replacing the
+  flat wall/floor/ceiling colors and the low-res-render + nearest-filter
+  pipeline, both per
+  [10-visual-style-guide.md](10-visual-style-guide.md), plus varied
+  lighting per room instead of just the carried torch.
 - Audio: footsteps, combat SFX, ambient loop(s).
 - Minimap (top-down render sourced from the same level data as the 3D
   geometry).

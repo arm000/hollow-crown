@@ -181,3 +181,12 @@ pattern for walls should extend to repeated props/monster geometry
 rather than one draw call per object. Any phase that adds meaningfully
 more geometry or shader cost should get a quick pass on a real
 mid-range phone, not just judged by desktop framerate.
+
+The Phase 5 art pass in
+[10-visual-style-guide.md](10-visual-style-guide.md#rendering-pipeline)
+compounds this in the right direction rather than the wrong one: it
+specifies rendering the whole game at a low fixed internal resolution
+and upscaling with nearest-neighbor filtering for the pixel art look,
+which also means shading dramatically fewer pixels per frame — a
+mobile-performance win that falls directly out of the art direction
+rather than needing to be traded against it.

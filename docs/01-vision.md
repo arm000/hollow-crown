@@ -85,6 +85,10 @@ Calling these out so we don't scope-creep into them by accident:
   hurt the party with no prior telegraph is not "hard," it's unfair, and
   is a bug against pillars 2 and 3 — see the telegraphing rule in
   [05-combat.md](05-combat.md#monster-design-every-type-is-a-lesson).
+- No photorealistic or painted/high-resolution art direction. The visual
+  target is pixel art — see
+  [10-visual-style-guide.md](10-visual-style-guide.md) for the actual
+  rendering pipeline and asset specs, not just the aspiration.
 
 ## Platform & scope
 
