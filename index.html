@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <title>The Hollow Crown</title>
     <style>
       html, body {
@@ -12,6 +15,9 @@
         height: 100%;
         background: #000;
         overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
         font-family: "Georgia", serif;
       }
       #app {
@@ -45,6 +51,75 @@
         letter-spacing: 0.08em;
         margin-bottom: 4px;
       }
+      #hud .touch-hint {
+        display: none;
+      }
+
+      /* Touch controls: mounted by TouchControls.ts, hidden by default so
+         mouse-driven desktops don't see buttons they don't need. Shown for
+         any device whose primary pointer is coarse and has no hover (i.e.
+         touch-primary), regardless of screen size. */
+      #touch-controls {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        display: none;
+      }
+      @media (hover: none) and (pointer: coarse) {
+        #touch-controls {
+          display: block;
+        }
+        #hud .keyboard-hint {
+          display: none;
+        }
+        #hud .touch-hint {
+          display: block;
+        }
+      }
+      .touch-pad {
+        position: absolute;
+        bottom: max(20px, env(safe-area-inset-bottom));
+        pointer-events: auto;
+      }
+      #move-pad {
+        left: max(16px, env(safe-area-inset-left));
+        width: 168px;
+        height: 168px;
+        display: grid;
+        grid-template-columns: repeat(3, 54px);
+        grid-template-rows: repeat(3, 54px);
+        gap: 3px;
+      }
+      #turn-pad {
+        right: max(16px, env(safe-area-inset-right));
+        display: flex;
+        align-items: flex-end;
+        gap: 14px;
+      }
+      .tp-btn {
+        font-size: 22px;
+        line-height: 1;
+        color: #d8c9a3;
+        background: rgba(20, 17, 13, 0.55);
+        border: 1px solid rgba(216, 201, 163, 0.35);
+        border-radius: 10px;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+      .tp-btn:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
+      .tp-up { grid-column: 2; grid-row: 1; }
+      .tp-left { grid-column: 1; grid-row: 2; }
+      .tp-right { grid-column: 3; grid-row: 2; }
+      .tp-down { grid-column: 2; grid-row: 3; }
+      #turn-pad .tp-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 24px;
+      }
     </style>
   </head>
   <body>
@@ -52,7 +127,8 @@
     <div id="crosshair"></div>
     <div id="hud">
       <div class="title">THE HOLLOW CROWN</div>
-      <div>W/S: walk &nbsp; A/D: strafe &nbsp; Q/E or ←/→: turn</div>
+      <div class="keyboard-hint">W/S: walk &nbsp; A/D: strafe &nbsp; Q/E or ←/→: turn</div>
+      <div class="touch-hint">Left pad: move &nbsp; right pad: turn</div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -20,10 +20,15 @@ const KEY_TO_ACTION: Record<string, Action> = {
 };
 
 /**
- * Turns keydown events into a small FIFO queue of discrete grid actions.
- * Key repeat is ignored — one press queues exactly one step or turn —
- * which keeps quick taps responsive while a held key doesn't flood
- * the queue with a move the player never asked to repeat.
+ * Turns input events into a small FIFO queue of discrete grid actions.
+ * Keyboard key repeat is ignored — one press queues exactly one step or
+ * turn — which keeps quick taps responsive while a held key doesn't
+ * flood the queue with a move the player never asked to repeat.
+ *
+ * This is the single input pipeline for the whole game: keyboard is one
+ * producer into the queue, on-screen touch controls (see
+ * `TouchControls`) are another, both via `push()`. Nothing downstream
+ * needs to know which one produced an action.
  */
 export class InputManager {
   private queue: Action[] = [];
@@ -34,8 +39,13 @@ export class InputManager {
       const action = KEY_TO_ACTION[event.code];
       if (!action) return;
       event.preventDefault();
-      this.queue.push(action);
+      this.push(action);
     });
+  }
+
+  /** Queues an action, e.g. from a touch control tap. */
+  push(action: Action): void {
+    this.queue.push(action);
   }
 
   /** Removes and returns the next queued action, if any. */

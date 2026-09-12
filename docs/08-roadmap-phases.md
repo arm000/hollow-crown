@@ -6,6 +6,12 @@ a person can sit down and complete. If a phase's scope doesn't reduce to
 something playable, split it rather than skip the gate. Don't start the
 next phase's systems until the current phase's gate is met.
 
+**"Playable" includes touch, on a phone-sized viewport, with no keyboard
+or mouse.** Mobile is a platform requirement from Phase 0 onward (see
+[01-vision.md](01-vision.md#platform--scope)), not a pass added at the
+end — every phase gate below should be read as "playable with a keyboard
+*and* playable with touch controls alone."
+
 Phases are additive: each one keeps everything the previous phase made
 playable working, and layers new systems on top.
 
@@ -13,17 +19,22 @@ playable working, and layers new systems on top.
 
 ## Phase 0 — Walking Skeleton ✅ Complete
 
-**Scope:** Grid-locked first-person movement and rendering. One small
-hand-authored level. No interactables, no entities, no UI beyond static
-HUD text.
+**Scope:** Grid-locked first-person movement and rendering, playable by
+keyboard or touch. One small hand-authored level. No interactables, no
+entities, no UI beyond static HUD text and the on-screen touch pads.
 
-**Built:** `DungeonMap`, `DungeonMesh`, `Player`, `InputManager`, `Game`.
+**Built:** `DungeonMap`, `DungeonMesh`, `Player`, `InputManager`,
+`TouchControls`, `Game`.
 
 **Playable when:** Launch the game, walk a full lap of the level, turn,
-strafe, hit walls without breaking anything. No crashes, no dead ends
-that shouldn't be dead ends.
+strafe, hit walls without breaking anything — on a keyboard *and* on a
+touch-only phone-sized viewport (on-screen movement/turn pads, no
+keyboard). No crashes, no dead ends that shouldn't be dead ends.
 
-**Status:** Done — this is the current state of the repo.
+**Status:** Done — this is the current state of the repo. (Touch controls
+were added after the mobile platform requirement was introduced,
+retrofitted onto the original keyboard-only build so this phase's gate
+stays true.)
 
 ---
 

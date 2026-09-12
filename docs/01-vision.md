@@ -65,7 +65,19 @@ Calling these out so we don't scope-creep into them by accident:
 
 ## Platform & scope
 
-Browser-first (desktop), keyboard-driven, single save slot to start. A
-solo/small-team hobby-scale project — the roadmap is written assuming we
-add breadth (more levels, monsters, classes) only after each underlying
-system is proven fun in miniature.
+Browser-based, **desktop and mobile both first-class**, single save slot
+to start. A solo/small-team hobby-scale project — the roadmap is written
+assuming we add breadth (more levels, monsters, classes) only after each
+underlying system is proven fun in miniature.
+
+"Playable" — the word every phase gate in
+[08-roadmap-phases.md](08-roadmap-phases.md) is built around — means
+playable **with touch controls on a phone-sized viewport**, not just with
+a keyboard on a desktop browser. This is a platform requirement, not a
+stretch goal: it holds from Phase 0 onward, and every new piece of UI
+(combat menu, inventory, minimap) has to work for someone with only a
+touchscreen and no keyboard/mouse. See
+[04-exploration-and-world.md](04-exploration-and-world.md#input--touch-controls)
+for the control scheme and
+[07-technical-architecture.md](07-technical-architecture.md#input--responsive-ui)
+for the implementation approach.

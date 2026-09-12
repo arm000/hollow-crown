@@ -25,6 +25,12 @@ Then open the printed local URL in a browser.
 | `Q` / `E`      | Turn left / right |
 | `←` / `→`      | Turn left / right |
 
+On a touchscreen device, on-screen pads (move, bottom-left; turn,
+bottom-right) replace the keyboard automatically — no setup needed, and
+no keyboard/mouse required to play. The game targets touch and desktop
+as equally first-class from the start; see
+[docs/01-vision.md](docs/01-vision.md#platform--scope).
+
 Movement and turning are locked to the dungeon grid, animated smoothly
 between tiles.
 
@@ -37,7 +43,8 @@ src/
     DungeonMap.ts       ASCII level data + tile queries
     DungeonMesh.ts      builds floor/ceiling/wall geometry for a level
     Player.ts           grid position, facing, and move/turn animation
-    InputManager.ts      keyboard -> discrete action queue
+    InputManager.ts     keyboard/touch -> discrete action queue
+    TouchControls.ts    on-screen movement/turn buttons for touch devices
     Game.ts             wires scene, renderer, input, and player together
 ```
 
@@ -52,8 +59,9 @@ playable build before the next one starts.
 ## Status
 
 Phase 0 complete (see the roadmap doc above): one small walkable level,
-first-person grid movement, and basic lighting/fog for atmosphere. No
-interactables, combat, items, or UI yet — that's Phase 1 onward.
+first-person grid movement playable by keyboard or touch, and basic
+lighting/fog for atmosphere. No interactables, combat, items, or other
+UI yet — that's Phase 1 onward.
 
 ## Scripts
 

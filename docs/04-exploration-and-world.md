@@ -16,6 +16,33 @@ Already implemented as of Phase 0 (`src/game/Player.ts`,
 - Movement is blocked by walls (`DungeonMap.isWall`) and, from Phase 1
   on, by other blocking interactables (closed doors, pushed blocks).
 
+## Input & touch controls
+
+The game has to be playable with touch alone, no keyboard (see
+[01-vision.md](01-vision.md#platform--scope)). Since the whole action set
+is already just six discrete commands (forward, backward, strafe left,
+strafe right, turn left, turn right), touch controls are a direct,
+1:1 mirror of the keyboard scheme rather than a reinterpretation of it:
+
+- An on-screen movement pad (bottom-left): forward/backward/strafe-left/
+  strafe-right as four buttons.
+- An on-screen turn pad (bottom-right): turn-left/turn-right as two
+  buttons.
+- No swipe-to-look or drag gestures — turning is a discrete quarter-turn
+  button tap, same semantics as `Q`/`E` on keyboard. This isn't a
+  compromise for touch; it's the same "every decision is discrete"
+  philosophy from pillar 1 ([01-vision.md](01-vision.md#pillars)) applied
+  consistently across input methods.
+- Both control schemes feed the same `InputManager` action queue
+  (`InputManager.push`) — there's exactly one input pipeline, keyboard
+  and touch are just two producers into it. Interact/combat/inventory
+  input added in later phases must follow the same pattern: one tappable
+  on-screen affordance per keyboard-triggerable action, no feature that
+  only has a keyboard path.
+- Touch controls are shown based on the device's input capability (coarse
+  pointer / no hover), not screen size — a touch laptop and a phone both
+  get them, a mouse-driven desktop doesn't clutter its screen with them.
+
 ## World turns
 
 Because movement is already discrete, we get a unified "world turn"

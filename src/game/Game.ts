@@ -3,6 +3,7 @@ import { STARTING_LEVEL, type DungeonMap } from "./DungeonMap";
 import { buildDungeonMesh } from "./DungeonMesh";
 import { InputManager, type Action } from "./InputManager";
 import { Player } from "./Player";
+import { TouchControls } from "./TouchControls";
 
 const TILE_SIZE = 2;
 
@@ -37,7 +38,13 @@ export class Game {
     this.player.camera.add(torch);
     this.scene.add(this.player.camera);
 
+    // Mounts on-screen touch buttons as a side effect; no reference needed.
+    new TouchControls(this.input);
+
     window.addEventListener("resize", () => this.onResize());
+    // Mobile browsers can be slow to fire `resize` on rotation, so also
+    // listen for orientationchange explicitly.
+    window.addEventListener("orientationchange", () => this.onResize());
   }
 
   start(): void {

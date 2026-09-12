@@ -7,8 +7,10 @@
   client-side (`localStorage` for saves, see below).
 - No physics engine — collision is grid-based (`DungeonMap.isWall`), not
   simulated.
-- No mouse-look/pointer-lock: input is discrete keydown events mapped to
-  grid actions (`InputManager`).
+- No mouse-look/pointer-lock: input is discrete keydown/pointer events
+  mapped to grid actions (`InputManager`), fed by both keyboard and
+  on-screen touch controls (`TouchControls`) — see
+  [Input & responsive UI](#input--responsive-ui).
 
 ## Current structure (Phase 0)
 
@@ -19,7 +21,8 @@ src/
     DungeonMap.ts       ASCII level data + tile queries
     DungeonMesh.ts      builds floor/ceiling/wall geometry for a level
     Player.ts           grid position, facing, and move/turn animation
-    InputManager.ts     keyboard -> discrete action queue
+    InputManager.ts     keyboard/touch -> discrete action queue
+    TouchControls.ts    on-screen buttons for touch devices
     Game.ts             wires scene, renderer, input, and player together
 ```
 
@@ -102,15 +105,47 @@ data (TS objects or JSON) rather than being hardcoded into logic classes
 (Phase 3 classes, Phase 4 monster roster, Phase 5 items/lore) grow
 without touching the systems that consume that data.
 
+## Input & responsive UI
+
+Mobile is first-class from Phase 0 (see
+[01-vision.md](01-vision.md#platform--scope)), which drives a few
+concrete implementation choices:
+
+- **One input pipeline, two producers.** `InputManager` owns a single
+  action queue and exposes `push(action)`; keyboard events and
+  `TouchControls`'s on-screen buttons both just call it. No system
+  downstream of `InputManager` needs to know or care which one produced
+  an action — this is what keeps every future action (interact, combat
+  menu choices) automatically touch-compatible as long as it's added to
+  this queue instead of a keyboard-only path.
+- **Touch controls are shown by input capability, not screen size** —
+  `@media (hover: none) and (pointer: coarse)` in `index.html`, not a
+  width breakpoint. A touchscreen laptop and a phone both qualify; a
+  mouse-driven desktop doesn't render buttons it doesn't need.
+- **Viewport handling**: `viewport-fit=cover` and
+  `user-scalable=no` in the meta viewport tag, `touch-action: none` on
+  the document to kill pinch-zoom/pull-to-refresh/scroll gestures that
+  would otherwise fight the game for touch input, and a `resize` +
+  `orientationchange` listener pair on the renderer (mobile browsers can
+  be slow to fire plain `resize` on rotation).
+- **Tap targets**: any future touch-facing UI (combat action buttons,
+  inventory slots, minimap toggle) needs ≥44px touch targets and no
+  hover-only affordance (no tooltips-on-hover as the only way to see
+  something, no drag-to-reorder without a tap-based fallback). Call this
+  out explicitly in each phase's design as it's built, don't leave it as
+  an afterthought pass.
+
 ## UI layer
 
-No UI exists yet beyond the static HUD text in `index.html`. Planned
-approach: plain DOM overlays (HTML/CSS positioned over the WebGL canvas),
-not an in-3D/WebGL UI — matches the existing HUD pattern, is far faster
-to iterate on, and CSS handles text/layout better than any WebGL text
+No UI exists yet beyond the static HUD text and touch control buttons in
+`index.html`/`TouchControls.ts`. Planned approach: plain DOM overlays
+(HTML/CSS positioned over the WebGL canvas), not an in-3D/WebGL UI —
+matches the existing HUD pattern, is far faster to iterate on, and CSS
+handles text/layout (and touch hit-targets) better than any WebGL text
 solution would for this project's needs. This covers HUD messages
 (Phase 1), the combat turn-order/action menu (Phase 2), inventory and
-character sheets (Phase 3), and the minimap (Phase 5).
+character sheets (Phase 3), and the minimap (Phase 5) — all subject to
+the touch-target rule above.
 
 ## Save system
 
@@ -133,9 +168,16 @@ manual playtesting per the roadmap's playability gates is sufficient.
 
 ## Performance
 
-Not a concern yet at Phase 0/1 scale (single small level, no entities).
-Watch for it starting Phase 4 (multiple levels, more monsters): the
-existing `InstancedMesh` approach for walls
-(`DungeonMesh.buildDungeonMesh`) should extend the same instancing
-pattern to repeated props/monster geometry rather than one draw call per
-object.
+Because mobile is first-class from Phase 0, the render budget has to
+target mid-range phone GPUs, not just a development desktop — this is
+earlier than it would matter for a desktop-only game. Current
+mitigations already in place: pixel ratio capped at 2
+(`Math.min(window.devicePixelRatio, 2)` — uncapped device pixel ratio on
+a high-density phone screen is a common and easy-to-miss mobile
+performance trap), `FogExp2` limiting effective draw distance, and
+`InstancedMesh` for wall geometry. Watch for it getting harder starting
+Phase 4 (multiple levels, more monsters): the existing instancing
+pattern for walls should extend to repeated props/monster geometry
+rather than one draw call per object. Any phase that adds meaningfully
+more geometry or shader cost should get a quick pass on a real
+mid-range phone, not just judged by desktop framerate.
