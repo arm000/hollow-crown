@@ -53,6 +53,18 @@ This maps directly onto pillar 2 ("combat is a puzzle") — four classes
 with non-overlapping jobs means party composition and turn order are
 where the tactics live, not raw numbers.
 
+**Ability design principle:** each class's kit should exist to answer
+specific entries in the monster design system in
+[05-combat.md](05-combat.md#monster-design-every-type-is-a-lesson), not
+just deal damage in a different flavor. Concretely (illustrative, not
+final numbers): the Mage's fire spell is the answer to a
+Physical-resistant enemy; the Cleric's cleanse is the answer to
+Fear/Poison/Silence; a Rogue precision attack is the answer to an
+enemy that otherwise just eats hits with no counter; the Warrior's
+taunt/guard is the answer to a reach attack that would otherwise hit
+the back rank. A class with no monster type it's specifically *needed*
+for is missing its half of the "every monster is a lesson" pillar.
+
 Class design (specific abilities, numbers) is a
 [Phase 3](08-roadmap-phases.md#phase-3--character-depth--equipment)
 concern — Phases 0–2 can hardcode 1-2 placeholder classes to get combat

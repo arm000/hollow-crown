@@ -81,7 +81,13 @@ loop.
   [04-exploration-and-world.md](04-exploration-and-world.md#world-turns).
 - One monster type ("aggressive melee" AI per
   [05-combat.md](05-combat.md#monster-ai-v1-scope)) that patrols and
-  detects the party on the shared tick.
+  detects the party on the shared tick. Even with only Attack/Defend/Flee
+  available this phase, this monster should already have a real,
+  telegraphed signature mechanic (e.g. a heavy strike flagged one turn
+  ahead that must be Defended or raced down) per
+  [05-combat.md](05-combat.md#monster-design-every-type-is-a-lesson) —
+  not a plain damage sponge. Damage-type resistance/weakness can wait for
+  Phase 3, since that needs the Ability/Item actions to be meaningful.
 - Combat trigger + `CombatController`: initiative roll, turn queue,
   Attack/Defend/Flee actions (Ability/Item can wait for Phase 3), combat
   DOM UI overlaying the first-person view.
@@ -97,7 +103,9 @@ this phase is built).
 **Playable when:** Explore Phase 1's puzzle loop (or a new small level
 built for this phase) with a monster patrolling it, get into a fight,
 resolve it turn-by-turn to a win or a loss, and see the game react
-correctly either way (recommend adding Vitest here per
+correctly either way — and losing that fight without ever Defending
+through the telegraphed heavy strike should feel like a fair, avoidable
+mistake, not bad luck (recommend adding Vitest here per
 [07-technical-architecture.md](07-technical-architecture.md#testing) to
 lock down initiative/damage math as it's written).
 
@@ -110,15 +118,26 @@ lock down initiative/damage math as it's written).
 - Full class definitions: each of the 4 classes gets 1-2 real abilities
   (Ability combat action goes live), a level table, and stat growth
   (leveling per [03-party-and-characters.md](03-party-and-characters.md#leveling)).
+  Ability design follows the counterplay principle in
+  [03-party-and-characters.md](03-party-and-characters.md#classes) — each
+  ability should be *the* answer to something, not just more damage.
+- Damage types (Physical/Fire/Blight/Holy) and the status-effect set
+  (Poison, Stun, Bleed, Fear, Silence) go live per
+  [05-combat.md](05-combat.md#monster-design-every-type-is-a-lesson), and
+  the Item combat action ships with the combat-countering consumables
+  from [06-items-and-equipment.md](06-items-and-equipment.md#combat-countering-consumables).
 - Equipment slots (Weapon/Off-hand/Armor/Accessory) with real stat
   effects; a slotted shared inventory UI (not spatial-grid — see
   [06-items-and-equipment.md](06-items-and-equipment.md#inventory-model)).
 - Minimal party-creation/naming screen (pick class + portrait per slot;
   full point-buy attribute creation is a stretch goal, not required).
-- At least one puzzle or encounter in the level whose outcome visibly
-  depends on a class ability or a piece of found gear (e.g., a locked
-  gate only Rogue lockpicking opens, or a chasm only a Mage spell
-  crosses).
+- A second monster type that's resistant to Physical and weak to Fire
+  (the Cinder Wretch example in
+  [05-combat.md](05-combat.md#a-teaching-ladder-illustrative-not-final-content)),
+  so the phase proves damage types matter in a real fight, not just on
+  paper. At least one non-combat puzzle should also depend on a class
+  ability or found gear (e.g., a locked gate only Rogue lockpicking
+  opens, or a chasm only a Mage spell crosses).
 
 **New tech:** class/ability data tables, equipment stat-modifier system,
 inventory UI, skill-check gating on interactables.
@@ -127,6 +146,9 @@ inventory UI, skill-check gating on interactables.
 level, equip gear found along the way, and see a specific build choice
 (a class ability, a piece of gear) materially change how a specific
 puzzle or fight plays out — not just bigger numbers in the same fights.
+Concretely: fighting the Physical-resistant monster with only melee
+should be a visibly bad time, and switching to Fire (Mage spell or an
+Oil Flask) should visibly fix it.
 
 ---
 
@@ -139,18 +161,30 @@ puzzle or fight plays out — not just bigger numbers in the same fights.
 - Save/load via `localStorage`
   ([07-technical-architecture.md](07-technical-architecture.md#save-system)):
   party state, current level, position/facing.
-- Monster roster expansion to 2-3 types with distinct AI (cautious
-  ranged, support, per
-  [05-combat.md](05-combat.md#monster-ai-v1-scope)).
+- Monster roster expansion to 2-3 more types (cautious ranged, support,
+  per [05-combat.md](05-combat.md#monster-ai-v1-scope)), each one
+  actually clearing the "new lesson" bar in
+  [05-combat.md](05-combat.md#monster-design-every-type-is-a-lesson) —
+  e.g. the Screeching Wraith (Fear) and Court Alchemist (kill-the-healer
+  priority) from the teaching-ladder example. A monster that's just a
+  stat variant of an existing type doesn't count toward this scope item.
+- Bestiary/codex UI: once a monster type has been encountered, its known
+  resistance/weakness/status/signature mechanic becomes visible in a
+  simple codex screen, per
+  [05-combat.md](05-combat.md#the-bestiary) — small scope (a list + detail
+  view), but this is what turns "I got lucky" into "I remembered its
+  weakness" for repeat encounters.
 - A real difficulty curve across the levels, tuned by hand.
 
 **New tech:** level-transition manager, save/load serialization, monster
-AI variety.
+AI variety, bestiary/codex UI and its backing data.
 
 **Playable when:** Descend through the full small multi-level dungeon,
 quit mid-session, relaunch, resume from the save, and finish the
 descent — with a difficulty curve that's noticeably harder at the bottom
-than the top.
+than the top, and where each new monster type met along the way plays
+differently enough that "check the codex, then fight" is a real, useful
+habit rather than a formality.
 
 ---
 
@@ -160,14 +194,23 @@ than the top.
 
 - Weave in *The Hollow Crown* story per
   [02-setting-and-story.md](02-setting-and-story.md): lore items, 1-2 NPC
-  encounters, a mid-dungeon reveal, a boss fight tied to the plot.
+  encounters, a mid-dungeon reveal, a boss fight tied to the plot. Per
+  the teaching-ladder idea in
+  [05-combat.md](05-combat.md#a-teaching-ladder-illustrative-not-final-content),
+  the boss should combine mechanics from 2-3 earlier monster types rather
+  than introduce an unrelated new gimmick — it reads as "everything
+  you've learned, at once" rather than one more new thing to learn cold.
 - Environmental art pass: real textures replacing flat wall/floor/ceiling
   colors, varied lighting per room instead of just the carried torch.
 - Audio: footsteps, combat SFX, ambient loop(s).
 - Minimap (top-down render sourced from the same level data as the 3D
   geometry).
-- Identification/cursed-item texture if still wanted
-  ([06-items-and-equipment.md](06-items-and-equipment.md#identification--curses)).
+- Fully-unidentified items and cursed gear, if still wanted — the
+  level-2 stretch tier in
+  [06-items-and-equipment.md](06-items-and-equipment.md#discovery-not-explanation).
+  Note this is on top of, not instead of, the no-tooltip-explanations
+  discovery principle in that doc, which has already been true since
+  items first existed.
 
 **New tech:** texture/material pipeline, audio manager, minimap renderer,
 simple lore/dialogue text UI.
