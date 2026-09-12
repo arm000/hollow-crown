@@ -9,6 +9,7 @@ interface ButtonSpec {
 const MOVE_BUTTONS: ButtonSpec[] = [
   { action: "forward", label: "▲", className: "tp-up" },
   { action: "strafeLeft", label: "◀", className: "tp-left" },
+  { action: "interact", label: "USE", className: "tp-interact" },
   { action: "strafeRight", label: "▶", className: "tp-right" },
   { action: "backward", label: "▼", className: "tp-down" },
 ];

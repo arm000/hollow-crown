@@ -100,6 +100,21 @@ This is also the target phase for wiring the Playwright E2E layer
 (including the mobile-touch project), since it's the first phase with a
 real DOM UI worth testing end-to-end.
 
+**Status:** In progress, shipped in batches (each pushed and deployed
+independently):
+- ✅ Batch 1 — `Interactable`/`InteractableManager` foundation, `Door`
+  (lockable), `KeyItem`, `ExitTile`, the interact action (keyboard
+  `Space` + a touch button), the placeholder HUD message line and
+  inventory list, the win screen, and a hand-authored key-and-door
+  level. Game's movement/interact resolution was pulled out into a pure
+  `GameLogic` module specifically so it's headlessly testable — see
+  `StartingLevel.playthrough.test.ts` for the scripted positive/negative
+  playthroughs.
+- ⬜ Batch 2 — Lever (linked door) + lore item.
+- ⬜ Batch 3 — Pressure plate + pushable block + secret wall.
+- ⬜ Batch 4 — Playwright E2E layer remains a deliberate deferral, not
+  part of this pass; final polish and doc sign-off.
+
 ---
 
 ## Phase 2 — Party & Turn-Based Combat

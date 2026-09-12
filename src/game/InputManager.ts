@@ -4,7 +4,8 @@ export type Action =
   | "strafeLeft"
   | "strafeRight"
   | "turnLeft"
-  | "turnRight";
+  | "turnRight"
+  | "interact";
 
 const KEY_TO_ACTION: Record<string, Action> = {
   KeyW: "forward",
@@ -17,6 +18,7 @@ const KEY_TO_ACTION: Record<string, Action> = {
   KeyE: "turnRight",
   ArrowLeft: "turnLeft",
   ArrowRight: "turnRight",
+  Space: "interact",
 };
 
 /**
