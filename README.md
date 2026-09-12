@@ -7,6 +7,10 @@ first-person view into hand-authored levels.
 Built with [Three.js](https://threejs.org/), TypeScript, and
 [Vite](https://vitejs.dev/).
 
+**Play the current build:** https://arm000.github.io/hollow-crown/
+(auto-deployed from `main` on every push — see
+[docs/09-deployment.md](docs/09-deployment.md))
+
 ## Getting started
 
 ```bash

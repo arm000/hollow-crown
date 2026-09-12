@@ -12,6 +12,12 @@ or mouse.** Mobile is a platform requirement from Phase 0 onward (see
 end — every phase gate below should be read as "playable with a keyboard
 *and* playable with touch controls alone."
 
+Every push to `main` auto-deploys to
+**https://arm000.github.io/hollow-crown/** (see
+[09-deployment.md](09-deployment.md)) — use that live URL, on an actual
+phone, to check each phase's touch-playability gate rather than only
+testing against a local dev server.
+
 Phases are additive: each one keeps everything the previous phase made
 playable working, and layers new systems on top.
 

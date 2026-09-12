@@ -14,6 +14,7 @@ independently as we build.
 | [06-items-and-equipment.md](06-items-and-equipment.md) | Inventory, gear, consumables |
 | [07-technical-architecture.md](07-technical-architecture.md) | Engine, code structure, data formats, save system |
 | [08-roadmap-phases.md](08-roadmap-phases.md) | **The phased build plan.** Every phase ends in a playable milestone — read this before starting any phase of work |
+| [09-deployment.md](09-deployment.md) | Where and how the game is hosted, and how a deploy happens |
 
 ## Working rule
 
