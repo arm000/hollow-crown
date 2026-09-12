@@ -41,10 +41,19 @@ src/
     Game.ts             wires scene, renderer, input, and player together
 ```
 
+## Design docs
+
+The full design — vision/pillars, setting, party & combat systems, and
+the phased build plan — lives in [`docs/`](docs/README.md). Start there
+before picking up any new feature work; every phase in
+[`docs/08-roadmap-phases.md`](docs/08-roadmap-phases.md) has to end in a
+playable build before the next one starts.
+
 ## Status
 
-Early scaffold: one small walkable level, first-person movement, and
-basic lighting/fog for atmosphere. No combat, items, or UI yet.
+Phase 0 complete (see the roadmap doc above): one small walkable level,
+first-person grid movement, and basic lighting/fog for atmosphere. No
+interactables, combat, items, or UI yet — that's Phase 1 onward.
 
 ## Scripts
 
