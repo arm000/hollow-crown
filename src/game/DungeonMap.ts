@@ -44,9 +44,20 @@ export class DungeonMap {
 }
 
 /**
- * The opening level: a single corridor from start to exit, with a
- * one-tile side room holding a key needed further down the corridor.
- * Entity placements (the key, the locked door, the exit) live in
- * `Level.ts`, layered on top of this pure geometry.
+ * The opening level: a single main corridor from start to exit, with a
+ * one-tile side room holding a key needed further down the corridor,
+ * plus an optional branch (a small room, then a locked bonus alcove)
+ * reachable without the key. Entity placements (the key, both doors,
+ * the lever, the exit, the lore item) live in `Level.ts`, layered on
+ * top of this pure geometry.
  */
-export const STARTING_LEVEL = new DungeonMap(["#########", "#S......#", "###.#####", "#########"]);
+export const STARTING_LEVEL = new DungeonMap([
+  "#########",
+  "#S......#",
+  "###.#.###",
+  "#####.###",
+  "####...##",
+  "######.##",
+  "######.##",
+  "#########",
+]);

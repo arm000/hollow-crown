@@ -44,15 +44,15 @@ describe("Starting level playthrough (headless)", () => {
     expect(world.inventory.has("rusted-key")).toBe(true);
 
     expect(move(world, 0, -1).moved).toBe(true); // back to (3,1)
-    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1), facing the door at (5,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1), facing the door at (6,1)
 
     expect(move(world, 1, 0).moved).toBe(false); // the locked door still blocks a plain step
 
     const unlock = attemptInteract(world);
     expect(unlock.message).toBe("You unlock the door.");
 
-    expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1), now open
-    expect(move(world, 1, 0).moved).toBe(true); // (5,1) -> (6,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (5,1) -> (6,1), now open
 
     const winningMove = move(world, 1, 0); // (6,1) -> (7,1): the exit
     expect(winningMove.moved).toBe(true);
@@ -65,6 +65,7 @@ describe("Starting level playthrough (headless)", () => {
     expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
     expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1)
     expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1) -- skips the side room entirely
+    expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1)
     expect(world.inventory.has("rusted-key")).toBe(false);
 
     expect(move(world, 1, 0).moved).toBe(false); // door blocks the only path onward
@@ -73,7 +74,33 @@ describe("Starting level playthrough (headless)", () => {
     expect(interactWithoutKey.message).toBe("The door is locked.");
     expect(move(world, 1, 0).moved).toBe(false); // still blocked after a failed interact
 
-    expect(world.player.gridX).toBe(4);
+    expect(world.player.gridX).toBe(5);
     expect(world.player.gridZ).toBe(1);
+  });
+
+  it("the lever unlocks an optional bonus alcove with a lore item, entirely bypassable", () => {
+    const world = newWorld();
+
+    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1): the lever branch's entrance
+    expect(move(world, 0, 1).moved).toBe(true); // (5,1) -> (5,2)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,2) -> (5,3)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,3) -> (5,4): the small room, and the lever's tile
+    expect(move(world, 1, 0).moved).toBe(true); // (5,4) -> (6,4)
+
+    expect(move(world, 0, 1).moved).toBe(false); // the bonus alcove's door is still locked
+
+    expect(move(world, -1, 0).moved).toBe(true); // back to (5,4), onto the lever
+    const pullLever = attemptInteract(world);
+    expect(pullLever.message).toBe("You pull the lever. Something unlocks nearby.");
+
+    expect(move(world, 1, 0).moved).toBe(true); // (5,4) -> (6,4)
+    expect(move(world, 0, 1).moved).toBe(true); // (6,4) -> (6,5): now open
+    expect(move(world, 0, 1).moved).toBe(true); // (6,5) -> (6,6): the lore alcove
+
+    const readLore = attemptInteract(world);
+    expect(readLore.message).toContain("wards held");
   });
 });

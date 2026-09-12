@@ -110,7 +110,13 @@ independently):
   `GameLogic` module specifically so it's headlessly testable — see
   `StartingLevel.playthrough.test.ts` for the scripted positive/negative
   playthroughs.
-- ⬜ Batch 2 — Lever (linked door) + lore item.
+- ✅ Batch 2 — `Lever` (toggles a linked door — a two-pass entity build
+  since the lever needs the door's actual instance, not just its
+  coordinates) and `LoreItem` (re-readable, interact-triggered rather
+  than auto-pickup, per the docs' distinction). The level gained an
+  optional branch: a lever unlocks a small bonus alcove with a lore
+  item, entirely bypassable and not required to win — covered by its
+  own headless playthrough alongside the main one.
 - ⬜ Batch 3 — Pressure plate + pushable block + secret wall.
 - ⬜ Batch 4 — Playwright E2E layer remains a deliberate deferral, not
   part of this pass; final polish and doc sign-off.

@@ -18,6 +18,10 @@ export function createInteractableMesh(entity: Interactable, tileSize: number): 
       return buildKeyItem(entity, tileSize);
     case "exit":
       return buildExitMarker(entity, tileSize);
+    case "lever":
+      return buildLever(entity, tileSize);
+    case "loreItem":
+      return buildLoreItem(entity, tileSize);
     default:
       return undefined;
   }
@@ -55,5 +59,26 @@ function buildExitMarker(entity: Interactable, tileSize: number): THREE.Object3D
   mesh.rotation.x = -Math.PI / 2;
   // Just above the floor, avoids z-fighting with the floor plane.
   mesh.position.set(entity.x * tileSize, 0.02, entity.z * tileSize);
+  return mesh;
+}
+
+function buildLever(entity: Interactable, tileSize: number): THREE.Object3D {
+  // A thin standing switch, deliberately much slimmer than a door so it
+  // reads as "fixture to interact with" rather than "obstacle blocking
+  // the way" — levers never block movement.
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(tileSize * 0.15, 1, tileSize * 0.15),
+    new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.5, metalness: 0.4 }),
+  );
+  mesh.position.set(entity.x * tileSize, 0.5, entity.z * tileSize);
+  return mesh;
+}
+
+function buildLoreItem(entity: Interactable, tileSize: number): THREE.Object3D {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(tileSize * 0.3, 0.05, tileSize * 0.4),
+    new THREE.MeshStandardMaterial({ color: 0xd8c9a3, roughness: 1 }),
+  );
+  mesh.position.set(entity.x * tileSize, 0.05, entity.z * tileSize);
   return mesh;
 }
