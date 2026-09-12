@@ -7,6 +7,14 @@ import { InputManager, type Action } from "./InputManager";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { createInteractableMesh } from "./interactables/InteractableMesh";
 import { Inventory } from "./Inventory";
+import {
+  AMBIENT_LIGHT_COLOR,
+  AMBIENT_LIGHT_INTENSITY,
+  TORCH_COLOR,
+  TORCH_DECAY,
+  TORCH_DISTANCE,
+  TORCH_INTENSITY,
+} from "./Lighting";
 import { STARTING_LEVEL_ENTITIES } from "./Level";
 import { Player } from "./Player";
 import { TouchControls } from "./TouchControls";
@@ -41,12 +49,9 @@ export class Game {
     const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE);
     this.scene.add(dungeonMesh.group);
     this.hideWallFace = dungeonMesh.hideWallFace;
-    // Three.js has used physically-correct light units (candela, not the
-    // small ~0-2 range from older versions/tutorials) since well before
-    // this project's three@0.169 — there's no "legacy lights" toggle left
-    // to fall back on, so these intensities look tiny (a near-black scene)
-    // unless scaled up accordingly.
-    this.scene.add(new THREE.AmbientLight(0x40405a, 3));
+    // See Lighting.ts for why these values are much larger than the
+    // ~0-2 range you'd expect from older Three.js tutorials.
+    this.scene.add(new THREE.AmbientLight(AMBIENT_LIGHT_COLOR, AMBIENT_LIGHT_INTENSITY));
     this.buildEntityMeshes(interactables);
 
     const start = dungeon.findStart();
@@ -54,7 +59,7 @@ export class Game {
     this.player = new Player(start.x, start.z, 1, TILE_SIZE, aspect);
     this.world = { player: this.player, dungeon, interactables, inventory };
 
-    const torch = new THREE.PointLight(0xffb46b, 40, 12, 2);
+    const torch = new THREE.PointLight(TORCH_COLOR, TORCH_INTENSITY, TORCH_DISTANCE, TORCH_DECAY);
     torch.position.set(0, 0.1, 0);
     this.player.camera.add(torch);
     this.scene.add(this.player.camera);

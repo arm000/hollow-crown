@@ -53,6 +53,7 @@ src/
     TouchControls.ts     on-screen movement/turn/interact buttons
     Inventory.ts         shared party inventory (placeholder: id -> name)
     Hud.ts               DOM message line, inventory list, win screen
+    Lighting.ts          light color/intensity constants — headlessly testable
     GameLogic.ts         pure move/interact resolution (no rendering) — headlessly testable
     interactables/       Door, Lever, PressurePlate, PushableBlock,
                          SecretWall, KeyItem, LoreItem, ExitTile,

@@ -158,7 +158,49 @@ first real DOM UI, using the debug hook described above):
   mobile project, tapping the on-screen move-pad button produces the
   same grid change that `KeyW` does on desktop — closing the exact gap
   flagged when `TouchControls` first shipped ("I couldn't test on an
-  actual physical touchscreen from here").
+  actual physical touchscreen from here"); render a frame at the start
+  position and assert average pixel luminance is above a floor — see
+  the worked example just below for why this one matters.
+
+## A worked example: the near-black lighting bug
+
+A real bug that's useful for calibrating what these layers can and
+can't actually catch. Phase 1's scene lights were tuned using
+pre-physically-correct Three.js intensity conventions (small values
+like `0.7`/`1.6`); Three.js has used physically-correct, candela-scale
+light units for years with no "legacy lights" toggle left to fall back
+on, so the scene rendered near-black. A user report ("I can't see
+anything") caught it — not a test.
+
+- **Layer 1 (Vitest, no browser) structurally could not have caught
+  this.** `Game.ts` owns the `THREE.WebGLRenderer` and both lights, and
+  is deliberately outside what layer 1 touches (see "Architecture
+  requirements for testability" above) — a plain Node test has no
+  WebGL context to render a frame and observe that it came out too
+  dark. This isn't a gap we forgot to cover; it's the boundary the
+  architecture draws on purpose.
+- **What layer 1 *can* do, once the bug is understood**: the tuning
+  values were pulled out into `Lighting.ts` as plain exported constants
+  specifically so a cheap guard-rail test (`Lighting.test.ts`) can
+  assert they stay above a known-bad floor. Be honest about what this
+  buys: it's a **regression net, not a bug-finder**. It stops the exact
+  old value from silently coming back; it would not have caught the bug
+  the first time, because nothing about `1.6` looked wrong on its own
+  — it only became "obviously too low" once we knew the physically-
+  correct-units floor to compare it against.
+- **What would actually catch this class of bug**: the rendered-frame
+  brightness check added to layer 3's example assertions above — render
+  a frame, sample average pixel luminance, assert it clears a floor.
+  This is meaningfully lighter-weight than the screenshot-diff visual
+  regression testing ruled out below (it doesn't break on every
+  intentional art/color change, only on "the scene went dark"), which
+  is exactly the kind of narrow, specific exception the non-goal below
+  already leaves room for.
+- **What nothing here catches**: whether the brightness is actually
+  *pleasant*, or tonally right, once it clears "not literally
+  unplayable". That's still pillar 6's human gate in
+  [01-vision.md](01-vision.md#pillars) — automated tests catch
+  regressions, not fitness for purpose.
 
 ## CI wiring
 
@@ -189,7 +231,10 @@ on both.
   [Phase 4](08-roadmap-phases.md#phase-4--multi-level-descent--persistence)
   anyway per [10-visual-style-guide.md](10-visual-style-guide.md#where-this-lands-in-the-roadmap)
   — revisit only if a specific recurring rendering bug (not just "did
-  the art change") justifies it.
+  the art change") justifies it. The average-luminance floor check in
+  the worked example above is exactly that kind of narrow exception,
+  not a reversal of this non-goal: it only fails on "the scene is
+  unplayably dark," not on any ordinary visual change.
 - **No automated fuzzing of hand-authored level layouts.** Levels are
   hand-authored, not generated (per
   [01-vision.md](01-vision.md#explicit-non-goals-for-now)), so the thing
