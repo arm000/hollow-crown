@@ -1,0 +1,20 @@
+{
+  "name": "the-hollow-crown",
+  "version": "0.1.0",
+  "description": "A first-person grid-based dungeon crawler in the style of Legend of Grimrock",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.169.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
