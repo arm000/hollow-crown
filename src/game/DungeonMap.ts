@@ -45,19 +45,28 @@ export class DungeonMap {
 
 /**
  * The opening level: a single main corridor from start to exit, with a
- * one-tile side room holding a key needed further down the corridor,
- * plus an optional branch (a small room, then a locked bonus alcove)
- * reachable without the key. Entity placements (the key, both doors,
- * the lever, the exit, the lore item) live in `Level.ts`, layered on
- * top of this pure geometry.
+ * one-tile side room holding a key needed further down the corridor.
+ * Two further branches are entirely optional, not required to win:
+ * a lever-and-plate room (either mechanism unlocks the same bonus
+ * alcove door) and, past that alcove, a secret wall hiding one more
+ * hidden pocket. Entity placements (keys, doors, lever, plate, block,
+ * secret wall, exit, lore) live in `Level.ts`, layered on top of this
+ * pure geometry.
+ *
+ * Note for `DungeonMap.test.ts`'s connectivity check: the tile behind
+ * the secret wall at (6, 7) is deliberately *not* reachable by raw
+ * wall/floor adjacency alone — that's what makes it a secret. See that
+ * test for how it accounts for known secret walls.
  */
 export const STARTING_LEVEL = new DungeonMap([
   "#########",
   "#S......#",
-  "###.#.###",
-  "#####.###",
-  "####...##",
+  "##..#.###",
+  "##.##.###",
+  "##.#...##",
+  "##.###.##",
   "######.##",
+  "#########",
   "######.##",
   "#########",
 ]);

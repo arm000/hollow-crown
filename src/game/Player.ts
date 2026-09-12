@@ -1,8 +1,17 @@
 import * as THREE from "three";
-import type { DungeonMap } from "./DungeonMap";
 
 /** Facing direction as a compass index: 0 = north, 1 = east, 2 = south, 3 = west. */
 export type Facing = 0 | 1 | 2 | 3;
+
+/**
+ * Anything that can answer "is this tile blocked". `DungeonMap` satisfies
+ * this structurally, but callers can pass a composite (raw walls plus
+ * blocking interactables — a locked door, an unrevealed secret wall) so
+ * `Player` never needs to know interactables exist at all.
+ */
+export interface Passable {
+  isWall(x: number, z: number): boolean;
+}
 
 const FACING_OFFSETS: Array<[number, number]> = [
   [0, -1], // north
@@ -74,11 +83,11 @@ export class Player {
   }
 
   /** Attempts to step onto the adjacent tile in the given grid direction. Fails if a wall blocks it or a move/turn is already in progress. */
-  tryMove(dx: number, dz: number, dungeon: DungeonMap): boolean {
+  tryMove(dx: number, dz: number, terrain: Passable): boolean {
     if (this.isAnimating) return false;
     const nx = this.gridX + dx;
     const nz = this.gridZ + dz;
-    if (dungeon.isWall(nx, nz)) return false;
+    if (terrain.isWall(nx, nz)) return false;
 
     this.moveFrom.copy(this.worldPosition());
     this.moveTo.copy(this.worldPosition(nx, nz));

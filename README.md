@@ -54,7 +54,9 @@ src/
     Inventory.ts         shared party inventory (placeholder: id -> name)
     Hud.ts               DOM message line, inventory list, win screen
     GameLogic.ts         pure move/interact resolution (no rendering) — headlessly testable
-    interactables/       Door, KeyItem, ExitTile, InteractableManager, ...
+    interactables/       Door, Lever, PressurePlate, PushableBlock,
+                         SecretWall, KeyItem, LoreItem, ExitTile,
+                         InteractableManager
     Game.ts              wires scene, renderer, input, and world state together
 ```
 
@@ -68,12 +70,14 @@ playable build before the next one starts.
 
 ## Status
 
-Phase 0 complete, Phase 1 in progress (see the roadmap doc above).
-Playable now: grid movement (keyboard or touch), and a small
-hand-authored level with a key-and-locked-door puzzle leading to an exit
-— find the key, unlock the door, reach the exit to win. Still to come in
-Phase 1: a lever, a pressure plate + pushable block, and a secret wall.
-No combat, character stats, or equipment yet — that's Phase 2 onward.
+Phase 0 complete, Phase 1 nearly complete (see the roadmap doc above).
+Playable now: grid movement (keyboard or touch) through a hand-authored
+level with a full interactable set — a key and locked door gating the
+exit (mandatory), plus an optional lever, a pushable block and pressure
+plate (either unlocks the same bonus alcove), and a secret wall hiding
+one more hidden pocket. Only a Playwright end-to-end test layer remains
+a deliberate deferral for this phase. No combat, character stats, or
+equipment yet — that's Phase 2 onward.
 
 ## Scripts
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DungeonMap, STARTING_LEVEL } from "./DungeonMap";
+import { STARTING_LEVEL_ENTITIES } from "./Level";
 
 describe("DungeonMap", () => {
   it("reports width/height from the layout", () => {
@@ -57,7 +58,20 @@ describe("DungeonMap", () => {
       expect(STARTING_LEVEL.isWall(start.x, start.z)).toBe(false);
     });
 
-    it("has every floor tile reachable from the start (no isolated rooms)", () => {
+    it("has every floor tile reachable from the start, secret walls included (no truly isolated rooms)", () => {
+      // Secret walls (see interactables/SecretWall.ts) are deliberately
+      // *not* reachable by raw wall/floor adjacency — that's what makes
+      // them secret. Treat their coordinates as passable here so this
+      // check still catches a genuinely unreachable/isolated room (a
+      // real level-design bug) without also flagging every intentional
+      // secret as one.
+      const secretWallTiles = new Set(
+        STARTING_LEVEL_ENTITIES.filter((spawn) => spawn.type === "secretWall").map(
+          (spawn) => `${spawn.x},${spawn.z}`,
+        ),
+      );
+      const passable = (x: number, z: number) => !STARTING_LEVEL.isWall(x, z) || secretWallTiles.has(`${x},${z}`);
+
       const start = STARTING_LEVEL.findStart();
       const seen = new Set<string>([`${start.x},${start.z}`]);
       const queue: Array<{ x: number; z: number }> = [start];
@@ -74,7 +88,7 @@ describe("DungeonMap", () => {
           const nx = x + dx;
           const nz = z + dz;
           const key = `${nx},${nz}`;
-          if (STARTING_LEVEL.isWall(nx, nz) || seen.has(key)) continue;
+          if (!passable(nx, nz) || seen.has(key)) continue;
           seen.add(key);
           queue.push({ x: nx, z: nz });
         }
@@ -83,7 +97,7 @@ describe("DungeonMap", () => {
       let floorTileCount = 0;
       for (let z = 0; z < STARTING_LEVEL.height; z++) {
         for (let x = 0; x < STARTING_LEVEL.width; x++) {
-          if (!STARTING_LEVEL.isWall(x, z)) floorTileCount++;
+          if (passable(x, z)) floorTileCount++;
         }
       }
 

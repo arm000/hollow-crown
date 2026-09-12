@@ -103,4 +103,63 @@ describe("Starting level playthrough (headless)", () => {
     const readLore = attemptInteract(world);
     expect(readLore.message).toContain("wards held");
   });
+
+  it("pushing the block onto the plate unlocks the same bonus door as the lever", () => {
+    const world = newWorld();
+
+    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
+    expect(move(world, 0, 1).moved).toBe(true); // (2,1) -> (2,2): the plate branch's entrance
+    expect(move(world, 0, 1).moved).toBe(true); // (2,2) -> (2,3)
+
+    const push = move(world, 0, 1); // (2,3) -> (2,4): pushes the block ahead of it onto the plate
+    expect(push.moved).toBe(true);
+    expect(push.pushedBlock).toEqual({ from: { x: 2, z: 4 }, to: { x: 2, z: 5 } });
+
+    // The spur is a dead end now that the block sits on the plate at its far tile — back out
+    // and around via the lever branch's room to reach the bonus door from the other side.
+    expect(move(world, 0, -1).moved).toBe(true); // (2,4) -> (2,3)
+    expect(move(world, 0, -1).moved).toBe(true); // (2,3) -> (2,2)
+    expect(move(world, 0, -1).moved).toBe(true); // (2,2) -> (2,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,1) -> (5,2)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,2) -> (5,3)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,3) -> (5,4)
+    expect(move(world, 1, 0).moved).toBe(true); // (5,4) -> (6,4)
+
+    // Open via the plate alone -- the lever was never touched in this test.
+    expect(move(world, 0, 1).moved).toBe(true); // (6,4) -> (6,5)
+  });
+
+  it("a secret wall behind the bonus alcove hides one more pocket", () => {
+    const world = newWorld();
+
+    // Reach the lore alcove via the lever (the quicker of the two ways in).
+    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,1) -> (5,2)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,2) -> (5,3)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,3) -> (5,4): the lever
+    attemptInteract(world); // pull it
+    expect(move(world, 1, 0).moved).toBe(true); // (5,4) -> (6,4)
+    expect(move(world, 0, 1).moved).toBe(true); // (6,4) -> (6,5): open now
+    expect(move(world, 0, 1).moved).toBe(true); // (6,5) -> (6,6): the lore alcove
+
+    // The wall further in looks ordinary until it's searched.
+    expect(move(world, 0, 1).moved).toBe(false);
+
+    world.player.turn(1); // face south (was east) to search the wall, not re-read the lore item underfoot
+    world.player.update(10);
+    const search = attemptInteract(world);
+    expect(search.message).toBe("You find a hidden passage!");
+
+    expect(move(world, 0, 1).moved).toBe(true); // (6,6) -> (6,7): now open
+    expect(move(world, 0, 1).moved).toBe(true); // (6,7) -> (6,8): the hidden pocket
+
+    const readSecondLore = attemptInteract(world);
+    expect(readSecondLore.message).toContain("never meant to stop looking");
+  });
 });

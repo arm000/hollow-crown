@@ -22,6 +22,15 @@ export function createInteractableMesh(entity: Interactable, tileSize: number): 
       return buildLever(entity, tileSize);
     case "loreItem":
       return buildLoreItem(entity, tileSize);
+    case "pushableBlock":
+      return buildPushableBlock(entity, tileSize);
+    case "pressurePlate":
+      return buildPressurePlate(entity, tileSize);
+    case "secretWall":
+      // Deliberately no mesh: a secret wall *is* one of DungeonMesh's
+      // ordinary wall faces, indistinguishable from any other wall until
+      // revealed (see Game.refreshEntityVisual -> hideWallFace).
+      return undefined;
     default:
       return undefined;
   }
@@ -80,5 +89,24 @@ function buildLoreItem(entity: Interactable, tileSize: number): THREE.Object3D {
     new THREE.MeshStandardMaterial({ color: 0xd8c9a3, roughness: 1 }),
   );
   mesh.position.set(entity.x * tileSize, 0.05, entity.z * tileSize);
+  return mesh;
+}
+
+function buildPushableBlock(entity: Interactable, tileSize: number): THREE.Object3D {
+  const size = tileSize * 0.8;
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(size, size, size),
+    new THREE.MeshStandardMaterial({ color: 0xb08050, roughness: 0.95 }),
+  );
+  mesh.position.set(entity.x * tileSize, size / 2, entity.z * tileSize);
+  return mesh;
+}
+
+function buildPressurePlate(entity: Interactable, tileSize: number): THREE.Object3D {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(tileSize * 0.7, 0.04, tileSize * 0.7),
+    new THREE.MeshStandardMaterial({ color: 0x4a6a7a, roughness: 0.8, metalness: 0.2 }),
+  );
+  mesh.position.set(entity.x * tileSize, 0.02, entity.z * tileSize);
   return mesh;
 }

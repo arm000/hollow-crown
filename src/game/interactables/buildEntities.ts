@@ -3,25 +3,30 @@ import { ExitTile } from "./ExitTile";
 import { KeyItem } from "./KeyItem";
 import { Lever } from "./Lever";
 import { LoreItem } from "./LoreItem";
+import { PressurePlate } from "./PressurePlate";
+import { PushableBlock } from "./PushableBlock";
+import { SecretWall } from "./SecretWall";
 import type { EntitySpawn, Interactable } from "./types";
+
+const DOOR_LINKED_TYPES = new Set(["lever", "pressurePlate"]);
 
 /**
  * Turns raw level-data spawns into runtime `Interactable` instances.
- * Levers are built in a second pass since they need a reference to
- * their linked door's actual instance, not just its spawn data — see
- * docs/08-roadmap-phases.md Phase 1.
+ * Levers and pressure plates are built in a second pass since they need
+ * a reference to their linked door's actual instance, not just its
+ * spawn data — see docs/08-roadmap-phases.md Phase 1.
  */
 export function buildEntities(spawns: EntitySpawn[]): Interactable[] {
-  const leverSpawns = spawns.filter((spawn) => spawn.type === "lever");
-  const otherSpawns = spawns.filter((spawn) => spawn.type !== "lever");
+  const doorLinkedSpawns = spawns.filter((spawn) => DOOR_LINKED_TYPES.has(spawn.type));
+  const otherSpawns = spawns.filter((spawn) => !DOOR_LINKED_TYPES.has(spawn.type));
 
   const byPosition = new Map<string, Interactable>();
   for (const spawn of otherSpawns) {
     byPosition.set(`${spawn.x},${spawn.z}`, buildOne(spawn));
   }
 
-  for (const spawn of leverSpawns) {
-    byPosition.set(`${spawn.x},${spawn.z}`, buildLever(spawn, byPosition));
+  for (const spawn of doorLinkedSpawns) {
+    byPosition.set(`${spawn.x},${spawn.z}`, buildDoorLinked(spawn, byPosition));
   }
 
   return [...byPosition.values()];
@@ -41,6 +46,10 @@ function buildOne(spawn: EntitySpawn): Interactable {
       return new KeyItem(spawn.x, spawn.z, params.itemId as string, (params.name as string) ?? "an item");
     case "loreItem":
       return new LoreItem(spawn.x, spawn.z, params.text as string);
+    case "pushableBlock":
+      return new PushableBlock(spawn.x, spawn.z);
+    case "secretWall":
+      return new SecretWall(spawn.x, spawn.z);
     case "exit":
       return new ExitTile(spawn.x, spawn.z);
     default:
@@ -48,13 +57,17 @@ function buildOne(spawn: EntitySpawn): Interactable {
   }
 }
 
-function buildLever(spawn: EntitySpawn, built: Map<string, Interactable>): Lever {
+function buildDoorLinked(spawn: EntitySpawn, built: Map<string, Interactable>): Interactable {
   const params = spawn.params ?? {};
   const doorX = params.doorX as number;
   const doorZ = params.doorZ as number;
   const door = built.get(`${doorX},${doorZ}`);
   if (!door || door.kind !== "door") {
-    throw new Error(`Lever at (${spawn.x}, ${spawn.z}) references a door at (${doorX}, ${doorZ}) that doesn't exist`);
+    const label = spawn.type === "lever" ? "Lever" : "Pressure plate";
+    throw new Error(`${label} at (${spawn.x}, ${spawn.z}) references a door at (${doorX}, ${doorZ}) that doesn't exist`);
   }
-  return new Lever(spawn.x, spawn.z, door as Door);
+
+  return spawn.type === "lever"
+    ? new Lever(spawn.x, spawn.z, door as Door)
+    : new PressurePlate(spawn.x, spawn.z, door as Door);
 }

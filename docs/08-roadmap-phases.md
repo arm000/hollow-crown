@@ -117,7 +117,21 @@ independently):
   optional branch: a lever unlocks a small bonus alcove with a lore
   item, entirely bypassable and not required to win — covered by its
   own headless playthrough alongside the main one.
-- ⬜ Batch 3 — Pressure plate + pushable block + secret wall.
+- ✅ Batch 3 — `PushableBlock` (moved via a push-resolution step in
+  `GameLogic`, not an interact), `PressurePlate` (state recomputed from
+  scratch after every move — self-correcting, no separate on-exit event
+  to keep in sync), and `SecretWall` (a normal wall tile whose entity
+  overrides the raw grid once revealed; `DungeonMesh` now exposes
+  `hideWallFace` so the revealed passage visually opens up, via
+  zero-scaling that one `InstancedMesh` instance rather than rebuilding
+  geometry). `Player.tryMove` was generalized to accept anything
+  answering "is this blocked" instead of a `DungeonMap` specifically, so
+  a revealed secret wall can actually override the raw grid rather than
+  being silently re-blocked by Player's own internal wall check. Also
+  fixed a real bug surfaced while testing this batch: `attemptInteract`
+  checked the party's own tile before the tile it's facing, which meant
+  standing on an item while facing a secret wall behind it always hit
+  the item first — swapped to faced-first, own-tile-fallback.
 - ⬜ Batch 4 — Playwright E2E layer remains a deliberate deferral, not
   part of this pass; final polish and doc sign-off.
 

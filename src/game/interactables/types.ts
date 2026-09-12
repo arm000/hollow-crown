@@ -47,6 +47,9 @@ export interface Interactable {
   /** True once this entity should be removed from the level (e.g. a collected key). */
   isConsumed?(): boolean;
 
+  /** For pressure plates: updates whether something is currently sitting on this tile. */
+  setOccupied?(occupied: boolean): void;
+
   /** True if entering this tile should end the level in victory. */
   readonly isExit?: boolean;
 }

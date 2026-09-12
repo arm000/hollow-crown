@@ -22,6 +22,7 @@ export class Game {
   private readonly world: WorldState;
   private readonly hud = new Hud();
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
+  private readonly hideWallFace: (x: number, z: number) => void;
   private won = false;
 
   constructor(container: HTMLElement) {
@@ -37,7 +38,9 @@ export class Game {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x05060a);
     this.scene.fog = new THREE.FogExp2(0x05060a, 0.09);
-    this.scene.add(buildDungeonMesh(dungeon, TILE_SIZE));
+    const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE);
+    this.scene.add(dungeonMesh.group);
+    this.hideWallFace = dungeonMesh.hideWallFace;
     this.scene.add(new THREE.AmbientLight(0x40405a, 0.7));
     this.buildEntityMeshes(interactables);
 
@@ -65,13 +68,11 @@ export class Game {
   }
 
   private buildEntityMeshes(interactables: InteractableManager): void {
-    for (const spawn of STARTING_LEVEL_ENTITIES) {
-      const entity = interactables.at(spawn.x, spawn.z);
-      if (!entity) continue;
+    for (const entity of interactables.allEntities()) {
       const mesh = createInteractableMesh(entity, TILE_SIZE);
       if (!mesh) continue;
       this.scene.add(mesh);
-      this.entityMeshes.set(`${spawn.x},${spawn.z}`, mesh);
+      this.entityMeshes.set(`${entity.x},${entity.z}`, mesh);
     }
   }
 
@@ -119,11 +120,22 @@ export class Game {
   private handleMove(dx: number, dz: number): void {
     const outcome = attemptMove(this.world, dx, dz);
     if (outcome.message) this.hud.showMessage(outcome.message);
+    if (outcome.pushedBlock) this.moveEntityMesh(outcome.pushedBlock.from, outcome.pushedBlock.to);
     if (outcome.enteredTile) {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.enteredTile.x, outcome.enteredTile.z);
     }
     if (outcome.won) this.win();
+  }
+
+  /** Repositions a pushed block's mesh to follow it — the only interactable in Phase 1 that moves after being placed. */
+  private moveEntityMesh(from: { x: number; z: number }, to: { x: number; z: number }): void {
+    const mesh = this.entityMeshes.get(`${from.x},${from.z}`);
+    if (!mesh) return;
+    this.entityMeshes.delete(`${from.x},${from.z}`);
+    this.entityMeshes.set(`${to.x},${to.z}`, mesh);
+    mesh.position.x = to.x * TILE_SIZE;
+    mesh.position.z = to.z * TILE_SIZE;
   }
 
   private handleInteract(): void {
@@ -135,10 +147,15 @@ export class Game {
     }
   }
 
-  /** Removes an entity's placeholder mesh once it's gone (collected) or no longer worth showing (an unlocked door). */
+  /** Removes an entity's placeholder mesh once it's gone (collected) or no longer worth showing (an unlocked door), and opens up a revealed secret wall's face. */
   private refreshEntityVisual(x: number, z: number): void {
-    const posKey = `${x},${z}`;
     const entity = this.world.interactables.at(x, z);
+
+    if (entity?.kind === "secretWall" && !entity.blocksMovement()) {
+      this.hideWallFace(x, z);
+    }
+
+    const posKey = `${x},${z}`;
     const stillVisible = entity !== undefined && !(entity.kind === "door" && !entity.blocksMovement());
     if (stillVisible) return;
 
