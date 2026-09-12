@@ -57,9 +57,12 @@ conflicts with a pillar, the pillar wins.
 5. **Small, dense levels over big, empty ones.** A level should reward
    full exploration — a secret, a puzzle, a piece of lore, a resource —
    roughly every screen's worth of corridor. No padding.
-6. **Playable beats feature-complete.** Every phase of development ships
-   something a person can actually sit down and finish. See
-   [08-roadmap-phases.md](08-roadmap-phases.md).
+6. **Playable beats feature-complete — and verifiable beats "it worked
+   when I checked it."** Every phase of development ships something a
+   person can actually sit down and finish, *and* an automated way to
+   confirm that without a person doing it by hand every time. See
+   [08-roadmap-phases.md](08-roadmap-phases.md) for the former,
+   [11-testing-strategy.md](11-testing-strategy.md) for the latter.
 
 ## Target experience
 

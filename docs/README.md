@@ -16,6 +16,7 @@ independently as we build.
 | [08-roadmap-phases.md](08-roadmap-phases.md) | **The phased build plan.** Every phase ends in a playable milestone — read this before starting any phase of work |
 | [09-deployment.md](09-deployment.md) | Where and how the game is hosted, and how a deploy happens |
 | [10-visual-style-guide.md](10-visual-style-guide.md) | Pixel art direction: rendering pipeline, asset specs, palette, typography |
+| [11-testing-strategy.md](11-testing-strategy.md) | How every feature is verified without a human — the automated counterpart to the roadmap's playability gates |
 
 ## Working rule
 
@@ -25,6 +26,12 @@ can launch the game and complete a real loop start-to-finish — not just
 "the code compiles" or "the feature exists behind a debug flag." If a
 phase's scope can't be reduced to something playable, split it further
 rather than skip the gate.
+
+**Every phase also needs an automated way to verify that same loop
+without a human** — see [11-testing-strategy.md](11-testing-strategy.md).
+The two gates are both required and neither substitutes for the other: a
+green test suite nobody has played, and a fun playtest with no test
+coverage, are both incomplete.
 
 These docs describe the intended shape of the game. Implementation may
 reveal that a system needs to change — when that happens, update the doc

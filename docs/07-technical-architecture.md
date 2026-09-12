@@ -16,15 +16,24 @@
 
 ```
 src/
-  main.ts              entry point
+  main.ts               entry point
   game/
-    DungeonMap.ts       ASCII level data + tile queries
-    DungeonMesh.ts      builds floor/ceiling/wall geometry for a level
-    Player.ts           grid position, facing, and move/turn animation
-    InputManager.ts     keyboard/touch -> discrete action queue
-    TouchControls.ts    on-screen buttons for touch devices
-    Game.ts             wires scene, renderer, input, and player together
+    DungeonMap.ts        ASCII level data + tile queries
+    DungeonMap.test.ts   unit tests (tile queries, level connectivity)
+    DungeonMesh.ts       builds floor/ceiling/wall geometry for a level
+    Player.ts            grid position, facing, and move/turn animation
+    Player.test.ts       unit tests (movement, turning, animation state)
+    InputManager.ts      keyboard/touch -> discrete action queue
+    InputManager.test.ts unit tests (key mapping, queue behavior)
+    TouchControls.ts     on-screen buttons for touch devices
+    Game.ts              wires scene, renderer, input, and player together
 ```
+
+Test files sit next to the source they test (`Foo.ts` / `Foo.test.ts`),
+picked up by Vitest via `vitest.config.ts`'s
+`include: ["src/**/*.test.ts"]` — see
+[11-testing-strategy.md](11-testing-strategy.md) for the full testing
+approach.
 
 `Game.tick()` is the heart of the loop today: if the player isn't mid-
 animation, pop one queued input action, apply it, then let `Player`
@@ -158,13 +167,24 @@ care.
 
 ## Testing
 
-Vitest (pairs naturally with Vite, no extra tooling to introduce) should
-be added when combat math shows up in
-[Phase 2](08-roadmap-phases.md#phase-2--party--turn-based-combat) —
-damage formulas, initiative ordering, and turn resolution are exactly the
-kind of logic that's cheap to unit test and easy to silently break
-later. Not needed before then; Phase 0/1 logic is simple enough that
-manual playtesting per the roadmap's playability gates is sufficient.
+Full strategy in [11-testing-strategy.md](11-testing-strategy.md) —
+every feature needs to be verifiable without a human, not just playable
+by one. Summary of what's implemented:
+
+- **Vitest** (`npm test`), covering `DungeonMap`, `Player`, and
+  `InputManager` now, with the same coverage expected of every phase's
+  logic as it's written — this used to be deferred to Phase 2 in an
+  earlier version of this doc, which was the wrong call: movement/
+  collision logic was genuinely unit-testable from Phase 0, and waiting
+  meant Phase 0/1 had zero regression protection.
+- **CI**: `.github/workflows/ci.yml` runs typecheck + tests + build on
+  every pull request; `.github/workflows/deploy.yml`'s build job runs
+  the same before publishing to
+  [Pages](09-deployment.md), so a failing test blocks the live deploy
+  directly.
+- **Playwright** (real headless-browser E2E, including a mobile-emulated
+  touch-input project) is designed but not yet implemented — see
+  [11-testing-strategy.md](11-testing-strategy.md#3-browser-end-to-end-smoke-tests--playwright-real-headless-browser).
 
 ## Performance
 

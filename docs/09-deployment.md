@@ -45,7 +45,9 @@ alternatives considered below.
 push to main
   -> checkout
   -> npm ci
-  -> npm run build          (tsc -b && vite build -> dist/)
+  -> npm run typecheck
+  -> npm test                (see 11-testing-strategy.md — a failing test blocks the deploy)
+  -> npm run build           (tsc -b && vite build -> dist/)
   -> upload dist/ as a Pages artifact
   -> deploy that artifact to the Pages environment
 ```
@@ -56,6 +58,13 @@ Pages-via-Actions pattern — `deploy` uses the official
 `id-token: write` permissions declared in the workflow. A `concurrency`
 group serializes deploys so two pushes in quick succession can't race
 each other's artifact upload.
+
+A separate workflow, `.github/workflows/ci.yml`, runs the same
+typecheck+test+build sequence on every pull request — fast feedback
+before merge, without waiting for a push to `main` to find out something
+broke. See [11-testing-strategy.md](11-testing-strategy.md) for what
+those tests actually cover and why both workflows run them rather than
+relying on one or the other.
 
 Trigger it manually without a new commit via the Actions tab's "Run
 workflow" button, or:

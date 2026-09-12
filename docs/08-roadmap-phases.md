@@ -12,6 +12,13 @@ or mouse.** Mobile is a platform requirement from Phase 0 onward (see
 end — every phase gate below should be read as "playable with a keyboard
 *and* playable with touch controls alone."
 
+**Every phase also has an "Automated verification" gate alongside
+"Playable when."** Full strategy in
+[11-testing-strategy.md](11-testing-strategy.md) — the short version:
+each phase's playability claim needs a test (or a small suite) that
+proves it without a human, and that test gets written in the same phase
+the feature ships in, not retrofitted later.
+
 Every push to `main` auto-deploys to
 **https://arm000.github.io/hollow-crown/** (see
 [09-deployment.md](09-deployment.md)) — use that live URL, on an actual
@@ -37,10 +44,21 @@ strafe, hit walls without breaking anything — on a keyboard *and* on a
 touch-only phone-sized viewport (on-screen movement/turn pads, no
 keyboard). No crashes, no dead ends that shouldn't be dead ends.
 
+**Automated verification:** `DungeonMap.test.ts` (level connectivity —
+every floor tile reachable from the start, the automated form of "a
+human can walk a full lap"), `Player.test.ts` (movement/wall-blocking,
+turning, animation state), `InputManager.test.ts` (key mapping, queue
+behavior) — all via `npm test`, run in CI on every PR and before every
+deploy. The touch-control half of this gate (does tapping a pad actually
+move the party) is not yet automated — that's the Playwright layer
+designed in [11-testing-strategy.md](11-testing-strategy.md#3-browser-end-to-end-smoke-tests--playwright-real-headless-browser),
+expected to land in Phase 1.
+
 **Status:** Done — this is the current state of the repo. (Touch controls
 were added after the mobile platform requirement was introduced,
 retrofitted onto the original keyboard-only build so this phase's gate
-stays true.)
+stays true; the Vitest suite above was added the same way once automated
+verification became a requirement.)
 
 ---
 
@@ -68,6 +86,19 @@ minimal DOM HUD.
 figure out the puzzle (get a key, throw a lever, find a secret), and
 reach a "You escaped" end screen. Complete, if tiny, beginning-to-end
 loop.
+
+**Automated verification:** unit tests on `Interactable` state
+transitions (door locked→unlocked only with the right key, lever
+correctly toggles its linked door, pressure plate held/released) and on
+win-condition evaluation, plus a headless scripted-playthrough test that
+runs the exact action sequence solving the puzzle and asserts the win
+state fires — and a second script proving it does *not* fire without the
+key/lever step, so the gate isn't just "some sequence wins" but "the
+puzzle is actually required." See
+[11-testing-strategy.md](11-testing-strategy.md#2-headless-scripted-playthroughs--vitest-still-no-browser).
+This is also the target phase for wiring the Playwright E2E layer
+(including the mobile-touch project), since it's the first phase with a
+real DOM UI worth testing end-to-end.
 
 ---
 
@@ -105,9 +136,18 @@ built for this phase) with a monster patrolling it, get into a fight,
 resolve it turn-by-turn to a win or a loss, and see the game react
 correctly either way — and losing that fight without ever Defending
 through the telegraphed heavy strike should feel like a fair, avoidable
-mistake, not bad luck (recommend adding Vitest here per
-[07-technical-architecture.md](07-technical-architecture.md#testing) to
-lock down initiative/damage math as it's written).
+mistake, not bad luck.
+
+**Automated verification:** this is the phase where randomness first
+enters the game (initiative rolls), so the seedable-RNG requirement in
+[11-testing-strategy.md](11-testing-strategy.md#architecture-requirements-for-testability)
+lands here, not later — unit tests lock down `WorldClock` tick order,
+the damage formula, and turn resolution against fixed seeds. A headless
+scripted playthrough drives a fixed action sequence into the fight and
+asserts the deterministic outcome, plus a second script that never
+Defends through the telegraphed strike and asserts the resulting loss —
+the automated version of "this loss was fair and avoidable," not just an
+assertion in prose.
 
 ---
 
@@ -150,6 +190,15 @@ Concretely: fighting the Physical-resistant monster with only melee
 should be a visibly bad time, and switching to Fire (Mage spell or an
 Oil Flask) should visibly fix it.
 
+**Automated verification:** unit tests on ability effects, equipment
+stat modifiers, XP/level-up math, and damage-type resistance/weakness
+application. A headless scripted playthrough is the direct proof behind
+the "visibly bad time / visibly fixed" claim above: script the fight
+against the Physical-resistant monster with melee-only and assert a
+losing or costly outcome, then the same fight substituting a Fire spell
+or Oil Flask and assert a clearly better one — an actual pass/fail
+check, not a design intention.
+
 ---
 
 ## Phase 4 — Multi-Level Descent & Persistence
@@ -185,6 +234,16 @@ descent — with a difficulty curve that's noticeably harder at the bottom
 than the top, and where each new monster type met along the way plays
 differently enough that "check the codex, then fight" is a real, useful
 habit rather than a formality.
+
+**Automated verification:** a save/load round-trip test (serialize party
++ level + position state, deserialize, assert it's identical to the
+original — this is the kind of bug that's invisible until someone's
+actual save gets corrupted, exactly what this gate exists to catch),
+unit tests on the new monster AI behaviors and on
+level-transition state, and a headless scripted playthrough of the full
+multi-level descent end to end. If Playwright landed in Phase 1, its
+suite gets a save/reload E2E case here too (quit and relaunch really is
+a browser-level concern, not just a logic one).
 
 ---
 
@@ -223,6 +282,18 @@ not a systems demo — a full descent through one act, story beats landing
 in the first-person view itself, ending in a boss fight, with sound and
 lighting doing real atmospheric work.
 
+**Automated verification:** the boss fight's combined mechanics get the
+same combat unit/scripted-playthrough coverage as any other monster (per
+[05-combat.md](05-combat.md#a-teaching-ladder-illustrative-not-final-content),
+it's assembled from 2-3 already-tested mechanics, so most of this is
+composition, not new logic) — and a unit test on the minimap's data
+mapping (does it place rooms/corridors where the source level data says
+they are). Per the non-goals in
+[11-testing-strategy.md](11-testing-strategy.md#non-goals), the art,
+audio, and narrative content itself is **not** automatically verified —
+only the underlying logic and data are. "Does this feel tonally right"
+stays a human judgment call.
+
 ---
 
 ## Phase 6 — Full Campaign & Release Polish
@@ -241,6 +312,18 @@ lighting doing real atmospheric work.
 
 **Playable when:** A start-to-finish playthrough of the complete game at
 shippable quality — this phase's gate *is* the release.
+
+**Automated verification:** a full-campaign headless scripted playthrough
+(and, if Playwright's overhead is worth it by now, a real-browser
+equivalent) as the release smoke test, plus balance sanity checks that
+are cheap to assert automatically and easy to accidentally break by hand
+(XP/level curves stay monotonic, no stat or resistance value produces
+negative HP or a division by zero, every item/ability referenced by a
+level actually exists in the data tables). This is the last phase before
+release — from here on, changes are regression-only maintenance against
+an existing test suite, not new coverage to write, which is exactly why
+every earlier phase's tests needed to actually get written on schedule
+rather than deferred to "eventually."
 
 ---
 
