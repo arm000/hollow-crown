@@ -123,13 +123,17 @@ function buildLever(entity: Interactable, tileSize: number): THREE.Object3D {
 }
 
 function buildNpc(entity: Interactable, tileSize: number): THREE.Object3D {
-  // A standing, person-shaped silhouette -- deliberately not a monster
-  // capsule's low, ready-to-lunge posture, and not a lore page's flat
-  // plane. A dull, worn-cloth color rather than anything vivid: someone
-  // who's been standing here a very long time.
-  const height = 1.7;
+  // A robed, cone-shaped silhouette -- deliberately *not* the same
+  // capsule primitive every monster type uses (see buildMonsterMesh in
+  // Game.ts). The two previously shared that shape and differed only
+  // in size/color, which read as "is this an enemy?" at a glance --
+  // exactly the confusion a player reported. Shape, not just color, is
+  // what needs to differ for pillar 3's "readable at a glance,
+  // especially on a phone" (docs/10-visual-style-guide.md), ahead of
+  // real sprite art existing to tell them apart properly.
+  const height = 1.6;
   const mesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.3, height - 0.6, 4, 8),
+    new THREE.ConeGeometry(0.35, height, 8),
     new THREE.MeshStandardMaterial({ color: 0x7a7264, roughness: 1 }),
   );
   mesh.position.set(entity.x * tileSize, height / 2, entity.z * tileSize);
