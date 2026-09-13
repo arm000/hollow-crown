@@ -456,10 +456,15 @@ export class Game {
   }
 }
 
+/** A placeholder color cue per monster type, ahead of the real Phase 5 art pass — e.g. the Cinder Wretch's warm, ember tone hints at its Fire-weak/Physical-resistant identity without stating it. */
+const MONSTER_COLORS: Record<string, number> = {
+  "Cinder Wretch": 0x8a3f2a,
+  "Screeching Wraith": 0xd8d8e8,
+  "Court Alchemist": 0x6a4a7a,
+};
+
 function buildMonsterMesh(monster: Monster): THREE.Object3D {
-  // Cinder Wretch reads visually distinct (warm, ember-toned) from the Rot-thing (sickly green) --
-  // a placeholder cue toward its Fire-weak/Physical-resistant identity, ahead of the real Phase 5 art pass.
-  const color = monster.name === "Cinder Wretch" ? 0x8a3f2a : 0x5a6b4a;
+  const color = MONSTER_COLORS[monster.name] ?? 0x5a6b4a; // sickly green default -- the Rot-thing's original look
   return new THREE.Mesh(
     new THREE.CapsuleGeometry(0.4, MONSTER_HEIGHT - 0.8, 4, 8),
     new THREE.MeshStandardMaterial({ color, roughness: 0.9 }),

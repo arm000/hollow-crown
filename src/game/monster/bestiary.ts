@@ -62,8 +62,83 @@ export function createCinderWretch(
   );
 }
 
+/**
+ * The Screeching Wraith (docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content):
+ * its telegraphed heavy strike inflicts Fear, which forces a character
+ * to Defend on their very next turn instead of acting
+ * (`CombatEngine.submitAction`) — the lesson here is the Resolve stat
+ * (a higher-Resolve target shrugs it off faster once cured) and the
+ * Cleric's Cleanse, not raw damage; its might is deliberately low.
+ */
+export function createScreechingWraith(
+  x: number,
+  z: number,
+  patrolPoints: GridPoint[],
+  dungeon: DungeonMap,
+  player: Player,
+): Monster {
+  return new Monster(
+    {
+      name: "Screeching Wraith",
+      x,
+      z,
+      patrolPoints,
+      detectionRadius: 4, // notices from further off than the others -- it's fast and unnatural, not stalking
+      maxHp: 16,
+      might: 2,
+      initiativeStat: 6,
+      flavor: {
+        light: "lets out a warning shriek, gathering itself for something worse!",
+        heavy: "unleashes a soul-splitting scream!",
+      },
+      heavyStatusEffect: { type: "fear", turnsRemaining: 2 },
+      xpReward: 22,
+    },
+    dungeon,
+    player,
+  );
+}
+
+/**
+ * The Court Alchemist (docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content):
+ * a support caster that heals rather than attacks on its telegraphed
+ * turn — the single-monster analogue to "kill the healer first" that
+ * `healsOnHeavyTurn` documents on `MonsterOptions`, since `CombatEngine`
+ * doesn't yet support more than one monster in an encounter at once.
+ * Burst it down before its heal-turn comes around, or the fight drags
+ * on considerably longer than its HP total alone suggests.
+ */
+export function createCourtAlchemist(
+  x: number,
+  z: number,
+  patrolPoints: GridPoint[],
+  dungeon: DungeonMap,
+  player: Player,
+): Monster {
+  return new Monster(
+    {
+      name: "Court Alchemist",
+      x,
+      z,
+      patrolPoints,
+      detectionRadius: 3,
+      maxHp: 22,
+      might: 3,
+      initiativeStat: 4,
+      flavor: {
+        light: "hurls a caustic vial at you, murmuring under its breath!",
+        heavy: "drinks down a restorative draught, mending its wounds!",
+      },
+      healsOnHeavyTurn: 9,
+      xpReward: 25, // as hard as the Cinder Wretch in practice -- the heal prolongs the fight considerably if ignored
+    },
+    dungeon,
+    player,
+  );
+}
+
 /** Every monster type a level's data can spawn — adding a new one here is one line, not a change to `Game.ts`. */
-export type MonsterTypeId = "rotThing" | "cinderWretch";
+export type MonsterTypeId = "rotThing" | "cinderWretch" | "screechingWraith" | "courtAlchemist";
 
 /** A level-data description of one monster placement, mirroring `EntitySpawn` for interactables (see `interactables/types.ts`) — plain data, not a constructed `Monster`, so level files stay pure data too. */
 export interface MonsterSpawn {
@@ -81,6 +156,10 @@ export function buildMonsters(spawns: MonsterSpawn[], dungeon: DungeonMap, playe
         return createRotThing(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
       case "cinderWretch":
         return createCinderWretch(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
+      case "screechingWraith":
+        return createScreechingWraith(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
+      case "courtAlchemist":
+        return createCourtAlchemist(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
     }
   });
 }

@@ -1,6 +1,6 @@
 import type { DungeonMap } from "../DungeonMap";
 import type { ResistanceMap } from "../combat/DamageType";
-import { StatusEffectSet } from "../combat/StatusEffect";
+import { StatusEffectSet, type StatusEffectInstance } from "../combat/StatusEffect";
 import type { Player } from "../Player";
 import { rollInt, type Rng } from "../Rng";
 import type { Tickable } from "../WorldClock";
@@ -9,6 +9,19 @@ export interface GridPoint {
   x: number;
   z: number;
 }
+
+/** Combat-log flavor for the light/heavy halves of a turn — overridable so a spellcaster doesn't "claw" at anyone (docs/08-roadmap-phases.md Phase 4's Court Alchemist). Defaults match the original Rot-thing/Cinder Wretch text exactly, so neither needs to pass this. */
+export interface MonsterFlavor {
+  /** Shown on the lighter hit, which also foreshadows the telegraphed turn to come — the "hard but fair" rule (docs/05-combat.md#telegraphing-the-hard-but-fair-rule) requires the warning to already be in this line. */
+  light: string;
+  /** Shown when the telegraphed turn actually resolves. */
+  heavy: string;
+}
+
+const DEFAULT_FLAVOR: MonsterFlavor = {
+  light: "claws at you, and rears back for something heavier!",
+  heavy: "unleashes its heavy strike!",
+};
 
 export interface MonsterOptions {
   name: string;
@@ -25,11 +38,27 @@ export interface MonsterOptions {
   resistances?: ResistanceMap;
   /** XP the party earns for defeating this monster (docs/03-party-and-characters.md#leveling) — defaults to 0 so existing tests that build a bare `Monster` for AI/combat behavior don't all need updating just to add a number they don't care about. */
   xpReward?: number;
+  flavor?: MonsterFlavor;
+  /** Applied to the target when the telegraphed heavy strike lands, in addition to its damage — the Screeching Wraith's Fear (docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content). */
+  heavyStatusEffect?: StatusEffectInstance;
+  /**
+   * If set, the telegraphed "heavy" turn heals the monster by this much
+   * instead of attacking — the Court Alchemist. A true support caster
+   * healing a second, separate monster would need multi-monster combat,
+   * which `CombatEngine` doesn't have yet (docs/08-roadmap-phases.md
+   * Phase 4's monster roster expansion is scoped to this simpler,
+   * single-monster analogue: burst it down or watch it undo your work,
+   * which still teaches the same urgency "kill the healer first" is
+   * getting at).
+   */
+  healsOnHeavyTurn?: number;
 }
 
 export interface MonsterCombatTurn {
   message: string;
   damage: number;
+  /** Set only on a heavy strike that also inflicts a status effect. */
+  statusEffect?: StatusEffectInstance;
 }
 
 /**
@@ -56,6 +85,9 @@ export class Monster implements Tickable {
 
   private readonly patrolPoints: GridPoint[];
   private readonly detectionRadius: number;
+  private readonly flavor: MonsterFlavor;
+  private readonly heavyStatusEffect: StatusEffectInstance | undefined;
+  private readonly healsOnHeavyTurn: number | undefined;
   private patrolIndex = 0;
   private alerted = false;
   private telegraphed = false;
@@ -76,6 +108,9 @@ export class Monster implements Tickable {
     this.initiativeStat = options.initiativeStat;
     this.resistances = options.resistances ?? {};
     this.xpReward = options.xpReward ?? 0;
+    this.flavor = options.flavor ?? DEFAULT_FLAVOR;
+    this.heavyStatusEffect = options.heavyStatusEffect;
+    this.healsOnHeavyTurn = options.healsOnHeavyTurn;
   }
 
   get isDown(): boolean {
@@ -163,14 +198,19 @@ export class Monster implements Tickable {
   takeCombatTurn(rng: Rng): MonsterCombatTurn {
     if (this.telegraphed) {
       this.telegraphed = false;
+      if (this.healsOnHeavyTurn) {
+        this.hp = Math.min(this.maxHp, this.hp + this.healsOnHeavyTurn);
+        return { message: `${this.name} ${this.flavor.heavy}`, damage: 0 };
+      }
       return {
-        message: `${this.name} unleashes its heavy strike!`,
+        message: `${this.name} ${this.flavor.heavy}`,
         damage: this.might * 3 + rollInt(rng, 1, 4),
+        statusEffect: this.heavyStatusEffect,
       };
     }
     this.telegraphed = true;
     return {
-      message: `${this.name} claws at you, and rears back for something heavier!`,
+      message: `${this.name} ${this.flavor.light}`,
       damage: this.might + rollInt(rng, 1, 4),
     };
   }

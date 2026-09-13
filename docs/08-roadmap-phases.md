@@ -654,9 +654,37 @@ independently):
     reloaded data is `toEqual` the original — plus corrupted-JSON and
     empty-storage cases returning `undefined` rather than throwing.
   - 232 tests passing.
-- ⬜ Batch 3 — Monster roster expansion: the Screeching Wraith (Fear)
-  and Court Alchemist (support/heal, kill-the-healer priority), each
-  clearing the "new lesson" bar, not a stat reskin.
+- ✅ Batch 3 — Monster roster expansion:
+  - `Monster` generalized to support both new lessons without a
+    per-type branch inside the class itself: `MonsterOptions` gained
+    `flavor` (overridable combat-log text — a spellcaster shouldn't
+    "claw"), `heavyStatusEffect` (applied when the telegraphed strike
+    lands), and `healsOnHeavyTurn` (the telegraphed turn heals the
+    monster instead of attacking). `CombatEngine.runMonsterTurn` now
+    applies a landed heavy strike's status effect and skips damage
+    resolution entirely for a zero-damage (self-heal) turn.
+  - Screeching Wraith: `heavyStatusEffect` is Fear (2 turns), teaching
+    the Resolve stat and the Cleric's Cleanse — the first real in-game
+    source for a mechanic that's been fully wired since Phase 3 but had
+    nothing to trigger it. `ScreechingWraithEncounter.playthrough.test.ts`
+    proves Fear actually forces a Defend on the feared character's next
+    turn through a real `CombatEngine` fight, not just the `Monster`
+    method in isolation.
+  - Court Alchemist: `healsOnHeavyTurn` heals itself instead of
+    attacking on its telegraphed turn — the single-monster analogue to
+    "kill the healer first" (`CombatEngine` doesn't support more than
+    one monster in an encounter yet; see the doc comment on
+    `healsOnHeavyTurn` for why that's a deliberate scope line, not an
+    oversight). `CourtAlchemistEncounter.playthrough.test.ts` proves
+    both halves of the lesson with the same monster and the same
+    attacker, differing only in damage per hit: a weak attacker
+    actually sees a heal land mid-fight, a strong one bursts it down
+    before its heal-turn ever comes around.
+  - Both are now placed in the actual descent, not just tests: the
+    Screeching Wraith replaces level 2's Rot-thing (already taught in
+    level 1, no need to repeat it), and the Court Alchemist joins level
+    3 alongside the Cinder Wretch, replacing its own Rot-thing repeat.
+  - 241 tests passing.
 - ⬜ Batch 4 — Bestiary/codex UI: once a monster type is encountered,
   its resistance/weakness/status/signature mechanic becomes visible in
   a simple list + detail screen.

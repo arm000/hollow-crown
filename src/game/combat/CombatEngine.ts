@@ -264,12 +264,22 @@ export class CombatEngine {
     const action = this.monster.takeCombatTurn(this.rng);
     this.log.push(action.message);
 
+    // A self-heal turn (the Court Alchemist's "heavy" slot) has no
+    // target at all -- Monster.takeCombatTurn already logged what
+    // happened via action.message, there's nothing more to resolve.
+    if (action.damage <= 0) return;
+
     const target = this.pickTarget();
     const defended = this.defending.has(target);
     const baseDamage = defended ? Math.ceil(action.damage / 2) : action.damage;
     const dealt = applyResistance(baseDamage, target.effectiveResistances, "physical");
     target.takeDamage(dealt);
     this.log.push(`${target.name} takes ${dealt} damage${defended ? " (defended)" : ""}.`);
+
+    if (action.statusEffect) {
+      target.statusEffects.apply(action.statusEffect);
+      this.log.push(`${target.name} is overcome with ${action.statusEffect.type}!`);
+    }
 
     if (this.party.isDefeated) {
       this.result = "defeat";

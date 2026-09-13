@@ -99,13 +99,16 @@ lever/plate/block bonus alcove, a secret wall, and a passage that only
 opens for a party with a Rogue along), then two smaller, more linear
 levels proving the descent mechanic itself — a `StairsDown` tile carries
 the party to the next level's own start tile, and only the final level's
-exit actually ends the run — with two monster types along the way with
-real turn-based combat: a Rot-thing
-(telegraphed heavy strike) and a Cinder Wretch (resistant to Physical,
-weak to Fire — melee alone goes badly, the Mage's Firebolt turns it
-around). Attack/Defend/Ability/Flee/Item, status effects (Bleed is live via
-the Rogue; Poison/Stun/Fear/Silence are mechanically real but mostly
-await a monster or item that inflicts them), victory/defeat/flee all
+exit actually ends the run — with four monster types along the way with
+real turn-based combat: a Rot-thing (telegraphed heavy strike), a Cinder
+Wretch (resistant to Physical, weak to Fire — melee alone goes badly,
+the Mage's Firebolt turns it around), a Screeching Wraith (its heavy
+strike inflicts Fear, forcing a Defend next turn — the Resolve stat and
+Cleric's Cleanse finally have something to answer), and a Court
+Alchemist (heals itself instead of attacking on its telegraphed turn —
+burst it down or watch it undo your work). Attack/Defend/Ability/Flee/Item,
+status effects (Bleed and Fear are both live now; Poison/Silence are
+mechanically real but still await a source), victory/defeat/flee all
 handled. Two equipment pickups (a sword, a fire-resisting charm) and two
 consumables (an Oil Flask, an Antidote) are findable in the level. Gear
 lands in the shared inventory unequipped — tap the always-visible
@@ -120,9 +123,8 @@ inventory screen as `Lv2`, etc.). The inventory screen's header also has
 a "Save" button — a single save slot capturing the party, inventory,
 current level, and exact position; relaunching the game offers a
 "Continue" button on the party-creation screen when a save exists,
-skipping straight back into the run. A bigger monster roster, a
-bestiary/codex screen, and a hand-tuned difficulty curve are the rest of
-Phase 4.
+skipping straight back into the run. A bestiary/codex screen and a
+hand-tuned difficulty curve are the rest of Phase 4.
 
 ## Scripts
 

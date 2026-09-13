@@ -6,14 +6,13 @@ import type { LevelDef } from "./LevelDef";
 /**
  * The third and final level of the opening descent
  * (docs/08-roadmap-phases.md Phase 4): a single one-tile-wide corridor
- * with no branch to duck down and no way around either monster patrolling
- * it — unlike level 1's Cinder Wretch, which sat in a room the party
- * could choose to avoid entirely. Both fights are mandatory, back to
- * back, which is the actual difficulty curve this level exists to prove
- * (harder at the bottom than the top), even while reusing level 1's
- * monster types rather than introducing new ones — that's
- * [Phase 4](08-roadmap-phases.md#phase-4--multi-level-descent--persistence)'s
- * separate "monster roster expansion" scope item, not this one. The real,
+ * with no branch to duck down and no way around either monster
+ * patrolling it — unlike level 1's Cinder Wretch, which sat in a room
+ * the party could choose to avoid entirely. Both fights are mandatory,
+ * back to back: the Cinder Wretch again (still a fair, earned finale
+ * fight for whatever counter the party found on the way down), and the
+ * Court Alchemist, new this batch, whose telegraphed heal-turn punishes
+ * a party that hasn't learned to focus fire by now. The real,
  * run-ending `ExitTile` finally shows up here.
  */
 export const LEVEL_3_MAP = new DungeonMap(["###########", "#S........#", "##.#####.##", "###########"]);
@@ -40,7 +39,7 @@ export const LEVEL_3_ENTITIES: EntitySpawn[] = [
 
 export const LEVEL_3_MONSTERS: MonsterSpawn[] = [
   {
-    type: "rotThing",
+    type: "courtAlchemist",
     x: 3,
     z: 1,
     patrolPoints: [

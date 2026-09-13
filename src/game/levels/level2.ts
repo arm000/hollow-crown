@@ -11,8 +11,10 @@ import type { LevelDef } from "./LevelDef";
  * descent mechanic itself, and the difficulty curve across levels, are
  * what's actually being tested. Same core shape as level 1's mandatory
  * path, though: a key in a small side room gates a locked door, with a
- * Rot-thing patrolling the one corridor between them so reaching the
- * stairs down means dealing with it, not routing around it.
+ * Screeching Wraith patrolling the one corridor between them so
+ * reaching the stairs down means dealing with it, not routing around
+ * it — a new type rather than level 1's Rot-thing repeated, per
+ * docs/08-roadmap-phases.md Phase 4's monster roster expansion.
  */
 export const LEVEL_2_MAP = new DungeonMap(["#########", "#S......#", "##..#.###", "#########"]);
 
@@ -32,7 +34,7 @@ export const LEVEL_2_ENTITIES: EntitySpawn[] = [
 
 export const LEVEL_2_MONSTERS: MonsterSpawn[] = [
   {
-    type: "rotThing",
+    type: "screechingWraith",
     x: 4,
     z: 1,
     patrolPoints: [

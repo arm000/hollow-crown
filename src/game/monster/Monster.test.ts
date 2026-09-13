@@ -129,5 +129,101 @@ describe("Monster", () => {
       // The heavy strike is meaningfully bigger than the lighter hit.
       expect(second.damage).toBeGreaterThan(first.damage);
     });
+
+    it("carries heavyStatusEffect only on the telegraphed turn (the Screeching Wraith's Fear)", () => {
+      const monster = new Monster(
+        {
+          name: "Screeching Wraith",
+          x: 1,
+          z: 1,
+          patrolPoints: [{ x: 1, z: 1 }],
+          detectionRadius: 0,
+          maxHp: 10,
+          might: 2,
+          initiativeStat: 5,
+          heavyStatusEffect: { type: "fear", turnsRemaining: 2 },
+        },
+        OPEN_MAP,
+        new Player(1, 1, 1, 2, 1),
+      );
+      const rng = new SeededRng(1);
+
+      expect(monster.takeCombatTurn(rng).statusEffect).toBeUndefined(); // the lighter hit
+      expect(monster.takeCombatTurn(rng).statusEffect).toEqual({ type: "fear", turnsRemaining: 2 }); // the telegraphed one
+    });
+
+    it("heals itself instead of attacking on the telegraphed turn when healsOnHeavyTurn is set (the Court Alchemist)", () => {
+      const monster = new Monster(
+        {
+          name: "Court Alchemist",
+          x: 1,
+          z: 1,
+          patrolPoints: [{ x: 1, z: 1 }],
+          detectionRadius: 0,
+          maxHp: 20,
+          might: 3,
+          initiativeStat: 4,
+          healsOnHeavyTurn: 9,
+        },
+        OPEN_MAP,
+        new Player(1, 1, 1, 2, 1),
+      );
+      const rng = new SeededRng(1);
+      monster.takeDamage(15); // down to 5 HP
+
+      monster.takeCombatTurn(rng); // the lighter hit -- deals damage as normal, doesn't heal
+      expect(monster.hp).toBe(5);
+
+      const healTurn = monster.takeCombatTurn(rng);
+      expect(healTurn.damage).toBe(0); // no attack this turn
+      expect(monster.hp).toBe(14); // 5 + 9
+    });
+
+    it("healsOnHeavyTurn never overheals past maxHp", () => {
+      const monster = new Monster(
+        {
+          name: "Court Alchemist",
+          x: 1,
+          z: 1,
+          patrolPoints: [{ x: 1, z: 1 }],
+          detectionRadius: 0,
+          maxHp: 20,
+          might: 3,
+          initiativeStat: 4,
+          healsOnHeavyTurn: 9,
+        },
+        OPEN_MAP,
+        new Player(1, 1, 1, 2, 1),
+      );
+      const rng = new SeededRng(1);
+      monster.takeDamage(3); // down to 17 HP -- less than the full heal amount
+
+      monster.takeCombatTurn(rng);
+      monster.takeCombatTurn(rng);
+
+      expect(monster.hp).toBe(20);
+    });
+
+    it("uses custom flavor text when given, instead of the generic default", () => {
+      const monster = new Monster(
+        {
+          name: "Court Alchemist",
+          x: 1,
+          z: 1,
+          patrolPoints: [{ x: 1, z: 1 }],
+          detectionRadius: 0,
+          maxHp: 20,
+          might: 3,
+          initiativeStat: 4,
+          flavor: { light: "hurls a caustic vial at you!", heavy: "drinks down a restorative draught!" },
+        },
+        OPEN_MAP,
+        new Player(1, 1, 1, 2, 1),
+      );
+      const rng = new SeededRng(1);
+
+      expect(monster.takeCombatTurn(rng).message).toContain("caustic vial");
+      expect(monster.takeCombatTurn(rng).message).toContain("restorative draught");
+    });
   });
 });
