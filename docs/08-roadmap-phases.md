@@ -893,10 +893,61 @@ independently):
     actually enters it and re-rendering the minimap after every
     move/turn/level-load.
   - 263 tests passing.
-- ⬜ Batch 3 — Procedural pixel art textures (canvas-drawn, nearest-
-  filtered, per [10-visual-style-guide.md](10-visual-style-guide.md)'s
-  low-internal-resolution pipeline) replacing the flat wall/floor/
-  ceiling colors, plus varied lighting per room.
+- ✅ Batch 3 — Procedural pixel art textures + the low-res rendering
+  pipeline:
+  - `Textures.ts` (new): `buildActOneMaterials(dungeon)` procedurally
+    draws 32×32 wall/floor/ceiling textures on an offscreen `<canvas>`
+    (this project has no art-authoring pipeline or image-generation
+    tool, so code-drawn stands in for hand-painted) — a base color with
+    seeded, deterministic per-"chunky pixel" brightness jitter, mortar
+    lines, and occasional moss-colored flecks for Act 1's "damp stone"
+    palette, per [10-visual-style-guide.md](10-visual-style-guide.md#palette).
+    Deliberately leans into that doc's "bold silhouettes and flat color
+    blocks over fine texture noise" pillar rather than fighting it with
+    a smooth gradient. Every texture gets `NearestFilter` on both
+    filters and `generateMipmaps = false`, per that doc's texture-
+    filtering section, with no exceptions. Floor/ceiling get
+    `RepeatWrapping` sized to the level's own grid dimensions, matching
+    `DungeonMesh.ts`'s existing single plane per level exactly.
+  - `DungeonMesh.ts`'s `buildDungeonMesh` gained an optional `materials`
+    parameter (real ones from `Textures.ts` in actual play) that falls
+    back to the original flat-color `MeshStandardMaterial` placeholders
+    when omitted — keeping `DungeonMesh.test.ts` (headless, no
+    `document`/canvas available) passing completely unchanged, since
+    that suite only needs to prove the geometry logic, not exercise
+    real textures. `Textures.ts` itself has no unit tests, the same
+    deliberately-untested-DOM/canvas-dependent category as `Game.ts`
+    and every DOM-overlay UI class, per
+    [11-testing-strategy.md](11-testing-strategy.md#non-goals).
+  - Dungeon materials switched from `MeshStandardMaterial` to
+    `MeshLambertMaterial` (diffuse-only, no PBR specular/roughness
+    response — both the correct look for flat pixel art and cheaper to
+    shade on mobile, per that doc's "Materials" section). Monster/NPC/
+    interactable placeholder shapes keep their existing
+    `MeshStandardMaterial` for now — converting them to billboarded
+    sprites per the asset-specs table is real additional scope, not
+    done in this batch.
+  - `Game.ts`'s renderer now targets the actual "pixel art, whole-frame"
+    technique: renders to a small fixed internal resolution (~180px on
+    the shorter screen dimension, aspect-derived on the other —
+    deliberately not always fixing height, since a portrait phone would
+    otherwise derive an illegibly thin width) via
+    `renderer.setSize(w, h, false)`, with `antialias: false` and
+    `pixelRatio` pinned to 1 regardless of device pixel density; CSS
+    (`image-rendering: pixelated` on the canvas) does the upscale to
+    fill the actual screen. A level transition's teardown now also
+    disposes the previous level's geometry/material/texture resources
+    (`disposeObject3D`), since a texture per level visited is a more
+    expensive thing to quietly leak than the old flat colors were.
+  - **A note on risk, not just a changelog entry**: this project has a
+    real history with lighting/material changes that read fine in code
+    but wrong on screen (see this doc's Phase 1 status entry on the
+    near-black lighting bug) — none of this batch's rendering output
+    can be verified from here, only reasoned about. Flagged for a
+    real-browser check once deployed, same as every visual change
+    before it that couldn't be unit tested.
+  - 263 tests passing (unchanged in count — this batch is genuinely
+    render-only, no new logic to test beyond what already existed).
 - ⬜ Batch 4 — Procedural audio (Web Audio API oscillators/noise, no
   external asset files): footsteps, combat SFX, an ambient loop.
 - ⬜ Batch 5 (stretch, if still wanted) — fully-unidentified items and

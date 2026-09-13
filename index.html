@@ -24,6 +24,21 @@
         width: 100%;
         height: 100%;
       }
+      /* The game renders at a small fixed internal resolution and this
+         is what scales it up to fill the screen with blocky nearest-
+         neighbor sampling instead of a smooth blur -- the core
+         technique behind the whole "pixel art, whole-frame" look
+         (docs/10-visual-style-guide.md#rendering-pipeline). Game.ts
+         calls renderer.setSize(w, h, false) specifically so the
+         canvas's own CSS size stays exactly this (100%/100%) instead
+         of being reset to the low internal resolution in actual CSS
+         pixels. */
+      #app canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
       #crosshair {
         position: fixed;
         top: 50%;

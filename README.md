@@ -51,7 +51,8 @@ src/
   main.ts               entry point
   game/
     DungeonMap.ts        ASCII level data + tile queries
-    DungeonMesh.ts       builds floor/ceiling/wall geometry for a level
+    DungeonMesh.ts       builds floor/ceiling/wall geometry for a level (optional real materials, else flat-color placeholders)
+    Textures.ts          procedurally-drawn pixel-art wall/floor/ceiling textures (Act 1's palette)
     Level.ts             level 1's entity/monster spawns (key, door, stairs, ...)
     levels/              LevelDef.ts, level2.ts, level3.ts, level4.ts (boss arena), index.ts (the LEVELS registry)
     Player.ts            grid position, facing, move/turn animation, teleportTo (level transitions)
@@ -145,7 +146,11 @@ so a repeat fight can be won on memory, not luck. A small minimap in
 the top-left corner fills in as you explore — a tile only appears once
 you've actually stood on it (or it's a wall right next to one you have),
 sourced from the same level data the 3D geometry reads, not a separate
-hand-drawn map.
+hand-drawn map. The dungeon itself now wears procedurally-drawn pixel
+art (no art tool or asset files — a canvas-drawn stone/moss pattern
+stands in for hand-painted textures) rendered through an actual
+low-resolution, nearest-neighbor-upscaled pipeline rather than full-
+screen-resolution flat colors, per the pixel-art style guide.
 
 ## Scripts
 

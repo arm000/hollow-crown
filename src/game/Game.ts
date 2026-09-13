@@ -5,6 +5,7 @@ import { CombatEngine } from "./combat/CombatEngine";
 import { CombatUI } from "./combat/CombatUI";
 import type { DungeonMap } from "./DungeonMap";
 import { buildDungeonMesh } from "./DungeonMesh";
+import { buildActOneMaterials } from "./Textures";
 import {
   attemptInteract,
   attemptMove,
@@ -91,9 +92,18 @@ export class Game {
     const party = saveData ? deserializeParty(saveData) : createParty(partySpecs);
     const worldClock = new WorldClock();
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    // "Pixel art, whole-frame" (docs/10-visual-style-guide.md): render
+    // at a small fixed internal resolution and let CSS scale it up with
+    // nearest-neighbor sampling (`image-rendering: pixelated` in
+    // index.html), rather than rendering at full screen resolution and
+    // only the wall textures looking pixel-art. No AA at any stage --
+    // smoothing edges directly fights that look. pixelRatio is pinned
+    // to 1 (not the device's real ratio): the whole point is a fixed,
+    // deliberately low resolution regardless of screen density.
+    this.renderer = new THREE.WebGLRenderer({ antialias: false });
+    this.renderer.setPixelRatio(1);
+    const initialSize = computeLowResSize();
+    this.renderer.setSize(initialSize.width, initialSize.height, false); // false: leave the canvas's own CSS size alone, index.html's #app canvas rule stretches it to fill the screen
     // Physically-correct lighting produces raw values that can exceed the
     // 0-1 display range; without a tone-mapping curve those either clip
     // harshly or (with weak lights) sit so low they read as near-black.
@@ -198,6 +208,7 @@ export class Game {
   ): { dungeon: DungeonMap; interactables: InteractableManager; monsters: Monster[] } {
     if (this.dungeonMeshGroup) {
       this.scene.remove(this.dungeonMeshGroup);
+      disposeObject3D(this.dungeonMeshGroup); // frees the previous level's geometry + textures -- see Textures.ts
       for (const mesh of this.entityMeshes.values()) this.scene.remove(mesh);
       this.entityMeshes.clear();
       for (const mesh of this.monsterMeshes.values()) this.scene.remove(mesh);
@@ -207,7 +218,7 @@ export class Game {
     const dungeon = level.dungeon;
     const interactables = InteractableManager.fromSpawns(level.entities);
     const secretWallCells = level.entities.filter((spawn) => spawn.type === "secretWall");
-    const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE, secretWallCells);
+    const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE, secretWallCells, buildActOneMaterials(dungeon));
     this.scene.add(dungeonMesh.group);
     this.dungeonMeshGroup = dungeonMesh.group;
     this.hideWallFace = dungeonMesh.hideWallFace;
@@ -528,8 +539,31 @@ export class Game {
   private onResize(): void {
     this.player.camera.aspect = window.innerWidth / window.innerHeight;
     this.player.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    const size = computeLowResSize();
+    this.renderer.setSize(size.width, size.height, false); // see the constructor's comment on the `false` -- still true after a resize
   }
+}
+
+/**
+ * Target internal resolution for the pixel-art rendering pipeline
+ * (docs/10-visual-style-guide.md#rendering-pipeline): roughly 320x180
+ * for a 16:9-ish view, computed from the live aspect ratio the same way
+ * `onResize` already tracked it pre-Phase-5, just at this much lower a
+ * resolution. Fixes whichever screen dimension is shorter and derives
+ * the other from the live aspect ratio, rather than always fixing
+ * height — a portrait phone (mobile is first-class throughout this
+ * project, per docs/01-vision.md#platform--scope) would otherwise fix
+ * the same 180px height as landscape and derive an illegibly thin
+ * width (well under 100px on a typical tall phone aspect).
+ */
+const LOW_RES_MIN_DIMENSION = 180;
+
+function computeLowResSize(): { width: number; height: number } {
+  const aspect = window.innerWidth / window.innerHeight;
+  if (aspect >= 1) {
+    return { width: Math.round(LOW_RES_MIN_DIMENSION * aspect), height: LOW_RES_MIN_DIMENSION };
+  }
+  return { width: LOW_RES_MIN_DIMENSION, height: Math.round(LOW_RES_MIN_DIMENSION / aspect) };
 }
 
 /** A placeholder color cue per monster type, ahead of the real Phase 5 art pass — e.g. the Cinder Wretch's warm, ember tone hints at its Fire-weak/Physical-resistant identity without stating it. */
@@ -545,4 +579,18 @@ function buildMonsterMesh(monster: Monster): THREE.Object3D {
     new THREE.CapsuleGeometry(0.4, MONSTER_HEIGHT - 0.8, 4, 8),
     new THREE.MeshStandardMaterial({ color, roughness: 0.9 }),
   );
+}
+
+/** Frees GPU-side geometry/material/texture resources for everything under `object` — needed now that the dungeon mesh carries real canvas-backed textures (`Textures.ts`), not just flat colors, so a level transition's teardown doesn't quietly leak a texture per level visited. */
+function disposeObject3D(object: THREE.Object3D): void {
+  object.traverse((child) => {
+    if (!(child instanceof THREE.Mesh || child instanceof THREE.InstancedMesh)) return;
+    child.geometry.dispose();
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    for (const material of materials) {
+      const map = (material as THREE.MeshLambertMaterial).map;
+      if (map) map.dispose();
+      material.dispose();
+    }
+  });
 }

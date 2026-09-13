@@ -27,6 +27,13 @@ export interface DungeonMeshResult {
   hideWallFace(x: number, z: number): void;
 }
 
+/** Floor/ceiling/wall materials — optional so `DungeonMesh.test.ts` (headless, no `document`/canvas) keeps working against the original flat-color placeholders unchanged; `Game.ts` always supplies real ones (see `Textures.ts`) in the actual running game. */
+export interface DungeonMeshMaterials {
+  floor: THREE.Material;
+  ceiling: THREE.Material;
+  wall: THREE.Material;
+}
+
 /**
  * Builds the renderable geometry for a dungeon level: one big floor slab,
  * one big ceiling slab, and an instanced quad for every wall face that
@@ -48,13 +55,18 @@ export function buildDungeonMesh(
   dungeon: DungeonMap,
   tileSize: number,
   secretWallCells: Array<{ x: number; z: number }> = [],
+  materials?: DungeonMeshMaterials,
 ): DungeonMeshResult {
   const group = new THREE.Group();
   group.name = "dungeon";
 
-  const floorMat = new THREE.MeshStandardMaterial({ color: 0x3a3226, roughness: 1 });
-  const ceilingMat = new THREE.MeshStandardMaterial({ color: 0x14110d, roughness: 1 });
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0x5c5548, roughness: 0.9 });
+  // The flat-color Phase 0-4 placeholders, kept as the default so every
+  // existing headless test (no `document`/canvas available to build a
+  // real texture) still exercises this function unchanged. Real play
+  // always passes `materials` from `Textures.ts` instead.
+  const floorMat = materials?.floor ?? new THREE.MeshStandardMaterial({ color: 0x3a3226, roughness: 1 });
+  const ceilingMat = materials?.ceiling ?? new THREE.MeshStandardMaterial({ color: 0x14110d, roughness: 1 });
+  const wallMat = materials?.wall ?? new THREE.MeshStandardMaterial({ color: 0x5c5548, roughness: 0.9 });
 
   const spanX = dungeon.width * tileSize;
   const spanZ = dungeon.height * tileSize;
