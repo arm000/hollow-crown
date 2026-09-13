@@ -41,11 +41,17 @@ export class Game {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    // Physically-correct lighting produces raw values that can exceed the
+    // 0-1 display range; without a tone-mapping curve those either clip
+    // harshly or (with weak lights) sit so low they read as near-black.
+    // ACES is the standard choice paired with physically-correct lights.
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.4;
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x05060a);
-    this.scene.fog = new THREE.FogExp2(0x05060a, 0.09);
+    this.scene.fog = new THREE.FogExp2(0x05060a, 0.045);
     const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE);
     this.scene.add(dungeonMesh.group);
     this.hideWallFace = dungeonMesh.hideWallFace;
