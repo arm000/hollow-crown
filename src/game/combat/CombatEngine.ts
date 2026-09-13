@@ -1,11 +1,13 @@
+import type { Inventory } from "../Inventory";
 import type { Monster } from "../monster/Monster";
 import { CLASS_ABILITIES } from "../party/classes";
 import type { Character } from "../party/Character";
 import type { Party } from "../party/Party";
 import { rollInt, type Rng } from "../Rng";
+import { CONSUMABLE_ITEMS } from "./Consumable";
 import { applyResistance } from "./DamageType";
 
-export type CombatActionChoice = "attack" | "defend" | "flee" | "ability";
+export type CombatActionChoice = "attack" | "defend" | "flee" | "ability" | "item";
 export type CombatResult = "ongoing" | "victory" | "defeat" | "fled";
 export type Combatant = Character | Monster;
 
@@ -33,6 +35,7 @@ export class CombatEngine {
     private readonly party: Party,
     private readonly monster: Monster,
     private readonly rng: Rng,
+    private readonly inventory?: Inventory,
   ) {
     this.rollInitiative(false); // first round: nothing has ticked yet
     this.resolveAutomaticTurns();
@@ -51,8 +54,8 @@ export class CombatEngine {
     return this.turnOrder;
   }
 
-  /** Applies `choice` for whoever's turn it currently is (must be a party member's turn). */
-  submitAction(choice: CombatActionChoice): void {
+  /** Applies `choice` for whoever's turn it currently is (must be a party member's turn). `itemId` is required for, and only used by, the "item" choice. */
+  submitAction(choice: CombatActionChoice, itemId?: string): void {
     if (!this.isPartyTurn) return;
     const actor = this.currentActor as Character;
     this.defending.delete(actor); // Defend/Guard last until this character's next action, which is now.
@@ -79,6 +82,10 @@ export class CombatEngine {
       }
       case "ability": {
         this.resolveAbility(actor);
+        break;
+      }
+      case "item": {
+        this.resolveItem(actor, itemId);
         break;
       }
       case "flee": {
@@ -150,6 +157,33 @@ export class CombatEngine {
         );
         break;
       }
+    }
+  }
+
+  /** Uses a consumable on `actor` — cure items target the user; there's no ally-targeting UI yet (docs/06-items-and-equipment.md#combat-countering-consumables). */
+  private resolveItem(actor: Character, itemId: string | undefined): void {
+    const item = itemId ? CONSUMABLE_ITEMS[itemId] : undefined;
+    if (!item || !this.inventory) {
+      this.log.push(`${actor.name} has nothing usable to hand.`);
+      return;
+    }
+    if (!this.inventory.consume(itemId!)) {
+      this.log.push(`${actor.name} reaches for ${item.name}, but there's none left.`);
+      return;
+    }
+
+    if (item.effect.kind === "cure") {
+      const hadEffect = actor.statusEffects.has(item.effect.status);
+      actor.statusEffects.remove(item.effect.status);
+      this.log.push(
+        hadEffect
+          ? `${actor.name} uses ${item.name} — the ${item.effect.status} fades.`
+          : `${actor.name} uses ${item.name}, but there was nothing to cure.`,
+      );
+    } else {
+      const damage = applyResistance(item.effect.amount, this.monster.resistances, item.effect.damageType);
+      this.monster.takeDamage(damage);
+      this.log.push(`${actor.name} uses ${item.name} for ${damage} ${item.effect.damageType} damage.`);
     }
   }
 

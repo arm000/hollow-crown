@@ -359,11 +359,35 @@ independently):
     to let the player choose who wears what or swap gear later — that
     UI is still open roadmap scope, not done here.
   - 164 tests passing.
-- ⬜ Batch 3 — A real inventory UI (view/equip/swap gear across the
-  party, not just auto-equip-on-pickup), the Item combat action, and
-  combat-countering consumables (Oil Flask, Antidote, Bandages,
-  Smelling Salts, Holy Water).
-- ⬜ Batch 4 — Leveling (XP curve, level-up), a minimal party-creation/
+- ✅ Batch 3 — Item combat action + combat-countering consumables:
+  - `Inventory.ts` gained count tracking (`add(id, name, count)` stacks
+    instead of duplicating, `consume(id)` decrements-and-removes,
+    `entries()` for anything that needs to list what's held) — needed
+    so a consumable can be picked up more than once and actually run
+    out.
+  - `Consumable.ts` + `CONSUMABLE_ITEMS`: Oil Flask (Fire damage —
+    a deliberate simplification of the design doc's "convert your next
+    attack to Fire" into a direct throw, needing no extra engine state
+    to answer "no Mage, Physical-resistant enemy"), Antidote/Bandages/
+    Smelling Salts (cure Poison/Bleed/Fear), Holy Water (Holy damage).
+  - `CombatEngine` gained the `"item"` action: consumes from
+    `Inventory`, applies its cure or resistance-adjusted damage effect,
+    logs a graceful no-op if the item or inventory is missing. Cure
+    items target the user only — no ally-targeting UI yet.
+  - `CombatUI` grew a second button row, rebuilt every render, listing
+    only consumable ids actually held (with a live count) — unlike the
+    four fixed actions, what's offered here changes turn to turn.
+  - Two pickups placed in `Level.ts` (an Oil Flask in the entry
+    corridor, an Antidote along the lever spur) so this is reachable in
+    the actual game, not just in unit tests — reusing the existing
+    generic `"keyItem"` spawn type rather than a new one, since
+    `KeyItem.onEnter` already just adds whatever id/name it's given.
+    Neither pickup's message names its mechanical effect, per
+    [06-items-and-equipment.md](06-items-and-equipment.md#discovery-not-explanation).
+  - 178 tests passing.
+- ⬜ Batch 4 — A real inventory UI (view/equip/swap gear across the
+  party, not just auto-equip-on-pickup).
+- ⬜ Batch 5 — Leveling (XP curve, level-up), a minimal party-creation/
   naming screen, and a non-combat puzzle gated by a class ability or
   found gear.
 

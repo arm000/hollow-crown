@@ -24,6 +24,15 @@ import type { EntitySpawn } from "./interactables/types";
  *   for Bram in the plate/block spur, and a fire-resisting charm for
  *   Corvin in the room the Cinder Wretch patrols — finding it means
  *   passing through the exact monster its resistance answers.
+ * - Two consumables (docs/06-items-and-equipment.md combat-countering
+ *   items): an Oil Flask in the entry corridor, everyone's first pickup,
+ *   and an Antidote along the spur toward the lever room. Both reuse the
+ *   generic "keyItem" spawn — `KeyItem.onEnter` just adds whatever
+ *   itemId/name it's given to the inventory, and `Inventory` now tracks
+ *   counts, so it works unmodified for stackable consumables too. Their
+ *   *effects* (what CONSUMABLE_ITEMS says an id does) are never named
+ *   here or in the pickup message — discovering that is the player's
+ *   job, per docs/06-items-and-equipment.md "Discovery, not explanation".
  */
 export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
   { type: "keyItem", x: 3, z: 2, params: { itemId: "rusted-key", name: "a Rusted Key" } },
@@ -32,6 +41,9 @@ export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
 
   { type: "equipmentItem", x: 2, z: 3, params: { itemId: "rusted-sword", equipTo: "Bram" } },
   { type: "equipmentItem", x: 4, z: 4, params: { itemId: "ember-charm", equipTo: "Corvin" } },
+
+  { type: "keyItem", x: 2, z: 1, params: { itemId: "oil-flask", name: "an Oil Flask" } },
+  { type: "keyItem", x: 5, z: 3, params: { itemId: "antidote", name: "an Antidote" } },
 
   { type: "lever", x: 5, z: 4, params: { doorX: 6, doorZ: 5 } },
   { type: "door", x: 6, z: 5, params: { locked: true } },

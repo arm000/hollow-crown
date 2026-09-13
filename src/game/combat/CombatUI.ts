@@ -1,5 +1,7 @@
 import type { CombatActionChoice, CombatEngine } from "./CombatEngine";
+import { CONSUMABLE_ITEMS } from "./Consumable";
 import type { Monster } from "../monster/Monster";
+import type { Inventory } from "../Inventory";
 import { CLASS_ABILITIES } from "../party/classes";
 import type { Character } from "../party/Character";
 
@@ -22,10 +24,11 @@ export class CombatUI {
   private readonly statusEl: HTMLElement;
   private readonly logEl: HTMLElement;
   private readonly actionsEl: HTMLElement;
+  private readonly itemsEl: HTMLElement;
   private readonly buttons: Map<CombatActionChoice, HTMLButtonElement> = new Map();
   private active = false;
 
-  constructor(private readonly onAction: (choice: CombatActionChoice) => void) {
+  constructor(private readonly onAction: (choice: CombatActionChoice, itemId?: string) => void) {
     this.root = document.createElement("div");
     this.root.id = "combat-ui";
     this.root.hidden = true;
@@ -52,7 +55,13 @@ export class CombatUI {
       this.buttons.set(choice, button);
     }
 
-    this.root.append(this.statusEl, this.logEl, this.actionsEl);
+    // A separate row, rebuilt every render: which items are offered
+    // changes turn to turn (something gets used up), unlike the four
+    // fixed actions above.
+    this.itemsEl = document.createElement("div");
+    this.itemsEl.id = "combat-items";
+
+    this.root.append(this.statusEl, this.logEl, this.actionsEl, this.itemsEl);
     document.body.appendChild(this.root);
 
     window.addEventListener("keydown", (event) => {
@@ -77,10 +86,11 @@ export class CombatUI {
   }
 
   /** Refreshes the displayed state from the engine — call after every action. */
-  render(engine: CombatEngine, monster: Monster): void {
+  render(engine: CombatEngine, monster: Monster, inventory: Inventory): void {
     this.statusEl.textContent = `${monster.name}: ${monster.hp}/${monster.maxHp} HP`;
     this.logEl.textContent = engine.log.slice(-6).join("\n");
     this.actionsEl.hidden = !engine.isPartyTurn;
+    this.renderItems(engine.isPartyTurn, inventory);
     if (!engine.isPartyTurn) return;
 
     const actor = engine.currentActor as Character;
@@ -91,6 +101,28 @@ export class CombatUI {
       abilityButton.disabled = !canAfford;
       abilityButton.textContent = ability.manaCost > 0 ? `${ability.name} (${ability.manaCost} MP)` : ability.name;
       abilityButton.title = ability.description;
+    }
+  }
+
+  private renderItems(isPartyTurn: boolean, inventory: Inventory): void {
+    this.itemsEl.replaceChildren();
+    const usable = inventory.entries().filter((entry) => CONSUMABLE_ITEMS[entry.id]);
+    if (!isPartyTurn || usable.length === 0) {
+      this.itemsEl.hidden = true;
+      return;
+    }
+    this.itemsEl.hidden = false;
+
+    for (const { id, name, count } of usable) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "combat-action-btn combat-item-btn";
+      button.textContent = `${name} x${count}`;
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        this.onAction("item", id);
+      });
+      this.itemsEl.appendChild(button);
     }
   }
 }

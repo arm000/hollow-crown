@@ -158,12 +158,23 @@
         width: 90%;
         text-align: center;
       }
-      #combat-actions {
+      #combat-actions,
+      #combat-items {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 12px;
       }
-      #combat-actions[hidden] {
+      #combat-items {
+        margin-top: 8px;
+      }
+      #combat-actions[hidden],
+      #combat-items[hidden] {
         display: none;
+      }
+      .combat-item-btn {
+        font-size: 13px;
+        padding: 8px 14px;
       }
       .combat-action-btn {
         font-size: 16px;

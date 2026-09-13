@@ -87,13 +87,17 @@ key-and-door gate, an optional lever/plate/block bonus alcove, a secret
 wall) — and two monster types with real turn-based combat: a Rot-thing
 (telegraphed heavy strike) and a Cinder Wretch (resistant to Physical,
 weak to Fire — melee alone goes badly, the Mage's Firebolt turns it
-around). Attack/Defend/Ability/Flee, status effects (Bleed is live via
-the Rogue; Poison/Stun/Fear/Silence are mechanically real but await a
-monster or item that inflicts them), victory/defeat/flee all handled.
-Two equipment pickups (a sword, a fire-resisting charm) auto-equip onto
-a designated character and genuinely change combat math — there's no
-inventory UI to choose who wears what yet, that's still open. Consumable
-items and leveling don't exist yet either — that's the rest of Phase 3.
+around). Attack/Defend/Ability/Flee/Item, status effects (Bleed is live via
+the Rogue; Poison/Stun/Fear/Silence are mechanically real but mostly
+await a monster or item that inflicts them), victory/defeat/flee all
+handled. Two equipment pickups (a sword, a fire-resisting charm)
+auto-equip onto a designated character and genuinely change combat
+math — there's no inventory UI to choose who wears what yet, that's
+still open. Two consumables (an Oil Flask, an Antidote) are findable in
+the level and usable mid-fight via the Item action, curing a status or
+dealing resistance-adjusted damage — a party without a Mage can still
+answer a Fire-weak monster by throwing the flask. Leveling and a
+party-creation screen don't exist yet — that's the rest of Phase 3.
 
 ## Scripts
 

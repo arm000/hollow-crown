@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ResistanceMap } from "./DamageType";
 import { DungeonMap } from "../DungeonMap";
+import { Inventory } from "../Inventory";
 import { Monster } from "../monster/Monster";
 import { Character } from "../party/Character";
 import { EQUIPMENT_ITEMS } from "../party/Equipment";
@@ -237,6 +238,66 @@ describe("CombatEngine", () => {
 
       expect(mage.mana).toBe(5);
       expect(monster.hp).toBe(9999);
+    });
+  });
+
+  describe("items", () => {
+    it("a damage item (Oil Flask) hits the monster and is consumed", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const party = new Party([bram]);
+      const monster = newMonster({ maxHp: 9999 });
+      const inventory = new Inventory();
+      inventory.add("oil-flask", "an Oil Flask", 1);
+      const engine = new CombatEngine(party, monster, new SeededRng(1), inventory);
+
+      if (engine.isPartyTurn) engine.submitAction("item", "oil-flask");
+
+      expect(monster.hp).toBeLessThan(9999);
+      expect(inventory.has("oil-flask")).toBe(false); // the one flask is used up
+    });
+
+    it("an Oil Flask's Fire damage is amplified by a Fire weakness, just like Firebolt", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const party = new Party([bram]);
+      const monster = newMonster({ maxHp: 9999, resistances: { fire: 2 } });
+      const inventory = new Inventory();
+      inventory.add("oil-flask", "an Oil Flask", 1);
+      const engine = new CombatEngine(party, monster, new SeededRng(1), inventory);
+
+      if (engine.isPartyTurn) engine.submitAction("item", "oil-flask");
+
+      expect(9999 - monster.hp).toBe(12); // 6 base damage, doubled by the weakness
+    });
+
+    it("a cure item (Antidote) removes the matching status effect", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      bram.statusEffects.apply({ type: "poison", turnsRemaining: 3, tickDamage: 2 });
+      const party = new Party([bram]);
+      const inventory = new Inventory();
+      inventory.add("antidote", "an Antidote", 1);
+      const engine = new CombatEngine(party, newMonster({ maxHp: 9999 }), new SeededRng(1), inventory);
+
+      if (engine.isPartyTurn) engine.submitAction("item", "antidote");
+
+      expect(bram.statusEffects.has("poison")).toBe(false);
+    });
+
+    it("using an item the party doesn't have does nothing and doesn't throw", () => {
+      const party = newParty();
+      const engine = new CombatEngine(party, newMonster({ maxHp: 9999 }), new SeededRng(1), new Inventory());
+
+      expect(() => {
+        if (engine.isPartyTurn) engine.submitAction("item", "oil-flask");
+      }).not.toThrow();
+    });
+
+    it("using an item with no inventory attached at all is a graceful no-op", () => {
+      const party = newParty();
+      const engine = new CombatEngine(party, newMonster({ maxHp: 9999 }), new SeededRng(1)); // no inventory passed
+
+      expect(() => {
+        if (engine.isPartyTurn) engine.submitAction("item", "oil-flask");
+      }).not.toThrow();
     });
   });
 

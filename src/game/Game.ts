@@ -124,7 +124,7 @@ export class Game {
 
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
-    this.combatUI = new CombatUI((choice) => this.handleCombatAction(choice));
+    this.combatUI = new CombatUI((choice, itemId) => this.handleCombatAction(choice, itemId));
 
     window.addEventListener("resize", () => this.onResize());
     // Mobile browsers can be slow to fire `resize` on rotation, so also
@@ -259,24 +259,25 @@ export class Game {
   private startCombat(monster: Monster): void {
     this.mode = "combat";
     this.combatMonster = monster;
-    this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng());
+    this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng(), this.world.inventory);
     this.hud.showMessage(`${monster.name} attacks!`);
     this.combatUI.show();
     this.refreshCombatUI();
     this.checkCombatEnd();
   }
 
-  private handleCombatAction(choice: CombatActionChoice): void {
+  private handleCombatAction(choice: CombatActionChoice, itemId?: string): void {
     if (!this.combatEngine) return;
-    this.combatEngine.submitAction(choice);
+    this.combatEngine.submitAction(choice, itemId);
     this.refreshCombatUI();
     this.checkCombatEnd();
   }
 
   private refreshCombatUI(): void {
     if (!this.combatEngine || !this.combatMonster) return;
-    this.combatUI.render(this.combatEngine, this.combatMonster);
+    this.combatUI.render(this.combatEngine, this.combatMonster, this.world.inventory);
     this.hud.updateParty(this.world.party.members);
+    this.hud.updateInventory(this.world.inventory.list());
   }
 
   private checkCombatEnd(): void {
