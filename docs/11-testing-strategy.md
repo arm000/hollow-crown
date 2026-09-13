@@ -209,6 +209,33 @@ anything") caught it — not a test.
   [01-vision.md](01-vision.md#pillars) — automated tests catch
   regressions, not fitness for purpose.
 
+**Postscript — the real cause was a different bug entirely.** Two
+rounds of light-intensity tuning later, the actual root cause turned
+out to be `#win-screen`'s CSS specificity bug (see the Playwright
+example above): a near-opaque, full-screen `background: rgba(5, 4, 2,
+0.85)` overlay had been visible from page load the whole time,
+sitting on top of the canvas. Fixing *that* — unrelated to any light
+value — was what actually resolved "I can't see anything." Two lessons
+worth keeping:
+
+- **A fix that doesn't move the symptom is itself a signal.** The first
+  lighting change was a real jump (ambient `0.7→3`, torch `1.6→40` —
+  roughly 4x and 25x) and was reported as looking unchanged. That
+  should have raised the question "is lighting even the variable in
+  play here?" instead of prompting a *bigger* version of the same fix.
+  Rendered output that doesn't respond to a large change in its
+  supposed cause is evidence the cause is wrong, not evidence the fix
+  wasn't aggressive enough.
+- **The luminance-floor check above has a real blind spot**: a dim
+  scene and an opaque black overlay covering a normally-lit scene
+  produce the *same* low average luminance. That automated check alone
+  would likely have failed here too, and — worse — would have pointed
+  back at "the lights," the same wrong diagnosis, since it measures the
+  same aggregate the eye was fooled by. There's no substitute for
+  actually looking at (or, for a person, screenshotting) the rendered
+  frame when a metric and a human report disagree about *why*
+  something looks wrong, even once the metric itself is automated.
+
 ## CI wiring
 
 Implemented now:
