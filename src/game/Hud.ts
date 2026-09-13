@@ -1,6 +1,21 @@
 import type { Character } from "./party/Character";
 
 /**
+ * The v1 ending (docs/08-roadmap-phases.md Phase 6's scope decision:
+ * only Act 1, The Sunken Wards, ships — see
+ * docs/02-setting-and-story.md#structure). Written to close the story
+ * on its own terms, not as a mid-campaign cliffhanger: Steward Marrow's
+ * defeat is a real, self-contained resolution, while the deeper acts
+ * stay a deliberate, unresolved specter rather than a sequel hook —
+ * "the horror is absence" (docs/02-setting-and-story.md#tone) applies
+ * to what the ending doesn't answer, too.
+ */
+const WIN_EPILOGUE =
+  "Steward Marrow's watch is over. Whatever waited here for guests who were never coming has, at last, stopped waiting.\n\n" +
+  "You climb back toward daylight with proof enough of what Ashveil actually lost — and the growing, unshakeable sense that the Sunken Wards were only ever the shallowest room in a much colder house.\n\n" +
+  "Somewhere below, the Long Court is still sinking. You do not go looking for it. Not yet.";
+
+/**
  * Thin wrapper around the plain-DOM HUD elements declared in
  * `index.html` (see docs/07-technical-architecture.md "UI layer" — DOM
  * overlays, not in-3D UI). No polish intended yet: a message line, a
@@ -13,6 +28,7 @@ export class Hud {
   private readonly inventoryEl: HTMLElement;
   private readonly partyEl: HTMLElement;
   private readonly winScreenEl: HTMLElement;
+  private readonly winScreenEpilogueEl: HTMLElement;
   private readonly defeatScreenEl: HTMLElement;
   private readonly inventoryToggleEl: HTMLElement;
   private readonly muteToggleEl: HTMLElement;
@@ -23,6 +39,7 @@ export class Hud {
     this.inventoryEl = getRequiredElement(doc, "hud-inventory");
     this.partyEl = getRequiredElement(doc, "hud-party");
     this.winScreenEl = getRequiredElement(doc, "win-screen");
+    this.winScreenEpilogueEl = getRequiredElement(doc, "win-screen-epilogue");
     this.defeatScreenEl = getRequiredElement(doc, "defeat-screen");
     this.inventoryToggleEl = getRequiredElement(doc, "inventory-toggle");
     this.muteToggleEl = getRequiredElement(doc, "mute-toggle");
@@ -52,6 +69,7 @@ export class Hud {
   }
 
   showWinScreen(): void {
+    this.winScreenEpilogueEl.textContent = WIN_EPILOGUE;
     this.winScreenEl.hidden = false;
   }
 

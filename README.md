@@ -96,9 +96,18 @@ playable build before the next one starts.
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
 E2E layer left), Phase 2 complete, Phase 3 complete, Phase 4 complete,
-**Phase 5 complete** (see the roadmap doc above; Phase 6 — full
-campaign & release polish — is next). Playable now: a
-one-time party-creation screen (name each of the four slots, pick a
+Phase 5 complete, **Phase 6 in progress** (see the roadmap doc above).
+Phase 6's own scope explicitly deferred v1's exact content count to this
+phase; that call is now made — **v1 ships Act 1 only** (the 4-level
+descent below), with Acts 2–4 staying canon for a possible future
+expansion but not built, and the ending rewritten as a real,
+self-contained epilogue rather than a mid-campaign checkpoint. A
+full-campaign headless playthrough test now exercises the whole descent
+with real combat as a release smoke test, alongside balance sanity
+checks (XP curve, resistance math, level data integrity). An Options
+screen (volume, mute, and per-action key rebinding, all persisted
+independently of a save) is reachable from the inventory screen's
+header. Playable now: a one-time party-creation screen (name each of the four slots, pick a
 class and a color-swatch portrait — placeholder art, real pixel art is
 still ahead — or accept the defaults to get the original
 Bram/Ysolde/Corvin/Maren party), then grid movement (keyboard or touch)

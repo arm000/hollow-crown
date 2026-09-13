@@ -19,6 +19,13 @@ import type { LevelDef } from "./LevelDef";
  * defensive boost heading into this level's second mandatory fight,
  * already bruised from the first. A stairway down to level 4 (Phase 5's
  * boss arena) replaces what used to be this level's run-ending exit.
+ *
+ * Also carries a Holy Water pickup, right in the main corridor between
+ * the two fights (found via Phase 6's automated full-campaign
+ * playthrough: `CONSUMABLE_ITEMS`/Steward Marrow's whole design says
+ * "weak to Holy, Holy Water is the answer," but nothing in any level
+ * ever actually handed the player one — the intended counter to the
+ * boss's weakness was unreachable in real play).
  */
 export const LEVEL_3_MAP = new DungeonMap(["###########", "#S........#", "##.##.##.##", "###########"]);
 
@@ -42,6 +49,7 @@ export const LEVEL_3_ENTITIES: EntitySpawn[] = [
     },
   },
   { type: "equipmentItem", x: 5, z: 2, params: { itemId: "hardened-leather" } },
+  { type: "keyItem", x: 5, z: 1, params: { itemId: "holy-water", name: "Holy Water" } },
   {
     type: "loreItem",
     x: 8,

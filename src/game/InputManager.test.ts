@@ -107,4 +107,57 @@ describe("InputManager", () => {
     expect(input.next()).toBe("turnRight");
     expect(input.next()).toBe("turnRight");
   });
+
+  describe("key rebinding (docs/08-roadmap-phases.md Phase 6)", () => {
+    it("keyFor reports the default binding before any rebind", () => {
+      const input = new InputManager(new FakeEventTarget() as unknown as Window);
+      expect(input.keyFor("interact")).toBe("Space");
+    });
+
+    it("rebind() makes the new key trigger the action", () => {
+      const target = new FakeEventTarget();
+      const input = new InputManager(target as unknown as Window);
+
+      input.rebind("interact", "KeyF");
+      target.dispatch("keydown", fakeKeydown("KeyF"));
+
+      expect(input.next()).toBe("interact");
+      expect(input.keyFor("interact")).toBe("KeyF");
+    });
+
+    it("rebind() removes every previous key for that action, including both of a default pair", () => {
+      const target = new FakeEventTarget();
+      const input = new InputManager(target as unknown as Window);
+
+      input.rebind("forward", "KeyI"); // forward defaulted to both KeyW and ArrowUp
+
+      target.dispatch("keydown", fakeKeydown("KeyW"));
+      target.dispatch("keydown", fakeKeydown("ArrowUp"));
+      expect(input.next()).toBeUndefined(); // neither old key still does anything
+
+      target.dispatch("keydown", fakeKeydown("KeyI"));
+      expect(input.next()).toBe("forward");
+    });
+
+    it("rebind() doesn't disturb other actions' bindings", () => {
+      const target = new FakeEventTarget();
+      const input = new InputManager(target as unknown as Window);
+
+      input.rebind("interact", "KeyF");
+      target.dispatch("keydown", fakeKeydown("KeyW"));
+
+      expect(input.next()).toBe("forward"); // untouched
+    });
+
+    it("applies keyBindingOverrides passed to the constructor, e.g. from loaded settings", () => {
+      const target = new FakeEventTarget();
+      const input = new InputManager(target as unknown as Window, { interact: "KeyF" });
+
+      target.dispatch("keydown", fakeKeydown("Space"));
+      expect(input.next()).toBeUndefined(); // the default no longer applies
+
+      target.dispatch("keydown", fakeKeydown("KeyF"));
+      expect(input.next()).toBe("interact");
+    });
+  });
 });

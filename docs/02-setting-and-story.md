@@ -53,11 +53,16 @@ deeper and further back in time:
    heaviest workout.
 4. **The Throne Beneath** — Harrow III himself, and the crown.
 
-Exact level count per act, and whether all four acts ship in v1, is a
-scope call deferred to the roadmap — see
-[08-roadmap-phases.md](08-roadmap-phases.md#phase-5--content--narrative-pass).
-Phases 0–4 use small placeholder/greybox levels that don't need to carry
-any of this narrative weight yet.
+**v1 scope decision (Phase 6):** only Act 1, The Sunken Wards, ships —
+4 levels, ending with Steward Marrow's defeat and the party's escape
+back to the surface. Acts 2–4 above are the intended shape of the full
+campaign and stay canon for a possible future expansion, but they are
+not built and v1's ending (see
+[08-roadmap-phases.md](08-roadmap-phases.md#phase-6--full-campaign--release-polish))
+is written to close the story on its own terms at the end of Act 1, not
+as a mid-campaign cliffhanger. Phases 0–4 used small placeholder/
+greybox levels that didn't carry any of this narrative weight; Phase 5
+is where Act 1 actually got its content pass.
 
 ## How story is delivered
 

@@ -35,6 +35,7 @@ export class InventoryUI {
     private readonly onClose: () => void,
     private readonly onSave: () => void,
     private readonly onOpenBestiary: () => void,
+    private readonly onOpenOptions: () => void,
   ) {
     this.root = document.createElement("div");
     this.root.id = "inventory-ui";
@@ -68,6 +69,15 @@ export class InventoryUI {
       this.onOpenBestiary();
     });
 
+    const optionsButton = document.createElement("button");
+    optionsButton.type = "button";
+    optionsButton.id = "inventory-options";
+    optionsButton.textContent = "Options";
+    optionsButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      this.onOpenOptions();
+    });
+
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.id = "inventory-close";
@@ -84,7 +94,7 @@ export class InventoryUI {
 
     const actions = document.createElement("div");
     actions.id = "inventory-header-actions";
-    actions.append(saveButton, bestiaryButton, closeButton);
+    actions.append(saveButton, bestiaryButton, optionsButton, closeButton);
     header.append(title, actions);
 
     this.bodyEl = document.createElement("div");

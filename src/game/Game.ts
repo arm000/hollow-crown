@@ -18,13 +18,15 @@ import {
 } from "./GameLogic";
 import { Hud } from "./Hud";
 import { AudioManager } from "./AudioManager";
-import { InputManager, type Action } from "./InputManager";
+import { ACTIONS, InputManager, type Action } from "./InputManager";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { createInteractableMesh } from "./interactables/InteractableMesh";
 import { Inventory } from "./Inventory";
 import { InventoryUI } from "./InventoryUI";
 import { buildMinimapGrid } from "./Minimap";
 import { MinimapUI } from "./MinimapUI";
+import { OptionsUI } from "./OptionsUI";
+import { loadSettings, saveSettings } from "./Settings";
 import {
   AMBIENT_LIGHT_COLOR,
   AMBIENT_LIGHT_INTENSITY,
@@ -50,23 +52,24 @@ import { WorldClock } from "./WorldClock";
 const TILE_SIZE = 2;
 const MONSTER_HEIGHT = 1.4;
 
-type Mode = "explore" | "combat" | "inventory" | "bestiary";
+type Mode = "explore" | "combat" | "inventory" | "bestiary" | "options";
 
 export class Game {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene: THREE.Scene;
   private readonly player: Player;
-  private readonly input = new InputManager();
+  private readonly input: InputManager;
   private readonly clock = new THREE.Clock();
   private readonly world: WorldState;
   private readonly hud = new Hud();
   private readonly combatUI: CombatUI;
   private readonly inventoryUI: InventoryUI;
   private readonly bestiaryUI: BestiaryUI;
+  private readonly optionsUI: OptionsUI;
   /** One representative `Monster` per encountered type name, for the bestiary screen (docs/05-combat.md#the-bestiary) to describe — recorded the moment combat starts, per "win, lose, or flee" all counting as an encounter. Not persisted across save/load, same simplification as per-level interactable/monster state (see `SaveGame.ts`). */
   private readonly encounteredMonsters = new Map<string, Monster>();
   private readonly minimapUI = new MinimapUI();
-  private readonly audio = new AudioManager();
+  private readonly audio: AudioManager;
   /** Grid tiles the party has actually stood on this level, as `"x,z"` keys (docs/08-roadmap-phases.md Phase 5's minimap fog of war) — reset on every level transition, never persisted across save/load, same simplification as per-level interactable/monster state. */
   private visitedTiles = new Set<string>();
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
@@ -94,6 +97,19 @@ export class Game {
     const inventory = saveData ? deserializeInventory(saveData) : new Inventory();
     const party = saveData ? deserializeParty(saveData) : createParty(partySpecs);
     const worldClock = new WorldClock();
+
+    // Device preferences (docs/08-roadmap-phases.md Phase 6's options
+    // menu) load before `input`/`audio` exist, not after, so a returning
+    // player's rebinds and volume take effect from the very first frame
+    // rather than snapping over once some later code applies them.
+    // Deliberately independent of `saveData` -- see Settings.ts's doc
+    // comment on why these live outside the save-slot concept entirely.
+    const settings = loadSettings();
+    this.input = new InputManager(window, settings.keyBindings);
+    this.audio = new AudioManager();
+    this.audio.setVolume(settings.volume);
+    this.audio.setMuted(settings.muted);
+    this.hud.updateMuteButton(settings.muted);
 
     // "Pixel art, whole-frame" (docs/10-visual-style-guide.md): render
     // at a small fixed internal resolution and let CSS scale it up with
@@ -157,8 +173,15 @@ export class Game {
       () => this.closeInventory(),
       () => this.handleSave(),
       () => this.openBestiary(),
+      () => this.openOptions(),
     );
     this.bestiaryUI = new BestiaryUI(() => this.closeBestiary());
+    this.optionsUI = new OptionsUI(
+      (percent) => this.handleVolumeChange(percent),
+      (muted) => this.handleMuteToggle(muted),
+      (action, key) => this.handleRebind(action, key),
+      () => this.closeOptions(),
+    );
     this.hud.onInventoryToggle(() => this.toggleInventory());
     this.hud.onMuteToggle(() => this.toggleMute());
     // Scheduled immediately but stays silent until a real user gesture
@@ -173,6 +196,11 @@ export class Game {
       if (event.code === "Escape" && this.mode === "bestiary") {
         event.preventDefault();
         this.closeBestiary();
+        return;
+      }
+      if (event.code === "Escape" && this.mode === "options") {
+        event.preventDefault();
+        this.closeOptions();
         return;
       }
       if (event.code !== "KeyI" && !(event.code === "Escape" && this.mode === "inventory")) return;
@@ -472,6 +500,7 @@ export class Game {
   private toggleMute(): void {
     this.audio.setMuted(!this.audio.isMuted);
     this.hud.updateMuteButton(this.audio.isMuted);
+    this.persistSettings();
   }
 
   /**
@@ -510,6 +539,63 @@ export class Game {
 
   private refreshBestiaryUI(): void {
     this.bestiaryUI.render([...this.encounteredMonsters.values()].map(describeMonster));
+  }
+
+  /** Opened from the inventory screen's "Options" button — same "replaces, doesn't layer on top of" convention as `openBestiary`. */
+  private openOptions(): void {
+    this.mode = "options";
+    this.inventoryUI.hide();
+    this.optionsUI.show();
+    this.refreshOptionsUI();
+  }
+
+  /** Closes straight back to exploration, not back to the inventory screen — same convention as `closeBestiary`. */
+  private closeOptions(): void {
+    this.mode = "explore";
+    this.optionsUI.hide();
+    this.input.clear();
+  }
+
+  private refreshOptionsUI(): void {
+    this.optionsUI.render(this.audio.volumePercent, this.audio.isMuted, (action) => this.input.keyFor(action));
+  }
+
+  /**
+   * The three options-screen callbacks below all follow the same shape:
+   * apply the change to the live `AudioManager`/`InputManager` so it
+   * takes effect immediately, persist the *whole* settings blob (not
+   * just the one field that changed) via `saveSettings`, and re-render
+   * so the screen reflects what actually landed. Reading `this.input`/
+   * `this.audio` back for the persisted values, rather than trusting the
+   * callback's own argument, keeps this correct even if a future control
+   * clamps or rejects part of a change.
+   */
+  private handleVolumeChange(percent: number): void {
+    this.audio.setVolume(percent);
+    this.persistSettings();
+    this.refreshOptionsUI();
+  }
+
+  private handleMuteToggle(muted: boolean): void {
+    this.audio.setMuted(muted);
+    this.hud.updateMuteButton(this.audio.isMuted);
+    this.persistSettings();
+    this.refreshOptionsUI();
+  }
+
+  private handleRebind(action: Action, key: string): void {
+    this.input.rebind(action, key);
+    this.persistSettings();
+    this.refreshOptionsUI();
+  }
+
+  private persistSettings(): void {
+    const keyBindings: Partial<Record<Action, string>> = {};
+    for (const action of ACTIONS) {
+      const key = this.input.keyFor(action);
+      if (key) keyBindings[action] = key;
+    }
+    saveSettings({ volume: this.audio.volumePercent, muted: this.audio.isMuted, keyBindings });
   }
 
   private handleEquip(characterName: string, itemId: string): void {

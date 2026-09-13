@@ -21,15 +21,34 @@ export class AudioManager {
   private ctx: AudioContext | undefined;
   private readonly ambientNodes: Array<{ gain: GainNode }> = [];
   private muted = false;
+  /** 0-1, independent of `muted` (docs/08-roadmap-phases.md Phase 6's options menu) -- both apply multiplicatively, so muting still silences everything regardless of the volume level, and turning volume down to 0 reads the same as muted without flipping the mute flag itself. */
+  private volume = 1;
 
   get isMuted(): boolean {
     return this.muted;
   }
 
+  /** 0-100, for an options screen's volume slider. */
+  get volumePercent(): number {
+    return Math.round(this.volume * 100);
+  }
+
   setMuted(muted: boolean): void {
     this.muted = muted;
+    this.rescaleAmbientGain();
+  }
+
+  /** `percent` is clamped to 0-100. */
+  setVolume(percent: number): void {
+    this.volume = Math.max(0, Math.min(100, percent)) / 100;
+    this.rescaleAmbientGain();
+  }
+
+  private rescaleAmbientGain(): void {
+    if (this.ambientNodes.length === 0) return; // avoid creating an AudioContext just from a settings load before the ambient loop has ever started
+    const target = this.muted ? 0 : AMBIENT_GAIN * this.volume;
     for (const { gain } of this.ambientNodes) {
-      gain.gain.setTargetAtTime(muted ? 0 : AMBIENT_GAIN, this.ensureContext().currentTime, 0.2);
+      gain.gain.setTargetAtTime(target, this.ensureContext().currentTime, 0.2);
     }
   }
 
@@ -40,14 +59,14 @@ export class AudioManager {
   }
 
   private playTone(freq: number, duration: number, type: OscillatorType, peakGain: number): void {
-    if (this.muted) return;
+    if (this.muted || this.volume === 0) return;
     const ctx = this.ensureContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.value = freq;
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(peakGain, ctx.currentTime + 0.01);
+    gain.gain.linearRampToValueAtTime(peakGain * this.volume, ctx.currentTime + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
     osc.connect(gain).connect(ctx.destination);
     osc.start();
@@ -55,7 +74,7 @@ export class AudioManager {
   }
 
   private playNoiseBurst(duration: number, peakGain: number, lowpassFreq: number): void {
-    if (this.muted) return;
+    if (this.muted || this.volume === 0) return;
     const ctx = this.ensureContext();
     const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * duration), ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -67,7 +86,7 @@ export class AudioManager {
     filter.type = "lowpass";
     filter.frequency.value = lowpassFreq;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(peakGain, ctx.currentTime);
+    gain.gain.setValueAtTime(peakGain * this.volume, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
 
     source.connect(filter).connect(gain).connect(ctx.destination);
@@ -119,7 +138,7 @@ export class AudioManager {
       osc.frequency.value = AMBIENT_BASE_FREQ;
       osc.detune.value = detune;
       const gain = ctx.createGain();
-      gain.gain.value = this.muted ? 0 : AMBIENT_GAIN;
+      gain.gain.value = this.muted ? 0 : AMBIENT_GAIN * this.volume;
       osc.connect(gain).connect(ctx.destination);
       osc.start();
       this.ambientNodes.push({ gain });

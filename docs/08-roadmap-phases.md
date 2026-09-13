@@ -1083,6 +1083,76 @@ an existing test suite, not new coverage to write, which is exactly why
 every earlier phase's tests needed to actually get written on schedule
 rather than deferred to "eventually."
 
+**Status:** In progress, shipped in batches (each pushed and deployed
+independently):
+
+- ✅ Batch 1 — v1 scope decision + narrative ending:
+  - The exact-level-count call this phase's own scope explicitly deferred
+    is now made: **v1 ships only Act 1** ("The Sunken Wards," 4 levels).
+    Acts 2–4 stay canon for a possible future expansion but are not
+    built. [02-setting-and-story.md](02-setting-and-story.md#structure)
+    updated to say so directly, replacing its old "deferred to the
+    roadmap" placeholder paragraph.
+  - The win screen (`Hud.showWinScreen`) changed from a single static
+    "YOU ESCAPED" string to a real title + multi-paragraph epilogue
+    (`Hud.ts`'s `WIN_EPILOGUE`), so the ending reads as a genuine,
+    self-contained conclusion rather than a mid-campaign checkpoint —
+    Steward Marrow's defeat resolves, but the crown and the Long Court
+    stay deliberately unresolved, per the setting's own "horror is
+    absence" tone rather than an obvious sequel hook.
+- ✅ Batch 2 — Full-campaign smoke test + balance sanity checks:
+  - `FullCampaign.playthrough.test.ts` (new): the release smoke test
+    this phase's own scope calls for — unlike the earlier
+    `MultiLevelDescent.playthrough.test.ts` (deliberately monster-free),
+    this one drives the entire level 1→4 descent with real monsters and
+    real `CombatEngine` resolution, reactively resolving every triggered
+    fight (leading with a class ability against a known elemental
+    weakness, else a plain attack) and asserting victory, an undefeated
+    party, and a real win at the end.
+  - Writing that test's fight-resolution logic surfaced a real content
+    bug: Holy Water — the explicitly-intended counter to Steward
+    Marrow's Holy weakness per his own design doc comment — was never
+    actually placed as a pickup anywhere. Fixed by adding it to
+    `levels/level3.ts`, positioned on the main corridor between that
+    level's two mandatory fights, the same "breather resource exactly
+    where it's needed" placement already used for that level's armor
+    pickups.
+  - `BalanceSanity.test.ts` (new): the balance sanity checks this
+    phase's scope calls for — the XP curve stays strictly increasing and
+    always positive; `applyResistance` never produces negative/NaN/
+    non-finite damage across a matrix of damage types, multipliers, and
+    raw damage values; every real monster's resistance map (built from
+    actual level spawn data, not a hand-copied list) uses only valid
+    damage-type keys with positive finite multipliers; every equipment
+    spawn across all levels resolves to a real item; every lever/plate's
+    target door falls within its own level's map bounds.
+- ✅ Batch 3 — Options menu (volume + key rebinding):
+  - `InputManager` rewritten from a fixed module-level key map to an
+    instance-level, rebindable one: `rebind(action, key)` (clears every
+    key currently mapped to that action first, including both keys of a
+    default pair, so a rebound action always resolves to exactly the
+    chosen key) and `keyFor(action)` for the options screen to display.
+  - `AudioManager` gained an independent `volume` (0-1, multiplicative
+    with `muted`) with `setVolume`/`volumePercent`.
+  - `Settings.ts` (new): a small `localStorage`-backed store for
+    volume/mute/key-bindings, deliberately separate from `SaveGame.ts`
+    — these are device preferences that persist across "New Game," not
+    part of a save.
+  - `OptionsUI.ts` (new): a DOM overlay in the same family as
+    `InventoryUI`/`BestiaryUI` — a volume slider, a mute checkbox, and
+    dropdown-based (not live "press any key" capture) rebinding for
+    every action, chosen specifically to avoid any global
+    keydown-interception ordering games with the rest of the input
+    pipeline. Reachable via a new "Options" button on the inventory
+    screen's header, alongside Save/Bestiary/Close — continuing that
+    screen's role as the de facto pause menu.
+  - `Game.ts` loads `Settings` on construction, before `InputManager`/
+    `AudioManager` exist, so a returning player's rebinds and volume
+    apply from the first frame; every options-screen change applies to
+    the live systems immediately and re-persists the whole settings
+    blob.
+  - 299 tests passing.
+
 ---
 
 ## Notes on sequencing
