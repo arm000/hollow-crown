@@ -44,7 +44,13 @@ function cellType(dungeon: DungeonMap, interactables: InteractableManager, x: nu
  * `(dx, dz)`, adding every tile up to and including whatever finally
  * blocks it (a wall, a closed door, ...) to `revealed` — the blocker
  * itself is seen (you can see the door you can't see past), nothing
- * beyond it is.
+ * beyond it is. At every step, also reveals the two tiles flanking that
+ * point of the corridor (perpendicular to travel) — the side walls
+ * you'd actually see on screen looking down a hallway, not just its
+ * far end. Those flanking tiles don't extend the ray themselves; a
+ * floor tile revealed this way (a side passage's entrance) only gets
+ * looked further into once it's an actual sightline of its own (i.e.
+ * the party has stood there, or another ray reaches it).
  */
 function castSight(
   dungeon: DungeonMap,
@@ -54,12 +60,15 @@ function castSight(
   [dx, dz]: [number, number],
   revealed: Set<string>,
 ): void {
+  const [pdx, pdz] = [-dz, dx]; // perpendicular to (dx, dz), rotated 90°
   let x = startX;
   let z = startZ;
   for (;;) {
     x += dx;
     z += dz;
     revealed.add(`${x},${z}`);
+    revealed.add(`${x + pdx},${z + pdz}`);
+    revealed.add(`${x - pdx},${z - pdz}`);
     if (isBlocking(dungeon, interactables, x, z)) return;
   }
 }
@@ -67,10 +76,12 @@ function castSight(
 /**
  * Every tile revealed so far: each visited floor tile itself, plus
  * whatever's visible in a straight line from it in all four cardinal
- * directions — "tiles in front of you you've seen, not just ones
- * you've stood on," per docs/08-roadmap-phases.md Phase 5's minimap,
- * stopping at the same things that block movement (walls, closed
- * doors, unrevealed secrets, unopened class gates, pushable blocks).
+ * directions — including the corridor walls flanking that line, not
+ * just the tiles directly along it — stopping at the same things that
+ * block movement (walls, closed doors, unrevealed secrets, unopened
+ * class gates, pushable blocks). "Any wall you've actually seen on
+ * screen, not just ones dead ahead," per user feedback on the first
+ * pass at this (docs/08-roadmap-phases.md Phase 5's minimap).
  */
 function computeRevealed(
   dungeon: DungeonMap,

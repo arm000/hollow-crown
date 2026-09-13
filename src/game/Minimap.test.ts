@@ -123,5 +123,20 @@ describe("buildMinimapGrid", () => {
       expect(grid[1][3]).toBe("floor"); // the opened passage, not a solid wall block
       expect(grid[1][4]).toBe("floor"); // now visible beyond it
     });
+
+    it("reveals the walls flanking a corridor, not just the tiles straight down it", () => {
+      // A 1-wide horizontal corridor -- row 0 and row 2 are its north/
+      // south walls the whole way down.
+      const WIDE_VIEW_CORRIDOR = new DungeonMap(["#######", "#S....#", "#######"]);
+      const grid = buildMinimapGrid(WIDE_VIEW_CORRIDOR, NO_INTERACTABLES, new Set(["1,1"]));
+
+      // Every step down the corridor's sightline should reveal its
+      // flanking wall on both sides, not just the tile directly ahead --
+      // "any wall seen on screen," not only ones dead ahead.
+      for (const x of [2, 3, 4, 5]) {
+        expect(grid[0][x], `wall above (${x},1)`).toBe("wall");
+        expect(grid[2][x], `wall below (${x},1)`).toBe("wall");
+      }
+    });
   });
 });

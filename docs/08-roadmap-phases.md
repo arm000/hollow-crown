@@ -913,7 +913,17 @@ independently):
     the minimap after every interact, not just move/turn, since
     unlocking a door (directly, or via a lever/plate elsewhere) changes
     what's visible without necessarily moving the party at all.
-  - 277 tests passing.
+  - **Second follow-up fix (found via user report):** each sightline ray
+    still only revealed the tiles directly along it, not the corridor
+    walls actually visible on screen flanking them — looking straight
+    down a hallway only showed its far end, not its sides the whole way
+    there. `castSight` now also reveals the two tiles perpendicular to
+    travel at every step along the ray (the left/right corridor walls a
+    first-person view of that hallway would actually show), not just
+    the tile dead ahead — without extending the ray through them, so a
+    side passage's entrance shows up without seeing further into it
+    until that passage gets its own sightline.
+  - 278 tests passing.
 - ✅ Batch 3 — Procedural pixel art textures + the low-res rendering
   pipeline:
   - `Textures.ts` (new): `buildActOneMaterials(dungeon)` procedurally
