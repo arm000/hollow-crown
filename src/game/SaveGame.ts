@@ -54,7 +54,10 @@ export interface SaveData {
   playerZ: number;
   playerFacing: number;
   party: SerializedCharacter[];
+  /** Always the *true* item names (`Inventory.rawEntries`), never whatever an unidentified item currently displays as — see `identifiedItemIds` below for how identification state itself round-trips. */
   inventory: SerializedInventoryEntry[];
+  /** Item ids identified so far (docs/08-roadmap-phases.md Phase 5's unidentified-items stretch batch) — paired with `inventory` so a reload doesn't silently re-hide (or reveal) anything. Defaults to empty for saves written before this field existed. */
+  identifiedItemIds: string[];
 }
 
 function serializeCharacter(character: Character): SerializedCharacter {
@@ -110,7 +113,8 @@ export function serialize(world: WorldState, levelId: string): SaveData {
     playerZ: world.player.gridZ,
     playerFacing: world.player.facing,
     party: world.party.members.map(serializeCharacter),
-    inventory: world.inventory.entries(),
+    inventory: world.inventory.rawEntries(),
+    identifiedItemIds: world.inventory.identifiedIds(),
   };
 }
 
@@ -121,6 +125,7 @@ export function deserializeParty(data: SaveData): Party {
 export function deserializeInventory(data: SaveData): Inventory {
   const inventory = new Inventory();
   for (const entry of data.inventory) inventory.add(entry.id, entry.name, entry.count);
+  for (const itemId of data.identifiedItemIds ?? []) inventory.identify(itemId);
   return inventory;
 }
 

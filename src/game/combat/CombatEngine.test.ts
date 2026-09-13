@@ -282,6 +282,20 @@ describe("CombatEngine", () => {
       expect(bram.statusEffects.has("poison")).toBe(false);
     });
 
+    it("using an item identifies it, so an unidentified consumable's inventory listing reveals its true name from then on", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const party = new Party([bram]);
+      const monster = newMonster({ maxHp: 9999 });
+      const inventory = new Inventory();
+      inventory.add("oil-flask", "an Oil Flask", 2);
+      expect(inventory.entries()[0].name).toBe("a bubbling amber vial"); // unidentified before use
+      const engine = new CombatEngine(party, monster, new SeededRng(1), inventory);
+
+      if (engine.isPartyTurn) engine.submitAction("item", "oil-flask");
+
+      expect(inventory.entries()[0].name).toBe("an Oil Flask"); // identified by use, even with one still held
+    });
+
     it("using an item the party doesn't have does nothing and doesn't throw", () => {
       const party = newParty();
       const engine = new CombatEngine(party, newMonster({ maxHp: 9999 }), new SeededRng(1), new Inventory());

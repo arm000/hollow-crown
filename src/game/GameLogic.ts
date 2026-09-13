@@ -180,6 +180,16 @@ export function equipItem(world: WorldState, characterName: string, itemId: stri
   const item = EQUIPMENT_ITEMS[itemId];
   const character = world.party.members.find((member) => member.name === characterName);
   if (!item || !character) return { success: false };
+
+  // Cursed gear (docs/06-items-and-equipment.md#discovery-not-explanation's
+  // stretch tier) has to block this path too, not just a direct
+  // unequip -- `Character.equip` would otherwise happily swap it out
+  // and hand it back to the inventory, defeating the curse entirely.
+  const worn = character.equippedIn(item.slot);
+  if (worn?.cursed) {
+    return { success: false, message: `${worn.name} won't come off.` };
+  }
+
   if (!world.inventory.consume(itemId)) return { success: false };
 
   const previous = character.equip(item);
@@ -191,6 +201,15 @@ export function equipItem(world: WorldState, characterName: string, itemId: stri
 export function unequipItem(world: WorldState, characterName: string, slot: EquipmentSlot): EquipOutcome {
   const character = world.party.members.find((member) => member.name === characterName);
   if (!character) return { success: false };
+
+  const worn = character.equippedIn(slot);
+  if (worn?.cursed) {
+    // Cursed gear (docs/06-items-and-equipment.md#discovery-not-explanation's
+    // stretch tier) never announces itself ahead of time -- this refusal,
+    // the moment someone actually tries to take it off, is the discovery.
+    return { success: false, message: `${worn.name} won't come off.` };
+  }
+
   const item = character.unequip(slot);
   if (!item) return { success: false };
 

@@ -171,6 +171,11 @@ export class CombatEngine {
       this.log.push(`${actor.name} reaches for ${item.name}, but there's none left.`);
       return;
     }
+    // Using it *is* the identification moment (docs/06-items-and-equipment.md's
+    // "identified by use") -- the log below already names it truthfully
+    // regardless; this is what makes the inventory/combat-item lists
+    // stop showing the mystery name for any stock still held.
+    this.inventory.identify(itemId!);
 
     if (item.effect.kind === "cure") {
       const hadEffect = actor.statusEffects.has(item.effect.status);

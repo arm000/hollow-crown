@@ -813,7 +813,7 @@ audio, and narrative content itself is **not** automatically verified —
 only the underlying logic and data are. "Does this feel tonally right"
 stays a human judgment call.
 
-**Status:** In progress, shipped in batches (each pushed and deployed
+**Status:** Complete, shipped in batches (each pushed and deployed
 independently):
 
 - ✅ Batch 1 — Story integration + boss fight:
@@ -948,11 +948,65 @@ independently):
     before it that couldn't be unit tested.
   - 263 tests passing (unchanged in count — this batch is genuinely
     render-only, no new logic to test beyond what already existed).
-- ⬜ Batch 4 — Procedural audio (Web Audio API oscillators/noise, no
-  external asset files): footsteps, combat SFX, an ambient loop.
-- ⬜ Batch 5 (stretch, if still wanted) — fully-unidentified items and
-  cursed gear, the level-2 discovery tier from
-  [06-items-and-equipment.md](06-items-and-equipment.md#discovery-not-explanation).
+- ✅ Batch 4 — Procedural audio:
+  - `AudioManager.ts` (new): footsteps, combat SFX (an encounter
+    stinger, a generic hit sound on any resolved combat action, and
+    distinct victory/defeat/flee stings), and a two-oscillator ambient
+    drone, all synthesized live via the Web Audio API (oscillators +
+    a generated noise buffer) — no external sound files, same "no
+    asset-authoring tool available" situation as `Textures.ts`. Same
+    deliberately-untested category as that module and `Game.ts` itself,
+    per [11-testing-strategy.md](11-testing-strategy.md#non-goals) —
+    `AudioContext` doesn't exist in this project's Vitest environment,
+    and "does this sound right" is a human judgment call regardless.
+  - Browsers refuse actual sound from an `AudioContext` until a real
+    user gesture occurs; `ensureContext` (called by every sound method)
+    retries the resume every time it's called, so the very first
+    footstep — itself triggered by the player's first move — is what
+    wakes audio up, with no separate "click to enable sound" step.
+  - A "🔊"/"🔇" mute button joins the always-visible "Inventory" button
+    top-left (same reasoning: has to be reachable without a keyboard,
+    and every other screen corner is already spoken for).
+  - 263 tests passing (unchanged — audio, like the texture batch before
+    it, is genuinely render/sound-only, no new testable logic).
+- ✅ Batch 5 (stretch) — fully-unidentified items and cursed gear, the
+  level-2 discovery tier from
+  [06-items-and-equipment.md](06-items-and-equipment.md#discovery-not-explanation):
+  - `Inventory.ts` gained a fixed `UNIDENTIFIED_NAMES` mapping for the 5
+    existing consumables (an Oil Flask shows as "a bubbling amber vial"
+    until identified, etc.) — a **deliberate scope reduction** from the
+    design doc's "random flavor names per playthrough": true per-run
+    randomization needs a seeded shuffle threaded through `SaveGame.ts`
+    too, a further stretch beyond this one, not built here. Identified
+    "by use" (the simplest of the doc's three routes) — `CombatEngine.resolveItem`
+    calls the new `Inventory.identify()` the moment an item actually
+    resolves in combat, after which every remaining unit of that id
+    shows its true name everywhere (HUD, inventory screen, combat item
+    buttons) without further wiring, since they all already just read
+    `entries()`.
+  - **Found and fixed a real bug while wiring this in**: `SaveGame.serialize`
+    was calling `Inventory.entries()` (the *display* names) instead of
+    the true stored ones — saving and reloading an unidentified item
+    would have permanently baked its mystery name in as if it were real,
+    surviving even a later identification. Fixed with a new
+    `Inventory.rawEntries()` (always true names) and `identifiedIds()`,
+    both threaded through `SaveData`, so identification state itself now
+    round-trips correctly too. Caught by `SaveGame.test.ts` failing the
+    moment `oil-flask` (a real unidentified id) replaced a placeholder
+    id in an existing round-trip test — exactly the kind of thing that
+    test exists to catch.
+  - `EquipmentItem` gained a `cursed` flag; a new `ambition-ring` (+3
+    Might, cursed) sits in level 4's boss arena — a tempting reward with
+    a real cost, never announced ahead of time. `GameLogic.unequipItem`
+    refuses to remove cursed gear, and `equipItem` refuses to swap
+    something else into a slot a cursed item already occupies (the
+    latter needed its own guard — `Character.equip` would otherwise
+    happily hand the "stuck" item back to the inventory as part of a
+    normal swap, defeating the curse entirely).
+  - 271 tests passing.
+
+**Phase 5 is now complete** — every scope item above, including the
+stretch batch, has shipped and been deployed.
 
 ---
 

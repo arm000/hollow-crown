@@ -16,6 +16,7 @@ import {
   type WorldState,
 } from "./GameLogic";
 import { Hud } from "./Hud";
+import { AudioManager } from "./AudioManager";
 import { InputManager, type Action } from "./InputManager";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { createInteractableMesh } from "./interactables/InteractableMesh";
@@ -64,6 +65,7 @@ export class Game {
   /** One representative `Monster` per encountered type name, for the bestiary screen (docs/05-combat.md#the-bestiary) to describe — recorded the moment combat starts, per "win, lose, or flee" all counting as an encounter. Not persisted across save/load, same simplification as per-level interactable/monster state (see `SaveGame.ts`). */
   private readonly encounteredMonsters = new Map<string, Monster>();
   private readonly minimapUI = new MinimapUI();
+  private readonly audio = new AudioManager();
   /** Grid tiles the party has actually stood on this level, as `"x,z"` keys (docs/08-roadmap-phases.md Phase 5's minimap fog of war) — reset on every level transition, never persisted across save/load, same simplification as per-level interactable/monster state. */
   private visitedTiles = new Set<string>();
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
@@ -157,6 +159,10 @@ export class Game {
     );
     this.bestiaryUI = new BestiaryUI(() => this.closeBestiary());
     this.hud.onInventoryToggle(() => this.toggleInventory());
+    this.hud.onMuteToggle(() => this.toggleMute());
+    // Scheduled immediately but stays silent until a real user gesture
+    // lets the AudioContext resume -- see AudioManager's doc comment.
+    this.audio.startAmbient();
 
     window.addEventListener("resize", () => this.onResize());
     // Mobile browsers can be slow to fire `resize` on rotation, so also
@@ -312,6 +318,7 @@ export class Game {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.enteredTile.x, outcome.enteredTile.z);
       this.markVisited(outcome.enteredTile.x, outcome.enteredTile.z);
+      this.audio.playFootstep();
     }
     if (outcome.levelTransition) {
       // The old level (and any monster on it) is gone the instant this
@@ -408,6 +415,7 @@ export class Game {
     this.combatMonster = monster;
     this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng(), this.world.inventory);
     this.hud.showMessage(`${monster.name} attacks!`);
+    this.audio.playEncounterStinger();
     this.combatUI.show();
     this.refreshCombatUI();
     this.checkCombatEnd();
@@ -416,6 +424,7 @@ export class Game {
   private handleCombatAction(choice: CombatActionChoice, itemId?: string): void {
     if (!this.combatEngine) return;
     this.combatEngine.submitAction(choice, itemId);
+    this.audio.playHit(); // one generic impact sound for any resolved action -- not yet differentiated by action or damage type
     this.refreshCombatUI();
     this.checkCombatEnd();
   }
@@ -438,6 +447,11 @@ export class Game {
     this.input.clear(); // see InputManager.clear() -- drop anything queued right as the menu opens
     this.inventoryUI.show();
     this.refreshInventoryUI();
+  }
+
+  private toggleMute(): void {
+    this.audio.setMuted(!this.audio.isMuted);
+    this.hud.updateMuteButton(this.audio.isMuted);
   }
 
   /**
@@ -479,14 +493,19 @@ export class Game {
   }
 
   private handleEquip(characterName: string, itemId: string): void {
-    equipItem(this.world, characterName, itemId);
+    const result = equipItem(this.world, characterName, itemId);
+    // A refusal (cursed gear already worn there) has a message worth
+    // surfacing -- shown once the inventory screen closes, same as the
+    // "Game saved." confirmation already does from behind this overlay.
+    if (result.message) this.hud.showMessage(result.message);
     this.refreshInventoryUI();
     this.hud.updateParty(this.world.party.members);
     this.hud.updateInventory(this.world.inventory.list());
   }
 
   private handleUnequip(characterName: string, slot: EquipmentSlot): void {
-    unequipItem(this.world, characterName, slot);
+    const result = unequipItem(this.world, characterName, slot);
+    if (result.message) this.hud.showMessage(result.message);
     this.refreshInventoryUI();
     this.hud.updateParty(this.world.party.members);
     this.hud.updateInventory(this.world.inventory.list());
@@ -519,15 +538,18 @@ export class Game {
         [`${monster.name} is defeated! The party gains ${monster.xpReward} XP.`, ...levelUps].join(" "),
       );
       this.hud.updateParty(this.world.party.members); // a level-up can change HP/Mana shown there
+      this.audio.playVictoryStinger();
       this.syncMonsterMesh(monster);
     } else if (result === "fled") {
       // Otherwise the still-alerted, still-adjacent monster would just
       // trigger combat again on the party's very next action.
       monster.disengage();
       this.hud.showMessage("The party breaks off and flees back down the corridor.");
+      this.audio.playFleeStinger();
     } else if (result === "defeat") {
       this.runEnded = true; // stub per docs/08-roadmap-phases.md Phase 2 -- freezes input, no revive system yet
       this.hud.showDefeatScreen();
+      this.audio.playDefeatStinger();
     }
   }
 

@@ -132,12 +132,26 @@ describe("serialize / deserializeInventory", () => {
 
     const restored = deserializeInventory(serialize(world, "level-1"));
 
+    // oil-flask was never identified before saving -- its mystery name
+    // persists after loading too, the same as it would across a real
+    // quit/relaunch (see the "identification state" test below for the
+    // other half of this).
     expect(restored.entries()).toEqual(
       expect.arrayContaining([
-        { id: "oil-flask", name: "an Oil Flask", count: 2 },
+        { id: "oil-flask", name: "a bubbling amber vial", count: 2 },
         { id: "rusted-key", name: "a Rusted Key", count: 1 },
       ]),
     );
+  });
+
+  it("round-trips identification state, so an item identified before saving stays identified after loading", () => {
+    const world = newWorld(new Party([newCharacter()]));
+    world.inventory.add("oil-flask", "an Oil Flask", 1);
+    world.inventory.identify("oil-flask");
+
+    const restored = deserializeInventory(serialize(world, "level-1"));
+
+    expect(restored.entries()).toEqual([{ id: "oil-flask", name: "an Oil Flask", count: 1 }]);
   });
 });
 

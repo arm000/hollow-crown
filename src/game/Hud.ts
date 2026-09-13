@@ -15,6 +15,7 @@ export class Hud {
   private readonly winScreenEl: HTMLElement;
   private readonly defeatScreenEl: HTMLElement;
   private readonly inventoryToggleEl: HTMLElement;
+  private readonly muteToggleEl: HTMLElement;
 
   constructor(doc: Document = document) {
     this.messageEl = getRequiredElement(doc, "hud-message");
@@ -24,6 +25,7 @@ export class Hud {
     this.winScreenEl = getRequiredElement(doc, "win-screen");
     this.defeatScreenEl = getRequiredElement(doc, "defeat-screen");
     this.inventoryToggleEl = getRequiredElement(doc, "inventory-toggle");
+    this.muteToggleEl = getRequiredElement(doc, "mute-toggle");
   }
 
   showMessage(text: string): void {
@@ -64,6 +66,18 @@ export class Hud {
       event.preventDefault();
       callback();
     });
+  }
+
+  /** Wires the always-visible mute button (docs/08-roadmap-phases.md Phase 5's procedural audio) — same click-or-tap pattern as the Inventory button. */
+  onMuteToggle(callback: () => void): void {
+    this.muteToggleEl.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      callback();
+    });
+  }
+
+  updateMuteButton(muted: boolean): void {
+    this.muteToggleEl.textContent = muted ? "🔇" : "🔊";
   }
 }
 

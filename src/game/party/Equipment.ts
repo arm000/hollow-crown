@@ -15,6 +15,8 @@ export interface EquipmentItem {
   statBonus?: Partial<CharacterStats>;
   /** Multiplies (not replaces) the wearer's existing multiplier for that type, so bonuses from multiple sources stack. */
   resistanceBonus?: ResistanceMap;
+  /** Cursed gear (docs/06-items-and-equipment.md#discovery-not-explanation's stretch tier): `GameLogic.unequipItem` refuses to remove it once worn. Never stated to the player ahead of time — same "discovery, not explanation" principle as every other mechanical effect on this table. */
+  cursed?: boolean;
 }
 
 /**
@@ -55,5 +57,12 @@ export const EQUIPMENT_ITEMS: Record<string, EquipmentItem> = {
     name: "a Shadow Ring",
     slot: "accessory",
     statBonus: { grace: 2 },
+  },
+  "ambition-ring": {
+    id: "ambition-ring",
+    name: "a Ring of Old Ambition",
+    slot: "accessory",
+    statBonus: { might: 3 },
+    cursed: true, // a strong bonus with a real cost -- fitting for the one piece of gear found in Steward Marrow's own hall
   },
 };

@@ -58,7 +58,8 @@ src/
     Player.ts            grid position, facing, move/turn animation, teleportTo (level transitions)
     InputManager.ts      keyboard/touch -> discrete action queue
     TouchControls.ts     on-screen movement/turn/interact buttons
-    Inventory.ts         shared party inventory (id -> name/count)
+    Inventory.ts         shared party inventory (id -> name/count); unidentified-item mystery names
+    AudioManager.ts      procedural SFX/ambience via the Web Audio API (oscillators + noise)
     Hud.ts               DOM message line, party/inventory status, win/defeat screens
     InventoryUI.ts       DOM overlay: view carried items, equip/unequip gear across the party
     BestiaryUI.ts        DOM overlay: encountered monsters' resistances/status/mechanics
@@ -95,7 +96,8 @@ playable build before the next one starts.
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
 E2E layer left), Phase 2 complete, Phase 3 complete, Phase 4 complete,
-Phase 5 in progress (see the roadmap doc above). Playable now: a
+**Phase 5 complete** (see the roadmap doc above; Phase 6 — full
+campaign & release polish — is next). Playable now: a
 one-time party-creation screen (name each of the four slots, pick a
 class and a color-swatch portrait — placeholder art, real pixel art is
 still ahead — or accept the defaults to get the original
@@ -125,7 +127,11 @@ handled. Five equipment pickups are spread across the descent (a sword,
 a fire-resisting charm, and a ring behind level 1's class-gated passage;
 a Grace-boosting buckler right at level 2's entrance; Physical-resisting
 armor in a breather alcove between level 3's two finale fights) and two
-consumables (an Oil Flask, an Antidote) are findable in level 1. Gear
+consumables (an Oil Flask, an Antidote) are findable in level 1 — shown
+under a mystery name (e.g. "a bubbling amber vial") until actually used
+once in combat, per the "discovery, not explanation" principle taken to
+its stretch tier. A cursed ring (a real Might bonus, and no way to take
+it back off) waits in the boss arena too. Gear
 lands in the shared inventory unequipped — tap the always-visible
 "Inventory" button (or press `I`) to open a real inventory screen and
 choose who wears what, swapping gear freely between party members.
@@ -150,7 +156,10 @@ hand-drawn map. The dungeon itself now wears procedurally-drawn pixel
 art (no art tool or asset files — a canvas-drawn stone/moss pattern
 stands in for hand-painted textures) rendered through an actual
 low-resolution, nearest-neighbor-upscaled pipeline rather than full-
-screen-resolution flat colors, per the pixel-art style guide.
+screen-resolution flat colors, per the pixel-art style guide. Footsteps,
+combat hits, encounter/victory/defeat stings, and a low ambient drone
+are all synthesized live via the Web Audio API (no sound files either)
+— a "🔊"/"🔇" button next to Inventory mutes it all.
 
 ## Scripts
 

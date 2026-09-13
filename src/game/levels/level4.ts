@@ -42,6 +42,10 @@ export const LEVEL_4_ENTITIES: EntitySpawn[] = [
       text: "A steward's ledger, the last entry dated to a year no one alive remembers: 'Hold the wards. His Majesty will send word when the guests may finally be seated.'",
     },
   },
+  // A tempting reward with a real cost (docs/08-roadmap-phases.md Phase
+  // 5's stretch batch: cursed gear) -- won't come off once worn, and
+  // nothing here says so ahead of time.
+  { type: "equipmentItem", x: 6, z: 4, params: { itemId: "ambition-ring" } },
 ];
 
 export const LEVEL_4_MONSTERS: MonsterSpawn[] = [

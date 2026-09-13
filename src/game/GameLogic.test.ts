@@ -76,6 +76,19 @@ describe("equipItem", () => {
     expect(result.success).toBe(false);
     expect(world.inventory.has("rusted-sword")).toBe(true); // untouched
   });
+
+  it("refuses to swap a cursed item out of its slot, even via equipping something else there", () => {
+    const world = newWorld();
+    world.inventory.add("ambition-ring", "a Ring of Old Ambition");
+    equipItem(world, "Bram", "ambition-ring");
+    world.inventory.add("shadow-ring", "a Shadow Ring");
+
+    const result = equipItem(world, "Bram", "shadow-ring");
+
+    expect(result.success).toBe(false);
+    expect(world.party.members[0].equippedIn("accessory")?.id).toBe("ambition-ring"); // still stuck
+    expect(world.inventory.has("shadow-ring")).toBe(true); // never consumed
+  });
 });
 
 describe("unequipItem", () => {
@@ -97,6 +110,18 @@ describe("unequipItem", () => {
     const result = unequipItem(world, "Bram", "weapon");
 
     expect(result.success).toBe(false);
+  });
+
+  it("refuses to remove cursed gear once worn", () => {
+    const world = newWorld();
+    world.inventory.add("ambition-ring", "a Ring of Old Ambition");
+    equipItem(world, "Bram", "ambition-ring");
+
+    const result = unequipItem(world, "Bram", "accessory");
+
+    expect(result.success).toBe(false);
+    expect(result.message).toContain("won't come off");
+    expect(world.party.members[0].equippedIn("accessory")?.id).toBe("ambition-ring"); // still worn
   });
 });
 
