@@ -250,6 +250,11 @@
         border-bottom: 1px solid rgba(216, 201, 163, 0.3);
         padding-bottom: 10px;
       }
+      #inventory-header-actions {
+        display: flex;
+        gap: 8px;
+      }
+      #inventory-save,
       #inventory-close {
         font-size: 13px;
         padding: 6px 14px;
@@ -259,6 +264,7 @@
         color: #d8c9a3;
         touch-action: none;
       }
+      #inventory-save:active,
       #inventory-close:active {
         background: rgba(216, 201, 163, 0.35);
       }
@@ -411,6 +417,25 @@
       }
       #party-creation-confirm:active {
         background: rgba(216, 201, 163, 0.35);
+      }
+      #party-creation-continue {
+        margin-top: 4px;
+        font-size: 15px;
+        padding: 10px 28px;
+        border-radius: 8px;
+        border: 1px solid rgba(140, 200, 140, 0.6);
+        background: rgba(140, 200, 140, 0.18);
+        color: #d8c9a3;
+        letter-spacing: 0.05em;
+        touch-action: none;
+      }
+      #party-creation-continue:active {
+        background: rgba(140, 200, 140, 0.35);
+      }
+      #party-creation-new-game-label {
+        font-size: 12px;
+        opacity: 0.6;
+        margin: 4px 0 2px;
       }
 
       /* Touch controls: mounted by TouchControls.ts, hidden by default so

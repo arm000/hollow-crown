@@ -26,8 +26,9 @@ import type { Monster } from "./monster/Monster";
 import type { EquipmentSlot } from "./party/Equipment";
 import { awardPartyXp } from "./party/Leveling";
 import { createParty, DEFAULT_PARTY_SPEC, type PartyMemberSpec } from "./party/roster";
-import { Player } from "./Player";
+import { Player, type Facing } from "./Player";
 import { RandomRng } from "./Rng";
+import { deserializeInventory, deserializeParty, saveToStorage, serialize, type SaveData } from "./SaveGame";
 import { TouchControls } from "./TouchControls";
 import { WorldClock } from "./WorldClock";
 
@@ -58,10 +59,18 @@ export class Game {
   /** True once the run is over (win or defeat) — freezes input, per the win/defeat screens. */
   private runEnded = false;
 
-  /** `partySpecs` defaults to the Phase 2 roster so anything that constructs `Game` directly (tests included) doesn't need to know `PartyCreationUI` exists — `main.ts` is the only real caller that passes a player's actual choices. */
-  constructor(container: HTMLElement, partySpecs: PartyMemberSpec[] = DEFAULT_PARTY_SPEC) {
-    const inventory = new Inventory();
-    const party = createParty(partySpecs);
+  /**
+   * `partySpecs` defaults to the Phase 2 roster so anything that
+   * constructs `Game` directly (tests included) doesn't need to know
+   * `PartyCreationUI` exists — `main.ts` is the only real caller that
+   * passes a player's actual choices. `saveData`, when given, wins over
+   * `partySpecs` entirely: `main.ts`'s "Continue" path (see
+   * `SaveGame.ts`) restores the saved party/inventory/level/position
+   * instead of building a fresh party and starting at level 1.
+   */
+  constructor(container: HTMLElement, partySpecs: PartyMemberSpec[] = DEFAULT_PARTY_SPEC, saveData?: SaveData) {
+    const inventory = saveData ? deserializeInventory(saveData) : new Inventory();
+    const party = saveData ? deserializeParty(saveData) : createParty(partySpecs);
     const worldClock = new WorldClock();
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -94,9 +103,14 @@ export class Game {
     this.player.camera.add(torch);
     this.scene.add(this.player.camera);
 
-    const firstLevel = LEVELS[0];
+    const firstLevel = saveData ? getLevel(saveData.levelId) : LEVELS[0];
     const loaded = this.enterLevel(firstLevel, worldClock);
     this.currentLevelId = firstLevel.id;
+    if (saveData) {
+      // enterLevel already placed the player on the level's own start
+      // tile -- override with exactly where the save left off.
+      this.player.teleportTo(saveData.playerX, saveData.playerZ, saveData.playerFacing as Facing);
+    }
     this.world = { player: this.player, inventory, party, worldClock, ...loaded };
     this.hud.updateParty(party.members);
 
@@ -107,6 +121,7 @@ export class Game {
       (characterName, itemId) => this.handleEquip(characterName, itemId),
       (characterName, slot) => this.handleUnequip(characterName, slot),
       () => this.closeInventory(),
+      () => this.handleSave(),
     );
     this.hud.onInventoryToggle(() => this.toggleInventory());
 
@@ -392,6 +407,12 @@ export class Game {
 
   private refreshInventoryUI(): void {
     this.inventoryUI.render(this.world.party, this.world.inventory);
+  }
+
+  /** Overwrites the single save slot with the current run's state (docs/08-roadmap-phases.md Phase 4) — party, inventory, current level, and exact grid position/facing, per `SaveGame.ts`. Only reachable from the inventory screen, itself only reachable from exploration, so there's no mid-combat/post-run save state to guard against here. */
+  private handleSave(): void {
+    saveToStorage(serialize(this.world, this.currentLevelId));
+    this.hud.showMessage("Game saved.");
   }
 
   private checkCombatEnd(): void {

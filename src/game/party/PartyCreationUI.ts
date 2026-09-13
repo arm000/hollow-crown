@@ -18,7 +18,17 @@ export class PartyCreationUI {
   private readonly root: HTMLElement;
   private readonly specs: PartyMemberSpec[];
 
-  constructor(private readonly onConfirm: (specs: PartyMemberSpec[]) => void) {
+  /**
+   * `onContinue`, when given, means a save exists (see
+   * `SaveGame.hasSave` / `main.ts`) — a "Continue" button appears above
+   * the usual creation flow, bypassing it entirely to resume that save
+   * instead of building a fresh party. Omit it to skip straight to
+   * "New Game" only, e.g. when no save exists yet.
+   */
+  constructor(
+    private readonly onConfirm: (specs: PartyMemberSpec[]) => void,
+    private readonly onContinue?: () => void,
+  ) {
     this.specs = DEFAULT_PARTY_SPEC.map((spec) => ({ ...spec }));
 
     this.root = document.createElement("div");
@@ -45,7 +55,25 @@ export class PartyCreationUI {
       this.confirm();
     });
 
-    this.root.append(title, subtitle, slotsEl, confirmButton);
+    if (this.onContinue) {
+      const continueButton = document.createElement("button");
+      continueButton.type = "button";
+      continueButton.id = "party-creation-continue";
+      continueButton.textContent = "Continue";
+      continueButton.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        document.body.removeChild(this.root);
+        this.onContinue!();
+      });
+
+      const newGameLabel = document.createElement("div");
+      newGameLabel.id = "party-creation-new-game-label";
+      newGameLabel.textContent = "— or start a new party —";
+
+      this.root.append(title, continueButton, newGameLabel, subtitle, slotsEl, confirmButton);
+    } else {
+      this.root.append(title, subtitle, slotsEl, confirmButton);
+    }
     document.body.appendChild(this.root);
   }
 

@@ -620,9 +620,40 @@ independently):
     already made for level 1 — this test's job is proving the *descent*
     mechanic, not re-proving combat resolution.
   - 222 tests passing.
-- ⬜ Batch 2 — Save/load via `localStorage` (party state, current level
-  id, position/facing), with a round-trip test and a "Continue" option
-  on boot when a save exists.
+- ✅ Batch 2 — Save/load via `localStorage`:
+  - `SaveGame.ts` (new): `serialize(world, levelId)` snapshots exactly
+    what the design doc asks for — party state (stats, HP/Mana, level/
+    XP, portrait, equipped item ids per slot), the shared inventory
+    (id/name/count), current level id, and the party's exact grid
+    position/facing. Deliberately *not* saved: per-level interactable
+    state (unlocked doors, found secrets) or monster state — reloading
+    re-enters the saved level fresh, the same design simplification the
+    doc's save-system scope implies by only listing those three things.
+    `deserializeParty`/`deserializeInventory` rebuild real `Character`/
+    `Inventory` instances from that snapshot; `saveToStorage`/
+    `loadFromStorage`/`hasSave` wrap `localStorage` (injectable, same
+    pattern as `Hud`/`InputManager` taking a `Document`/`Window`, so
+    tests never touch a real browser storage).
+  - `Game`'s constructor gained an optional `saveData` parameter that
+    wins over `partySpecs` entirely: restores the saved party/inventory,
+    loads the saved level instead of level 1, and calls `teleportTo`
+    with the saved position/facing after the level's own start tile is
+    set up.
+  - A "Save" button now lives in the inventory screen's header, next to
+    Close — already the one place exploration fully stops, so no
+    separate always-visible corner button was needed for it.
+  - `PartyCreationUI` gained an optional `onContinue` callback: when
+    `main.ts` finds a save via `hasSave()`, a "Continue" button appears
+    above the usual creation flow and bypasses it entirely, loading
+    `Game` with the saved data instead of a fresh party.
+  - `SaveGame.test.ts` is the phase's specific "save/load round-trip"
+    ask: serializes a party with custom stats/level/XP/equipped gear
+    and a stocked inventory, round-trips it through a real
+    `JSON.stringify`/`parse` (via an in-memory fake `Storage`, this
+    project's Vitest environment is plain Node), and asserts the
+    reloaded data is `toEqual` the original — plus corrupted-JSON and
+    empty-storage cases returning `undefined` rather than throwing.
+  - 232 tests passing.
 - ⬜ Batch 3 — Monster roster expansion: the Screeching Wraith (Fear)
   and Court Alchemist (support/heal, kill-the-healer priority), each
   clearing the "new lesson" bar, not a stat reskin.

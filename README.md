@@ -64,6 +64,7 @@ src/
     Rng.ts               seedable RNG (mulberry32) for testable combat/AI randomness
     WorldClock.ts        one player action -> every registered entity ticks once
     GameLogic.ts         pure move/interact/turn/equip resolution (no rendering) — headlessly testable
+    SaveGame.ts          localStorage save/load: serialize/deserialize party+inventory+level+position
     interactables/       Door, Lever, PressurePlate, PushableBlock,
                          SecretWall, ClassGate, StairsDown, KeyItem,
                          LoreItem, ExitTile, EquipmentPickup, InteractableManager
@@ -115,9 +116,13 @@ dealing resistance-adjusted damage — a party without a Mage can still
 answer a Fire-weak monster by throwing the flask. Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
 character up (a class-flavored stat/HP/Mana bump, shown in the HUD and
-inventory screen as `Lv2`, etc.). Save/load, a bigger monster roster,
-a bestiary/codex screen, and a hand-tuned difficulty curve are the rest
-of Phase 4.
+inventory screen as `Lv2`, etc.). The inventory screen's header also has
+a "Save" button — a single save slot capturing the party, inventory,
+current level, and exact position; relaunching the game offers a
+"Continue" button on the party-creation screen when a save exists,
+skipping straight back into the run. A bigger monster roster, a
+bestiary/codex screen, and a hand-tuned difficulty curve are the rest of
+Phase 4.
 
 ## Scripts
 

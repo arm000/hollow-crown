@@ -33,6 +33,7 @@ export class InventoryUI {
     private readonly onEquip: (characterName: string, itemId: string) => void,
     private readonly onUnequip: (characterName: string, slot: EquipmentSlot) => void,
     private readonly onClose: () => void,
+    private readonly onSave: () => void,
   ) {
     this.root = document.createElement("div");
     this.root.id = "inventory-ui";
@@ -42,6 +43,21 @@ export class InventoryUI {
     header.id = "inventory-header";
     const title = document.createElement("span");
     title.textContent = "Inventory";
+
+    // A natural "pause menu" spot for Save (docs/08-roadmap-phases.md
+    // Phase 4) -- this screen is already the one place exploration
+    // fully stops, so saving here needs no separate always-visible
+    // corner button. Doesn't close the screen; Game shows a HUD
+    // confirmation instead.
+    const saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.id = "inventory-save";
+    saveButton.textContent = "Save";
+    saveButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      this.onSave();
+    });
+
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.id = "inventory-close";
@@ -55,7 +71,11 @@ export class InventoryUI {
       event.preventDefault();
       this.onClose();
     });
-    header.append(title, closeButton);
+
+    const actions = document.createElement("div");
+    actions.id = "inventory-header-actions";
+    actions.append(saveButton, closeButton);
+    header.append(title, actions);
 
     this.bodyEl = document.createElement("div");
     this.bodyEl.id = "inventory-body";
