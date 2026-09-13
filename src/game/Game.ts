@@ -131,6 +131,7 @@ export class Game {
     this.inventoryUI = new InventoryUI(
       (characterName, itemId) => this.handleEquip(characterName, itemId),
       (characterName, slot) => this.handleUnequip(characterName, slot),
+      () => this.closeInventory(),
     );
     this.hud.onInventoryToggle(() => this.toggleInventory());
 
@@ -294,26 +295,36 @@ export class Game {
     this.hud.updateInventory(this.world.inventory.list());
   }
 
-  /**
-   * Opens the inventory screen from exploration only — not mid-combat or
-   * after the run has ended, same gate as movement. Clears the input
-   * queue on both the way in and the way out: `InputManager` captures
-   * keydowns unconditionally (see its `clear()` doc comment), so without
-   * this, movement keys mashed while the menu was open would all fire at
-   * once, one per frame, the moment it closed.
-   */
+  /** The "I" key and the on-screen toggle button both flip between open/closed; the inventory screen's own Close button always closes (see `closeInventory`) rather than sharing this. */
   private toggleInventory(): void {
     if (this.mode === "inventory") {
-      this.mode = "explore";
-      this.inventoryUI.hide();
-      this.input.clear();
+      this.closeInventory();
       return;
     }
     if (this.mode !== "explore" || this.runEnded) return;
     this.mode = "inventory";
-    this.input.clear();
+    this.input.clear(); // see InputManager.clear() -- drop anything queued right as the menu opens
     this.inventoryUI.show();
     this.refreshInventoryUI();
+  }
+
+  /**
+   * Closes the inventory screen. Called from three places -- the "I"
+   * key, the toggle button (both via `toggleInventory`), and the
+   * screen's own Close button directly -- so this, not `hide()` on the
+   * UI class, is the one place that actually restores exploration:
+   * flips `mode` back and clears the input queue (`InputManager`
+   * captures keydowns unconditionally — see its `clear()` doc comment —
+   * so without this, movement keys pressed while the menu was open
+   * would sit queued until something else cleared them). The screen's
+   * Close button used to call the UI's `hide()` directly, which only
+   * did the DOM half and left `mode` stuck on "inventory" — movement
+   * looked frozen until Escape (which does go through here) fixed it.
+   */
+  private closeInventory(): void {
+    this.mode = "explore";
+    this.inventoryUI.hide();
+    this.input.clear();
   }
 
   private handleEquip(characterName: string, itemId: string): void {

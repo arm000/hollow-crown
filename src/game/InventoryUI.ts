@@ -32,6 +32,7 @@ export class InventoryUI {
   constructor(
     private readonly onEquip: (characterName: string, itemId: string) => void,
     private readonly onUnequip: (characterName: string, slot: EquipmentSlot) => void,
+    private readonly onClose: () => void,
   ) {
     this.root = document.createElement("div");
     this.root.id = "inventory-ui";
@@ -45,9 +46,14 @@ export class InventoryUI {
     closeButton.type = "button";
     closeButton.id = "inventory-close";
     closeButton.textContent = "Close";
+    // Notifies Game rather than calling this.hide() directly -- Game
+    // owns the mode transition (back to "explore") and the input-queue
+    // clear that goes with it (see InputManager.clear()); hide() here
+    // is just the DOM half of closing, which Game still calls itself
+    // once it's done its side, same as the Escape-key/toggle-button path.
     closeButton.addEventListener("pointerdown", (event) => {
       event.preventDefault();
-      this.hide();
+      this.onClose();
     });
     header.append(title, closeButton);
 

@@ -427,6 +427,15 @@ independently):
     every transition into or out of "explore" mode (opening/closing the
     inventory, starting/ending combat) — the mode-aware side owns
     discarding stale input, not the dumb queue itself.
+  - **Second follow-up fix (found via user report, same symptom via a
+    different door):** the fix above didn't cover the screen's own
+    Close button, which called `InventoryUI.hide()` directly — the DOM
+    half of closing only, leaving `Game.mode` stuck on "inventory" and
+    movement still dead until Escape (which *did* go through `Game`)
+    bailed it out. `InventoryUI` now takes an `onClose` callback and the
+    Close button calls that instead of hiding itself; `Game.closeInventory()`
+    is now the one place that does the mode flip + queue clear, reached
+    by the "I" key, the toggle button, and the Close button alike.
   - 184 tests passing.
 - ⬜ Batch 5 — Leveling (XP curve, level-up), a minimal party-creation/
   naming screen, and a non-combat puzzle gated by a class ability or
