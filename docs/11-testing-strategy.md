@@ -160,7 +160,14 @@ first real DOM UI, using the debug hook described above):
   flagged when `TouchControls` first shipped ("I couldn't test on an
   actual physical touchscreen from here"); render a frame at the start
   position and assert average pixel luminance is above a floor — see
-  the worked example just below for why this one matters.
+  the worked example just below for why this one matters; `#win-screen`
+  computes to `display: none` immediately after load, before any win
+  condition — this exact check would have caught a real shipped bug
+  where the win screen was visible from the moment the page loaded (an
+  ID selector's `display: flex` silently beat the browser's own
+  `[hidden]` rule on CSS specificity). Vitest couldn't have caught that
+  one either, for the same reason as the lighting bug: no real browser
+  applying a CSS cascade exists in a plain Node test.
 
 ## A worked example: the near-black lighting bug
 
