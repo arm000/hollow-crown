@@ -416,7 +416,18 @@ independently):
     thing [11-testing-strategy.md](11-testing-strategy.md#3-browser-end-to-end-smoke-tests--playwright-real-headless-browser)
     earmarks for the still-deferred Playwright layer; the equip/unequip
     logic it calls into (`GameLogic.ts`) is what's actually unit tested.
-  - 183 tests passing.
+  - **Follow-up fix (found via user report):** closing the inventory
+    screen left movement frozen, then all of it fired at once on the
+    next keypress. Cause: `InputManager` captures keydowns
+    unconditionally into a FIFO queue with no idea what mode `Game` is
+    in, so movement keys pressed while the menu was open (or during
+    combat — the same gap, just not yet reported there) sat queued and
+    all played back, one per animation frame, as soon as exploration
+    resumed. Fixed with `InputManager.clear()`, called by `Game` on
+    every transition into or out of "explore" mode (opening/closing the
+    inventory, starting/ending combat) — the mode-aware side owns
+    discarding stale input, not the dumb queue itself.
+  - 184 tests passing.
 - ⬜ Batch 5 — Leveling (XP curve, level-up), a minimal party-creation/
   naming screen, and a non-combat puzzle gated by a class ability or
   found gear.

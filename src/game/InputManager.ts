@@ -54,4 +54,17 @@ export class InputManager {
   next(): Action | undefined {
     return this.queue.shift();
   }
+
+  /**
+   * Drops everything queued so far. Keydown capture here is unconditional
+   * -- this class has no idea whether `Game` is currently exploring, in
+   * combat, or looking at a menu -- so whoever *does* know (`Game`) is
+   * responsible for calling this on every transition away from or back
+   * to exploring. Otherwise movement keys pressed while, say, the
+   * inventory screen is open just sit in the queue and all fire at once,
+   * one per frame, the moment exploration resumes.
+   */
+  clear(): void {
+    this.queue = [];
+  }
 }

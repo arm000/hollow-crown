@@ -271,6 +271,7 @@ export class Game {
 
   private startCombat(monster: Monster): void {
     this.mode = "combat";
+    this.input.clear(); // drop anything queued right as combat starts -- see InputManager.clear()
     this.combatMonster = monster;
     this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng(), this.world.inventory);
     this.hud.showMessage(`${monster.name} attacks!`);
@@ -293,15 +294,24 @@ export class Game {
     this.hud.updateInventory(this.world.inventory.list());
   }
 
-  /** Opens the inventory screen from exploration only — not mid-combat or after the run has ended, same gate as movement. */
+  /**
+   * Opens the inventory screen from exploration only — not mid-combat or
+   * after the run has ended, same gate as movement. Clears the input
+   * queue on both the way in and the way out: `InputManager` captures
+   * keydowns unconditionally (see its `clear()` doc comment), so without
+   * this, movement keys mashed while the menu was open would all fire at
+   * once, one per frame, the moment it closed.
+   */
   private toggleInventory(): void {
     if (this.mode === "inventory") {
       this.mode = "explore";
       this.inventoryUI.hide();
+      this.input.clear();
       return;
     }
     if (this.mode !== "explore" || this.runEnded) return;
     this.mode = "inventory";
+    this.input.clear();
     this.inventoryUI.show();
     this.refreshInventoryUI();
   }
@@ -331,6 +341,7 @@ export class Game {
     const monster = this.combatMonster;
     this.combatUI.hide();
     this.mode = "explore";
+    this.input.clear(); // drop anything queued during combat -- see InputManager.clear()
     this.combatEngine = undefined;
     this.combatMonster = undefined;
 

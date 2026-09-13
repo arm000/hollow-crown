@@ -81,6 +81,16 @@ describe("InputManager", () => {
     expect(input.next()).toBe("backward");
   });
 
+  it("clear() drops everything queued so far", () => {
+    const input = new InputManager(new FakeEventTarget() as unknown as Window);
+    input.push("forward");
+    input.push("turnLeft");
+
+    input.clear();
+
+    expect(input.next()).toBeUndefined();
+  });
+
   it("maps ArrowLeft/ArrowRight the same as Q/E (turn), not A/D (strafe)", () => {
     // A deliberate asymmetry in the key map: A/D strafe, but the arrow
     // keys mirror the dedicated turn keys instead of strafe.
