@@ -685,9 +685,34 @@ independently):
     level 1, no need to repeat it), and the Court Alchemist joins level
     3 alongside the Cinder Wretch, replacing its own Rot-thing repeat.
   - 241 tests passing.
-- ⬜ Batch 4 — Bestiary/codex UI: once a monster type is encountered,
-  its resistance/weakness/status/signature mechanic becomes visible in
-  a simple list + detail screen.
+- ✅ Batch 4 — Bestiary/codex UI:
+  - `Monster` gained public `heavyStatusEffect`/`healsOnHeavyTurn`
+    getters (previously private) and `monster/BestiaryEntry.ts`'s
+    `describeMonster()` reads them straight off an encountered
+    instance — no separate, hand-maintained data table duplicating
+    what the monster factories already encode; a Cinder Wretch's entry
+    is generated from the same `resistances` object its factory built,
+    for instance, not a second copy of "physical 0.5, fire 2" that
+    could drift out of sync.
+  - `Game` records a monster's name into `encounteredMonsters` the
+    moment `startCombat` runs, per docs/05-combat.md#the-bestiary's
+    "win, lose, or flee" all counting as an encounter — not persisted
+    across save/load, the same simplification `SaveGame.ts` already
+    makes for per-level interactable/monster state.
+  - `BestiaryUI.ts` (new, same DOM-overlay family as `CombatUI`/
+    `InventoryUI`): a list + detail view — each encountered type's
+    card shows its non-neutral resistances, any status effect its
+    heavy strike inflicts, and whether it heals instead of attacking.
+    Opened via a "Bestiary" button added to the inventory screen's
+    header (alongside Save/Close) rather than a fourth always-visible
+    corner button, replacing that screen rather than layering on top
+    of it.
+  - `BestiaryEntry.test.ts` covers `describeMonster` for all four
+    current types, including that a Rot-thing's entry is genuinely
+    empty (no resistances, no status, no self-heal) and a Cinder
+    Wretch's lists *only* its two non-neutral resistances, not four
+    entries with two neutral 1× multipliers padded in.
+  - 245 tests passing.
 - ⬜ Batch 5 — A real difficulty curve across the 3 levels, tuned by
   hand once the roster expansion above gives it something to tune with.
 

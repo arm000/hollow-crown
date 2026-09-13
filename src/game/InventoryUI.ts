@@ -34,6 +34,7 @@ export class InventoryUI {
     private readonly onUnequip: (characterName: string, slot: EquipmentSlot) => void,
     private readonly onClose: () => void,
     private readonly onSave: () => void,
+    private readonly onOpenBestiary: () => void,
   ) {
     this.root = document.createElement("div");
     this.root.id = "inventory-ui";
@@ -58,6 +59,15 @@ export class InventoryUI {
       this.onSave();
     });
 
+    const bestiaryButton = document.createElement("button");
+    bestiaryButton.type = "button";
+    bestiaryButton.id = "inventory-bestiary";
+    bestiaryButton.textContent = "Bestiary";
+    bestiaryButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      this.onOpenBestiary();
+    });
+
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.id = "inventory-close";
@@ -74,7 +84,7 @@ export class InventoryUI {
 
     const actions = document.createElement("div");
     actions.id = "inventory-header-actions";
-    actions.append(saveButton, closeButton);
+    actions.append(saveButton, bestiaryButton, closeButton);
     header.append(title, actions);
 
     this.bodyEl = document.createElement("div");

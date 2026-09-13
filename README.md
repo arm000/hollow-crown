@@ -60,6 +60,7 @@ src/
     Inventory.ts         shared party inventory (id -> name/count)
     Hud.ts               DOM message line, party/inventory status, win/defeat screens
     InventoryUI.ts       DOM overlay: view carried items, equip/unequip gear across the party
+    BestiaryUI.ts        DOM overlay: encountered monsters' resistances/status/mechanics
     Lighting.ts          light color/intensity constants — headlessly testable
     Rng.ts               seedable RNG (mulberry32) for testable combat/AI randomness
     WorldClock.ts        one player action -> every registered entity ticks once
@@ -123,8 +124,12 @@ inventory screen as `Lv2`, etc.). The inventory screen's header also has
 a "Save" button — a single save slot capturing the party, inventory,
 current level, and exact position; relaunching the game offers a
 "Continue" button on the party-creation screen when a save exists,
-skipping straight back into the run. A bestiary/codex screen and a
-hand-tuned difficulty curve are the rest of Phase 4.
+skipping straight back into the run. A "Bestiary" button there too
+opens a codex of every monster type encountered so far (win, lose, or
+flee all count), listing its resistances/weaknesses, any status effect
+its heavy strike inflicts, and whether it heals instead of attacking —
+so a repeat fight can be won on memory, not luck. A hand-tuned
+difficulty curve is the rest of Phase 4.
 
 ## Scripts
 

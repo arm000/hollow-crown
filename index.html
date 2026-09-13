@@ -255,6 +255,7 @@
         gap: 8px;
       }
       #inventory-save,
+      #inventory-bestiary,
       #inventory-close {
         font-size: 13px;
         padding: 6px 14px;
@@ -265,6 +266,7 @@
         touch-action: none;
       }
       #inventory-save:active,
+      #inventory-bestiary:active,
       #inventory-close:active {
         background: rgba(216, 201, 163, 0.35);
       }
@@ -322,6 +324,77 @@
       .inventory-character-name {
         font-size: 15px;
         margin-bottom: 6px;
+      }
+
+      /* Bestiary/codex overlay: mounted by BestiaryUI.ts. Same explicit
+         "display:none by default" pattern as #inventory-ui above -- an
+         ID selector would otherwise beat the browser's own [hidden]
+         rule. Opened from the inventory screen, not its own always-
+         visible button, so it shares that screen's "exploration is
+         fully stopped" precondition rather than needing its own. */
+      #bestiary-ui {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        gap: 12px;
+        background: rgba(5, 4, 2, 0.92);
+        color: #d8c9a3;
+        pointer-events: auto;
+        overflow-y: auto;
+        z-index: 13;
+      }
+      #bestiary-ui:not([hidden]) {
+        display: flex;
+      }
+      #bestiary-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 20px;
+        letter-spacing: 0.08em;
+        border-bottom: 1px solid rgba(216, 201, 163, 0.3);
+        padding-bottom: 10px;
+      }
+      #bestiary-close {
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.75);
+        color: #d8c9a3;
+        touch-action: none;
+      }
+      #bestiary-close:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
+      #bestiary-body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      #bestiary-empty {
+        font-size: 13px;
+        opacity: 0.6;
+        font-style: italic;
+      }
+      .bestiary-entry {
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.3);
+        background: rgba(216, 201, 163, 0.06);
+      }
+      .bestiary-entry-name {
+        font-size: 16px;
+        margin-bottom: 6px;
+      }
+      .bestiary-entry-line {
+        font-size: 13px;
+        opacity: 0.85;
+        line-height: 1.5;
       }
 
       /* Party-creation screen: mounted by PartyCreationUI.ts, shown once

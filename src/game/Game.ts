@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { BestiaryUI } from "./BestiaryUI";
 import type { CombatActionChoice } from "./combat/CombatEngine";
 import { CombatEngine } from "./combat/CombatEngine";
 import { CombatUI } from "./combat/CombatUI";
@@ -21,6 +22,7 @@ import {
 } from "./Lighting";
 import { getLevel, LEVELS } from "./levels";
 import type { LevelDef } from "./levels/LevelDef";
+import { describeMonster } from "./monster/BestiaryEntry";
 import { buildMonsters } from "./monster/bestiary";
 import type { Monster } from "./monster/Monster";
 import type { EquipmentSlot } from "./party/Equipment";
@@ -35,7 +37,7 @@ import { WorldClock } from "./WorldClock";
 const TILE_SIZE = 2;
 const MONSTER_HEIGHT = 1.4;
 
-type Mode = "explore" | "combat" | "inventory";
+type Mode = "explore" | "combat" | "inventory" | "bestiary";
 
 export class Game {
   private readonly renderer: THREE.WebGLRenderer;
@@ -47,6 +49,9 @@ export class Game {
   private readonly hud = new Hud();
   private readonly combatUI: CombatUI;
   private readonly inventoryUI: InventoryUI;
+  private readonly bestiaryUI: BestiaryUI;
+  /** One representative `Monster` per encountered type name, for the bestiary screen (docs/05-combat.md#the-bestiary) to describe — recorded the moment combat starts, per "win, lose, or flee" all counting as an encounter. Not persisted across save/load, same simplification as per-level interactable/monster state (see `SaveGame.ts`). */
+  private readonly encounteredMonsters = new Map<string, Monster>();
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
   private readonly monsterMeshes = new Map<Monster, THREE.Object3D>();
   private hideWallFace: (x: number, z: number) => void = () => {};
@@ -122,7 +127,9 @@ export class Game {
       (characterName, slot) => this.handleUnequip(characterName, slot),
       () => this.closeInventory(),
       () => this.handleSave(),
+      () => this.openBestiary(),
     );
+    this.bestiaryUI = new BestiaryUI(() => this.closeBestiary());
     this.hud.onInventoryToggle(() => this.toggleInventory());
 
     window.addEventListener("resize", () => this.onResize());
@@ -130,6 +137,11 @@ export class Game {
     // listen for orientationchange explicitly.
     window.addEventListener("orientationchange", () => this.onResize());
     window.addEventListener("keydown", (event) => {
+      if (event.code === "Escape" && this.mode === "bestiary") {
+        event.preventDefault();
+        this.closeBestiary();
+        return;
+      }
       if (event.code !== "KeyI" && !(event.code === "Escape" && this.mode === "inventory")) return;
       event.preventDefault();
       this.toggleInventory();
@@ -337,6 +349,10 @@ export class Game {
   private startCombat(monster: Monster): void {
     this.mode = "combat";
     this.input.clear(); // drop anything queued right as combat starts -- see InputManager.clear()
+    // Recorded here, not on victory/defeat/flee, so "win, lose, or
+    // flee" all count as an encounter per docs/05-combat.md#the-bestiary
+    // -- simply surviving the fight to any conclusion is enough.
+    this.encounteredMonsters.set(monster.name, monster);
     this.combatMonster = monster;
     this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng(), this.world.inventory);
     this.hud.showMessage(`${monster.name} attacks!`);
@@ -389,6 +405,25 @@ export class Game {
     this.mode = "explore";
     this.inventoryUI.hide();
     this.input.clear();
+  }
+
+  /** Opened from the inventory screen's "Bestiary" button — replaces that screen rather than layering on top of it, since `mode` is a single value. */
+  private openBestiary(): void {
+    this.mode = "bestiary";
+    this.inventoryUI.hide();
+    this.bestiaryUI.show();
+    this.refreshBestiaryUI();
+  }
+
+  /** Closes straight back to exploration, not back to the inventory screen — same "Close always means fully done here" convention as `closeInventory`. */
+  private closeBestiary(): void {
+    this.mode = "explore";
+    this.bestiaryUI.hide();
+    this.input.clear();
+  }
+
+  private refreshBestiaryUI(): void {
+    this.bestiaryUI.render([...this.encounteredMonsters.values()].map(describeMonster));
   }
 
   private handleEquip(characterName: string, itemId: string): void {

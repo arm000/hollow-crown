@@ -86,8 +86,9 @@ export class Monster implements Tickable {
   private readonly patrolPoints: GridPoint[];
   private readonly detectionRadius: number;
   private readonly flavor: MonsterFlavor;
-  private readonly heavyStatusEffect: StatusEffectInstance | undefined;
-  private readonly healsOnHeavyTurn: number | undefined;
+  /** Public (unlike `flavor`) — the bestiary/codex screen (docs/05-combat.md#the-bestiary) reads these once a type has been encountered, to describe its signature mechanic without a separate, hand-maintained data table duplicating what the monster already knows about itself. */
+  readonly heavyStatusEffect: StatusEffectInstance | undefined;
+  readonly healsOnHeavyTurn: number | undefined;
   private patrolIndex = 0;
   private alerted = false;
   private telegraphed = false;
