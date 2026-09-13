@@ -70,7 +70,8 @@ export class Game {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x05060a);
     this.scene.fog = new THREE.FogExp2(0x05060a, 0.07);
-    const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE);
+    const secretWallCells = STARTING_LEVEL_ENTITIES.filter((spawn) => spawn.type === "secretWall");
+    const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE, secretWallCells);
     this.scene.add(dungeonMesh.group);
     this.hideWallFace = dungeonMesh.hideWallFace;
     // See Lighting.ts for why these values are much larger than the

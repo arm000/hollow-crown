@@ -135,6 +135,23 @@ independently):
 - ⬜ Batch 4 — Playwright E2E layer remains a deliberate deferral, not
   part of this pass; final polish and doc sign-off.
 
+**Follow-up fix (found via user report during Phase 3):** a secret
+wall's cell is `#` in the raw grid, so it was never treated as a "floor
+cell" during `DungeonMesh` generation — meaning its *other* two sides
+(the genuine solid walls perpendicular to the passage) never got any
+geometry built for them at all. Once revealed and walkable, those sides
+were invisible but still solid: never built, not merely hidden — "I can
+walk through them, but I can see through them" was actually the
+opposite tile's problem reported from inside the passage. `DungeonMesh`
+now takes the level's secret-wall coordinates and builds their other
+sides as permanent, always-visible faces, kept deliberately separate
+from `hideWallFace`'s hideable set. `DungeonMesh.test.ts` (new — this
+class of Three.js object was previously untested, though nothing stops
+it running headlessly like `Player.test.ts` does) proves the fix
+directly: declaring a cell secret adds exactly its genuine-wall
+neighbors' faces, and revealing it hides only the passage-direction
+faces, never the sides. 168 tests passing.
+
 ---
 
 ## Phase 2 — Party & Turn-Based Combat
