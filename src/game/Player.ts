@@ -98,6 +98,25 @@ export class Player {
     return true;
   }
 
+  /**
+   * Instantly repositions the player, with no move/turn animation and no
+   * wall check — unlike `tryMove`/`turn`, which only ever take one legal
+   * step at a time within a single dungeon. Used for level transitions
+   * (docs/08-roadmap-phases.md Phase 4): smoothly animating a "move"
+   * between two different dungeons would be meaningless, and the
+   * destination is trusted (a level's own start tile), not something to
+   * validate against `Passable`.
+   */
+  teleportTo(gridX: number, gridZ: number, facing: Facing = this.facing): void {
+    this.gridX = gridX;
+    this.gridZ = gridZ;
+    this.facing = facing;
+    this.animKind = "idle";
+    this.animT = 1;
+    this.camera.position.copy(this.worldPosition());
+    this.camera.rotation.set(0, facingToYaw(facing), 0);
+  }
+
   /** Turns 90 degrees; pass 1 to turn right (clockwise) or -1 to turn left. */
   turn(direction: 1 | -1): boolean {
     if (this.isAnimating) return false;

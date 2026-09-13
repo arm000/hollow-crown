@@ -568,6 +568,70 @@ multi-level descent end to end. If Playwright landed in Phase 1, its
 suite gets a save/reload E2E case here too (quit and relaunch really is
 a browser-level concern, not just a logic one).
 
+**Status:** In progress, shipped in batches (each pushed and deployed
+independently):
+
+- ✅ Batch 1 — Multi-level descent (stairs/level-transition entity
+  linking 3 authored levels):
+  - `interactables/StairsDown.ts` (new): shaped like `ExitTile` (fires
+    on `onEnter`, no explicit interact needed) but carries a
+    `stairsToLevelId` instead of ending the run. `Interactable` gained
+    that field, `InteractableManager.handleEnter`/`GameLogic.MoveOutcome`
+    both thread it through as `levelTransition`, mirroring exactly how
+    `isExit`/`won` already worked — same pattern, new field, not a
+    parallel code path.
+  - `monster/bestiary.ts` gained `MonsterSpawn` (mirrors `EntitySpawn`)
+    and `buildMonsters()`, so a level's monster placements are data
+    (`MonsterTypeId` + position + patrol points), not code hardcoded
+    per-level in `Game.ts` — level 1's Rot-thing/Cinder Wretch spawns
+    moved into `Level.ts`'s new `STARTING_LEVEL_MONSTERS` unchanged,
+    proving the generalization didn't change level 1's behavior.
+  - `levels/LevelDef.ts` bundles a level's dungeon + entities + monsters;
+    `levels/level2.ts` and `levels/level3.ts` are two new small, more
+    linear levels (level 1 already showcased puzzle *variety* — lever,
+    plate, secret wall, class gate — so these two are where the descent
+    mechanic and difficulty curve are what's actually being proven,
+    reusing level 1's existing monster types rather than introducing new
+    ones, which is this phase's separate "monster roster expansion"
+    scope item). `levels/index.ts`'s `LEVELS`/`getLevel` assemble all
+    three, level 1 included, into the registry `Game` reads from.
+    Level 1's old `ExitTile` became a `StairsDown` to level 2; the real,
+    run-ending exit now lives on level 3 alone.
+  - `Player` gained `teleportTo` — an instant, unanimated reposition
+    (unlike `tryMove`/`turn`, which only take one validated step within
+    a single dungeon at a time) for landing on a new level's start tile.
+    `WorldClock` gained `clear()` to unregister a level's monsters at
+    once rather than one at a time.
+  - `Game.ts`'s constructor and its new `enterLevel`/`transitionToLevel`
+    methods replace the old "build level 1 inline" logic: `enterLevel`
+    tears down the previous level's dungeon/entity/monster meshes (skipped
+    on the very first call, since there's nothing yet to tear down),
+    builds the new level's geometry and monsters, and registers them;
+    `transitionToLevel` swaps `world.dungeon`/`interactables`/`monsters`
+    and calls `teleportTo` on the new level's start tile. `WorldState`'s
+    `dungeon`/`interactables`/`monsters` are no longer `readonly` — they
+    now change out from under a run, unlike `player`/`inventory`/`party`.
+  - `MultiLevelDescent.playthrough.test.ts` (new): the phase's specific
+    "headless scripted playthrough of the full multi-level descent end
+    to end" ask — drives the exact same `attemptMove`/`attemptInteract`
+    through all 3 levels to the real exit, swapping dungeon/interactables
+    on each transition the same way `Game.transitionToLevel` does.
+    Deliberately monster-free, same choice `StartingLevel.playthrough.test.ts`
+    already made for level 1 — this test's job is proving the *descent*
+    mechanic, not re-proving combat resolution.
+  - 222 tests passing.
+- ⬜ Batch 2 — Save/load via `localStorage` (party state, current level
+  id, position/facing), with a round-trip test and a "Continue" option
+  on boot when a save exists.
+- ⬜ Batch 3 — Monster roster expansion: the Screeching Wraith (Fear)
+  and Court Alchemist (support/heal, kill-the-healer priority), each
+  clearing the "new lesson" bar, not a stat reskin.
+- ⬜ Batch 4 — Bestiary/codex UI: once a monster type is encountered,
+  its resistance/weakness/status/signature mechanic becomes visible in
+  a simple list + detail screen.
+- ⬜ Batch 5 — A real difficulty curve across the 3 levels, tuned by
+  hand once the roster expansion above gives it something to tune with.
+
 ---
 
 ## Phase 5 — Content & Narrative Pass

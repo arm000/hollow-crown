@@ -56,7 +56,11 @@ function move(world: WorldState, dx: number, dz: number) {
 }
 
 describe("Starting level playthrough (headless)", () => {
-  it("can be solved: fetch the key, unlock the door, reach the exit", () => {
+  it("can be solved: fetch the key, unlock the door, reach the stairs down to level 2", () => {
+    // Since docs/08-roadmap-phases.md Phase 4, level 1's own exit tile
+    // moves the party on to the next level rather than ending the run --
+    // see levels/index.test.ts for the multi-level descent as a whole,
+    // and levels/level3.ts for where the real, run-ending exit now lives.
     const world = newWorld();
 
     expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
@@ -75,9 +79,10 @@ describe("Starting level playthrough (headless)", () => {
 
     expect(move(world, 1, 0).moved).toBe(true); // (5,1) -> (6,1), now open
 
-    const winningMove = move(world, 1, 0); // (6,1) -> (7,1): the exit
-    expect(winningMove.moved).toBe(true);
-    expect(winningMove.won).toBe(true);
+    const descendingMove = move(world, 1, 0); // (6,1) -> (7,1): the stairs down
+    expect(descendingMove.moved).toBe(true);
+    expect(descendingMove.won).toBe(false); // level 1 alone doesn't end the run anymore
+    expect(descendingMove.levelTransition).toBe("level-2");
   });
 
   it("cannot win by skipping the key: the locked door is a real gate, not a suggestion", () => {

@@ -23,6 +23,11 @@ export class WorldClock {
     if (index !== -1) this.tickables.splice(index, 1);
   }
 
+  /** Unregisters everything at once — a level transition (docs/08-roadmap-phases.md Phase 4) needs the old level's monsters gone before the new level's are registered, rather than unregistering them one at a time. */
+  clear(): void {
+    this.tickables.length = 0;
+  }
+
   /** Ticks every registered entity once, in registration order. */
   advance(): void {
     for (const tickable of this.tickables) tickable.tick();

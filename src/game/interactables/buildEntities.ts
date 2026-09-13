@@ -10,6 +10,7 @@ import { LoreItem } from "./LoreItem";
 import { PressurePlate } from "./PressurePlate";
 import { PushableBlock } from "./PushableBlock";
 import { SecretWall } from "./SecretWall";
+import { StairsDown } from "./StairsDown";
 import type { EntitySpawn, Interactable } from "./types";
 
 const DOOR_LINKED_TYPES = new Set(["lever", "pressurePlate"]);
@@ -69,6 +70,8 @@ function buildOne(spawn: EntitySpawn): Interactable {
       return new SecretWall(spawn.x, spawn.z);
     case "exit":
       return new ExitTile(spawn.x, spawn.z);
+    case "stairsDown":
+      return new StairsDown(spawn.x, spawn.z, params.targetLevelId as string);
     default:
       throw new Error(`Unknown entity spawn type: "${spawn.type}"`);
   }

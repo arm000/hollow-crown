@@ -20,6 +20,8 @@ export function createInteractableMesh(entity: Interactable, tileSize: number): 
       return buildKeyItem(entity, tileSize);
     case "exit":
       return buildExitMarker(entity, tileSize);
+    case "stairsDown":
+      return buildStairsDownMarker(entity, tileSize);
     case "lever":
       return buildLever(entity, tileSize);
     case "loreItem":
@@ -84,6 +86,24 @@ function buildExitMarker(entity: Interactable, tileSize: number): THREE.Object3D
   );
   mesh.rotation.x = -Math.PI / 2;
   // Just above the floor, avoids z-fighting with the floor plane.
+  mesh.position.set(entity.x * tileSize, 0.02, entity.z * tileSize);
+  return mesh;
+}
+
+function buildStairsDownMarker(entity: Interactable, tileSize: number): THREE.Object3D {
+  // A cool blue glow, deliberately distinct from the exit marker's warm
+  // gold -- "this leads onward, not out" -- since a run can now have
+  // several of these but only ever one true exit (the final level's).
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(tileSize * 0.9, tileSize * 0.9),
+    new THREE.MeshStandardMaterial({
+      color: 0xcce4ff,
+      emissive: 0x2a5f88,
+      emissiveIntensity: 0.6,
+      roughness: 1,
+    }),
+  );
+  mesh.rotation.x = -Math.PI / 2;
   mesh.position.set(entity.x * tileSize, 0.02, entity.z * tileSize);
   return mesh;
 }

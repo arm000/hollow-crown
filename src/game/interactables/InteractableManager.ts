@@ -8,6 +8,8 @@ function key(x: number, z: number): string {
 export interface EnterResult {
   message?: string;
   isExit: boolean;
+  /** Set when the entered tile is a `StairsDown` — the id of the level to load next. */
+  stairsToLevelId?: string;
 }
 
 /**
@@ -75,8 +77,9 @@ export class InteractableManager {
     if (!entity?.onEnter) return { isExit: false };
     const message = entity.onEnter(ctx);
     const isExit = entity.isExit === true;
+    const stairsToLevelId = entity.stairsToLevelId;
     if (entity.isConsumed?.()) this.remove(entity);
-    return { message, isExit };
+    return { message, isExit, stairsToLevelId };
   }
 
   /** Resolves an explicit interact action against whatever is at (x, z), if it supports one. */

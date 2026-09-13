@@ -61,3 +61,26 @@ export function createCinderWretch(
     player,
   );
 }
+
+/** Every monster type a level's data can spawn — adding a new one here is one line, not a change to `Game.ts`. */
+export type MonsterTypeId = "rotThing" | "cinderWretch";
+
+/** A level-data description of one monster placement, mirroring `EntitySpawn` for interactables (see `interactables/types.ts`) — plain data, not a constructed `Monster`, so level files stay pure data too. */
+export interface MonsterSpawn {
+  type: MonsterTypeId;
+  x: number;
+  z: number;
+  patrolPoints: GridPoint[];
+}
+
+/** Builds every monster a level's spawn list describes, per docs/08-roadmap-phases.md Phase 4's multi-level descent — `Game.ts` calls this once per level load instead of hardcoding a fixed monster list itself. */
+export function buildMonsters(spawns: MonsterSpawn[], dungeon: DungeonMap, player: Player): Monster[] {
+  return spawns.map((spawn) => {
+    switch (spawn.type) {
+      case "rotThing":
+        return createRotThing(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
+      case "cinderWretch":
+        return createCinderWretch(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
+    }
+  });
+}

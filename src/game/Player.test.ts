@@ -75,6 +75,37 @@ describe("Player", () => {
     });
   });
 
+  describe("teleportTo", () => {
+    it("repositions instantly, with no animation", () => {
+      const player = newPlayer(1, 1, 1);
+      player.teleportTo(5, 6, 2);
+      expect(player.gridX).toBe(5);
+      expect(player.gridZ).toBe(6);
+      expect(player.facing).toBe(2);
+      expect(player.isAnimating).toBe(false);
+      expect(player.camera.position.x).toBeCloseTo(5 * TILE_SIZE);
+      expect(player.camera.position.z).toBeCloseTo(6 * TILE_SIZE);
+    });
+
+    it("cancels an in-progress move/turn animation rather than fighting it", () => {
+      const player = newPlayer(1, 1, 1);
+      player.tryMove(1, 0, OPEN_MAP);
+      expect(player.isAnimating).toBe(true);
+
+      player.teleportTo(3, 3, 0);
+
+      expect(player.isAnimating).toBe(false);
+      expect(player.gridX).toBe(3);
+      expect(player.gridZ).toBe(3);
+    });
+
+    it("defaults to the player's current facing when none is given", () => {
+      const player = newPlayer(1, 1, 3);
+      player.teleportTo(2, 2);
+      expect(player.facing).toBe(3);
+    });
+  });
+
   describe("turn", () => {
     it("wraps facing around from west back to north", () => {
       const player = newPlayer(1, 1, 3);

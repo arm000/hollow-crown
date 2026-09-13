@@ -54,4 +54,7 @@ export interface Interactable {
 
   /** True if entering this tile should end the level in victory. */
   readonly isExit?: boolean;
+
+  /** Set on `StairsDown`: entering this tile should load a different level instead of ending the run (docs/08-roadmap-phases.md Phase 4). */
+  readonly stairsToLevelId?: string;
 }

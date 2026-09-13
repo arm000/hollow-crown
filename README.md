@@ -52,8 +52,9 @@ src/
   game/
     DungeonMap.ts        ASCII level data + tile queries
     DungeonMesh.ts       builds floor/ceiling/wall geometry for a level
-    Level.ts             entity spawns (key, door, exit, ...) for the level
-    Player.ts            grid position, facing, and move/turn animation
+    Level.ts             level 1's entity/monster spawns (key, door, stairs, ...)
+    levels/              LevelDef.ts, level2.ts, level3.ts, index.ts (the LEVELS registry)
+    Player.ts            grid position, facing, move/turn animation, teleportTo (level transitions)
     InputManager.ts      keyboard/touch -> discrete action queue
     TouchControls.ts     on-screen movement/turn/interact buttons
     Inventory.ts         shared party inventory (id -> name/count)
@@ -64,11 +65,12 @@ src/
     WorldClock.ts        one player action -> every registered entity ticks once
     GameLogic.ts         pure move/interact/turn/equip resolution (no rendering) — headlessly testable
     interactables/       Door, Lever, PressurePlate, PushableBlock,
-                         SecretWall, ClassGate, KeyItem, LoreItem,
-                         ExitTile, EquipmentPickup, InteractableManager
+                         SecretWall, ClassGate, StairsDown, KeyItem,
+                         LoreItem, ExitTile, EquipmentPickup, InteractableManager
     party/               Character, Party, roster.ts, PartyCreationUI.ts,
                          classes.ts (abilities), Equipment.ts, Leveling.ts
-    monster/             Monster (patrol/detection AI + its combat turn), bestiary.ts (monster types)
+    monster/             Monster (patrol/detection AI + its combat turn),
+                         bestiary.ts (monster types + MonsterSpawn/buildMonsters)
     combat/              CombatEngine (pure), CombatUI (DOM overlay),
                          DamageType.ts, StatusEffect.ts
     Game.ts              wires scene, renderer, input, and world state together
@@ -85,16 +87,19 @@ playable build before the next one starts.
 ## Status
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
-E2E layer left), Phase 2 complete, **Phase 3 complete** (see the roadmap
-doc above; Phase 4 — multi-level descent & persistence — is next).
-Playable now: a one-time party-creation screen (name each of the four
-slots, pick a class and a color-swatch portrait — placeholder art, real
-pixel art is still ahead — or accept the defaults to get the original
-Bram/Ysolde/Corvin/Maren party), then grid movement (keyboard or touch)
-through a hand-authored level with a full interactable set (a mandatory
-key-and-door gate, an optional lever/plate/block bonus alcove, a secret
-wall, and a passage that only opens for a party with a Rogue along) —
-and two monster types with real turn-based combat: a Rot-thing
+E2E layer left), Phase 2 complete, Phase 3 complete, Phase 4 in progress
+(see the roadmap doc above). Playable now: a one-time party-creation
+screen (name each of the four slots, pick a class and a color-swatch
+portrait — placeholder art, real pixel art is still ahead — or accept
+the defaults to get the original Bram/Ysolde/Corvin/Maren party), then
+grid movement (keyboard or touch) through a 3-level descent: level 1's
+hand-authored puzzle box (a mandatory key-and-door gate, an optional
+lever/plate/block bonus alcove, a secret wall, and a passage that only
+opens for a party with a Rogue along), then two smaller, more linear
+levels proving the descent mechanic itself — a `StairsDown` tile carries
+the party to the next level's own start tile, and only the final level's
+exit actually ends the run — with two monster types along the way with
+real turn-based combat: a Rot-thing
 (telegraphed heavy strike) and a Cinder Wretch (resistant to Physical,
 weak to Fire — melee alone goes badly, the Mage's Firebolt turns it
 around). Attack/Defend/Ability/Flee/Item, status effects (Bleed is live via
@@ -110,7 +115,9 @@ dealing resistance-adjusted damage — a party without a Mage can still
 answer a Fire-weak monster by throwing the flask. Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
 character up (a class-flavored stat/HP/Mana bump, shown in the HUD and
-inventory screen as `Lv2`, etc.).
+inventory screen as `Lv2`, etc.). Save/load, a bigger monster roster,
+a bestiary/codex screen, and a hand-tuned difficulty curve are the rest
+of Phase 4.
 
 ## Scripts
 

@@ -16,13 +16,14 @@ import type { WorldClock } from "./WorldClock";
  */
 export interface WorldState {
   readonly player: Player;
-  readonly dungeon: DungeonMap;
-  readonly interactables: InteractableManager;
+  /** Swapped out whole on a level transition (docs/08-roadmap-phases.md Phase 4's `StairsDown`) -- not readonly like `player`/`inventory`/`party`, which persist unchanged across the whole run. */
+  dungeon: DungeonMap;
+  interactables: InteractableManager;
   readonly inventory: Inventory;
   readonly party: Party;
   readonly worldClock: WorldClock;
-  /** Every monster placed in the current level — Phase 3 onward supports more than one type coexisting (docs/08-roadmap-phases.md Phase 4 builds further on this). Combat is still always one-monster-at-a-time. */
-  readonly monsters: Monster[];
+  /** Every monster placed in the current level — Phase 3 onward supports more than one type coexisting; Phase 4 replaces this list entirely on every level transition. Combat is still always one-monster-at-a-time. */
+  monsters: Monster[];
 }
 
 /** Ticks the world-turn clock once (docs/04-exploration-and-world.md#world-turns) and reports which monster (if any) is now adjacent to (or on) the party's tile — combat starts with that one. */
@@ -43,6 +44,8 @@ export interface MoveOutcome {
   /** Set if a pushable block moved as a result of this action — for updating its visual. */
   pushedBlock?: { from: { x: number; z: number }; to: { x: number; z: number } };
   won: boolean;
+  /** Set if the party stepped onto a `StairsDown` tile — the id of the level `Game` should load next (docs/08-roadmap-phases.md Phase 4). */
+  levelTransition?: string;
   /** Set if this action's world-turn tick left a monster adjacent to (or on) the party — combat starts against that one. */
   combatTriggeredBy?: Monster;
 }
@@ -109,6 +112,7 @@ export function attemptMove(world: WorldState, dx: number, dz: number): MoveOutc
     enteredTile: { x: nx, z: nz },
     pushedBlock,
     won: result.isExit,
+    levelTransition: result.stairsToLevelId,
     combatTriggeredBy,
   };
 }

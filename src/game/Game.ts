@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { CombatActionChoice } from "./combat/CombatEngine";
 import { CombatEngine } from "./combat/CombatEngine";
 import { CombatUI } from "./combat/CombatUI";
-import { STARTING_LEVEL, type DungeonMap } from "./DungeonMap";
+import type { DungeonMap } from "./DungeonMap";
 import { buildDungeonMesh } from "./DungeonMesh";
 import { attemptInteract, attemptMove, attemptTurn, equipItem, unequipItem, type WorldState } from "./GameLogic";
 import { Hud } from "./Hud";
@@ -19,8 +19,9 @@ import {
   TORCH_DISTANCE,
   TORCH_INTENSITY,
 } from "./Lighting";
-import { STARTING_LEVEL_ENTITIES } from "./Level";
-import { createCinderWretch, createRotThing } from "./monster/bestiary";
+import { getLevel, LEVELS } from "./levels";
+import type { LevelDef } from "./levels/LevelDef";
+import { buildMonsters } from "./monster/bestiary";
 import type { Monster } from "./monster/Monster";
 import type { EquipmentSlot } from "./party/Equipment";
 import { awardPartyXp } from "./party/Leveling";
@@ -47,7 +48,10 @@ export class Game {
   private readonly inventoryUI: InventoryUI;
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
   private readonly monsterMeshes = new Map<Monster, THREE.Object3D>();
-  private readonly hideWallFace: (x: number, z: number) => void;
+  private hideWallFace: (x: number, z: number) => void = () => {};
+  /** The current level's floor/wall geometry — torn down and rebuilt whole on every level transition, unlike entity/monster meshes which get their own maps. */
+  private dungeonMeshGroup: THREE.Group | undefined;
+  private currentLevelId = "";
   private mode: Mode = "explore";
   private combatEngine: CombatEngine | undefined;
   private combatMonster: Monster | undefined;
@@ -56,10 +60,9 @@ export class Game {
 
   /** `partySpecs` defaults to the Phase 2 roster so anything that constructs `Game` directly (tests included) doesn't need to know `PartyCreationUI` exists — `main.ts` is the only real caller that passes a player's actual choices. */
   constructor(container: HTMLElement, partySpecs: PartyMemberSpec[] = DEFAULT_PARTY_SPEC) {
-    const dungeon: DungeonMap = STARTING_LEVEL;
-    const interactables = InteractableManager.fromSpawns(STARTING_LEVEL_ENTITIES);
     const inventory = new Inventory();
     const party = createParty(partySpecs);
+    const worldClock = new WorldClock();
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -75,57 +78,27 @@ export class Game {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x05060a);
     this.scene.fog = new THREE.FogExp2(0x05060a, 0.07);
-    const secretWallCells = STARTING_LEVEL_ENTITIES.filter((spawn) => spawn.type === "secretWall");
-    const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE, secretWallCells);
-    this.scene.add(dungeonMesh.group);
-    this.hideWallFace = dungeonMesh.hideWallFace;
     // See Lighting.ts for why these values are much larger than the
-    // ~0-2 range you'd expect from older Three.js tutorials.
+    // ~0-2 range you'd expect from older Three.js tutorials. Ambient
+    // light and fog are level-independent for now -- shared across the
+    // whole descent rather than rebuilt per level.
     this.scene.add(new THREE.AmbientLight(AMBIENT_LIGHT_COLOR, AMBIENT_LIGHT_INTENSITY));
-    this.buildEntityMeshes(interactables);
 
-    const start = dungeon.findStart();
+    // The player/camera exist before any level does -- `enterLevel` below
+    // repositions it via `teleportTo` before the first frame ever
+    // renders, so the (0, 0) placeholder here is never actually seen.
     const aspect = window.innerWidth / window.innerHeight;
-    this.player = new Player(start.x, start.z, 1, TILE_SIZE, aspect);
-
-    const worldClock = new WorldClock();
-    const rotThing = createRotThing(
-      4,
-      1,
-      [
-        { x: 4, z: 1 },
-        { x: 5, z: 1 },
-      ],
-      dungeon,
-      this.player,
-    );
-    const cinderWretch = createCinderWretch(
-      6,
-      4,
-      [
-        { x: 4, z: 4 },
-        { x: 6, z: 4 },
-      ],
-      dungeon,
-      this.player,
-    );
-    const monsters = [rotThing, cinderWretch];
-    for (const monster of monsters) {
-      worldClock.register(monster);
-      this.monsterMeshes.set(monster, buildMonsterMesh(monster));
-    }
-    for (const [monster, mesh] of this.monsterMeshes) {
-      this.scene.add(mesh);
-      this.syncMonsterMesh(monster);
-    }
-
-    this.world = { player: this.player, dungeon, interactables, inventory, party, worldClock, monsters };
-    this.hud.updateParty(party.members);
-
+    this.player = new Player(0, 0, 1, TILE_SIZE, aspect);
     const torch = new THREE.PointLight(TORCH_COLOR, TORCH_INTENSITY, TORCH_DISTANCE, TORCH_DECAY);
     torch.position.set(0, 0.1, 0);
     this.player.camera.add(torch);
     this.scene.add(this.player.camera);
+
+    const firstLevel = LEVELS[0];
+    const loaded = this.enterLevel(firstLevel, worldClock);
+    this.currentLevelId = firstLevel.id;
+    this.world = { player: this.player, inventory, party, worldClock, ...loaded };
+    this.hud.updateParty(party.members);
 
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
@@ -152,6 +125,11 @@ export class Game {
     this.renderer.setAnimationLoop(() => this.tick());
   }
 
+  /** The level the party is currently on — for save/load (docs/08-roadmap-phases.md Phase 4) to persist and restore. */
+  get levelId(): string {
+    return this.currentLevelId;
+  }
+
   private buildEntityMeshes(interactables: InteractableManager): void {
     for (const entity of interactables.allEntities()) {
       const mesh = createInteractableMesh(entity, TILE_SIZE);
@@ -159,6 +137,67 @@ export class Game {
       this.scene.add(mesh);
       this.entityMeshes.set(`${entity.x},${entity.z}`, mesh);
     }
+  }
+
+  /**
+   * Builds one level's runtime geometry and state (docs/08-roadmap-phases.md
+   * Phase 4): dungeon mesh, entity meshes, and monsters, registering the
+   * latter with `worldClock`. Tears down whatever the *previous* level
+   * left behind first -- guarded by `dungeonMeshGroup` being set, which
+   * it only is after the first call, so the constructor's initial call
+   * has nothing to tear down. Doesn't touch `this.world` itself (which
+   * doesn't exist yet on that first call) -- callers apply the returned
+   * pieces themselves.
+   */
+  private enterLevel(
+    level: LevelDef,
+    worldClock: WorldClock,
+  ): { dungeon: DungeonMap; interactables: InteractableManager; monsters: Monster[] } {
+    if (this.dungeonMeshGroup) {
+      this.scene.remove(this.dungeonMeshGroup);
+      for (const mesh of this.entityMeshes.values()) this.scene.remove(mesh);
+      this.entityMeshes.clear();
+      for (const mesh of this.monsterMeshes.values()) this.scene.remove(mesh);
+      this.monsterMeshes.clear();
+    }
+
+    const dungeon = level.dungeon;
+    const interactables = InteractableManager.fromSpawns(level.entities);
+    const secretWallCells = level.entities.filter((spawn) => spawn.type === "secretWall");
+    const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE, secretWallCells);
+    this.scene.add(dungeonMesh.group);
+    this.dungeonMeshGroup = dungeonMesh.group;
+    this.hideWallFace = dungeonMesh.hideWallFace;
+    this.buildEntityMeshes(interactables);
+
+    const monsters = buildMonsters(level.monsters, dungeon, this.player);
+    worldClock.clear(); // the previous level's monsters, if any -- see WorldClock.clear()
+    for (const monster of monsters) {
+      worldClock.register(monster);
+      this.monsterMeshes.set(monster, buildMonsterMesh(monster));
+    }
+    for (const [monster, mesh] of this.monsterMeshes) {
+      this.scene.add(mesh);
+      this.syncMonsterMesh(monster);
+    }
+
+    return { dungeon, interactables, monsters };
+  }
+
+  /** Loads a different level by id and places the party on its start tile, facing east — the direction every hand-authored level's corridor extends from its 'S' tile. Called when the party steps onto a `StairsDown` (see `handleMove`). */
+  private transitionToLevel(levelId: string): void {
+    const level = getLevel(levelId);
+    const { dungeon, interactables, monsters } = this.enterLevel(level, this.world.worldClock);
+    this.world.dungeon = dungeon;
+    this.world.interactables = interactables;
+    this.world.monsters = monsters;
+    this.currentLevelId = level.id;
+
+    const start = dungeon.findStart();
+    this.player.teleportTo(start.x, start.z, 1);
+
+    this.hud.showMessage("You descend deeper into the dungeon...");
+    this.hud.updateInventory(this.world.inventory.list());
   }
 
   private tick(): void {
@@ -209,6 +248,13 @@ export class Game {
     if (outcome.enteredTile) {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.enteredTile.x, outcome.enteredTile.z);
+    }
+    if (outcome.levelTransition) {
+      // The old level (and any monster on it) is gone the instant this
+      // fires -- skip syncing meshes or starting combat against a
+      // level we've already left behind.
+      this.transitionToLevel(outcome.levelTransition);
+      return;
     }
     this.syncAllMonsterMeshes();
     if (outcome.won) this.win();

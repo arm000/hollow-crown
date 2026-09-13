@@ -57,4 +57,29 @@ describe("WorldClock", () => {
 
     expect(a.calls).toBe(0);
   });
+
+  it("clear() unregisters everything at once", () => {
+    const clock = new WorldClock();
+    const a = spyTickable();
+    const b = spyTickable();
+    clock.register(a);
+    clock.register(b);
+
+    clock.clear();
+    clock.advance();
+
+    expect(a.calls).toBe(0);
+    expect(b.calls).toBe(0);
+  });
+
+  it("clear() doesn't stop entities registered afterward", () => {
+    const clock = new WorldClock();
+    clock.clear(); // clearing an already-empty clock is a safe no-op
+    const a = spyTickable();
+    clock.register(a);
+
+    clock.advance();
+
+    expect(a.calls).toBe(1);
+  });
 });

@@ -1,4 +1,5 @@
 import type { EntitySpawn } from "./interactables/types";
+import type { MonsterSpawn } from "./monster/bestiary";
 
 /**
  * Entity placements for `STARTING_LEVEL` (see `DungeonMap.ts`), kept
@@ -8,8 +9,12 @@ import type { EntitySpawn } from "./interactables/types";
  *
  * The main puzzle: a key sits in a one-tile side room off the main
  * corridor; a locked door further along won't open without it. That's
- * the only mandatory path, so simply reaching the exit tile is proof
- * the puzzle was solved (see `ExitTile`).
+ * the only mandatory path, so simply reaching the stairs down is proof
+ * the puzzle was solved. As of docs/08-roadmap-phases.md Phase 4, this
+ * is level 1 of a multi-level descent — reaching this level's own exit
+ * moves on to level 2 rather than ending the run (see `StairsDown`);
+ * see `levels/index.ts` for the full descent and where the real,
+ * run-ending `ExitTile` now lives.
  *
  * Everything else is optional, bypassable content reachable without the
  * key:
@@ -47,7 +52,7 @@ import type { EntitySpawn } from "./interactables/types";
 export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
   { type: "keyItem", x: 3, z: 2, params: { itemId: "rusted-key", name: "a Rusted Key" } },
   { type: "door", x: 6, z: 1, params: { keyId: "rusted-key", locked: true } },
-  { type: "exit", x: 7, z: 1 },
+  { type: "stairsDown", x: 7, z: 1, params: { targetLevelId: "level-2" } },
 
   { type: "equipmentItem", x: 2, z: 3, params: { itemId: "rusted-sword" } },
   { type: "equipmentItem", x: 4, z: 4, params: { itemId: "ember-charm" } },
@@ -90,4 +95,26 @@ export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
     },
   },
   { type: "equipmentItem", x: 9, z: 4, params: { itemId: "shadow-ring" } },
+];
+
+/** Monster placements for `STARTING_LEVEL`, kept separate the same way `STARTING_LEVEL_ENTITIES` is — see `monster/bestiary.ts`'s `MonsterSpawn`. */
+export const STARTING_LEVEL_MONSTERS: MonsterSpawn[] = [
+  {
+    type: "rotThing",
+    x: 4,
+    z: 1,
+    patrolPoints: [
+      { x: 4, z: 1 },
+      { x: 5, z: 1 },
+    ],
+  },
+  {
+    type: "cinderWretch",
+    x: 6,
+    z: 4,
+    patrolPoints: [
+      { x: 4, z: 4 },
+      { x: 6, z: 4 },
+    ],
+  },
 ];
