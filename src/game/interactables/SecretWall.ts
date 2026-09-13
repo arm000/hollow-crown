@@ -1,4 +1,5 @@
-import type { Interactable } from "./types";
+import { awardPartyXp, SECRET_DISCOVERY_XP } from "../party/Leveling";
+import type { InteractionContext, Interactable } from "./types";
 
 /**
  * A wall tile that's secretly passable once found. Its grid tile stays
@@ -10,7 +11,11 @@ import type { Interactable } from "./types";
  *
  * Revealing it is a deliberate `interact` (a "search"), not automatic —
  * consistent with how doors and levers work, and avoids passively
- * revealing secrets just by walking near them.
+ * revealing secrets just by walking near them. The first reveal also
+ * awards XP, per docs/03-party-and-characters.md#leveling ("XP awarded
+ * for combat victories and for first-time discovery of secrets") — only
+ * the first, since re-searching an already-found wall isn't a new
+ * discovery.
  */
 export class SecretWall implements Interactable {
   readonly kind = "secretWall";
@@ -25,9 +30,10 @@ export class SecretWall implements Interactable {
     return !this.revealed;
   }
 
-  interact(): string {
+  interact(ctx: InteractionContext): string {
     if (this.revealed) return "Just a wall now.";
     this.revealed = true;
-    return "You find a hidden passage!";
+    const levelUps = awardPartyXp(ctx.party, SECRET_DISCOVERY_XP);
+    return ["You find a hidden passage!", ...levelUps].join(" ");
   }
 }

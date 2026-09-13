@@ -23,6 +23,8 @@ export interface MonsterOptions {
   initiativeStat: number;
   /** Damage-type resistances/weaknesses (docs/05-combat.md#monster-design-every-type-is-a-lesson) — empty by default, e.g. the Rot-thing has none. */
   resistances?: ResistanceMap;
+  /** XP the party earns for defeating this monster (docs/03-party-and-characters.md#leveling) — defaults to 0 so existing tests that build a bare `Monster` for AI/combat behavior don't all need updating just to add a number they don't care about. */
+  xpReward?: number;
 }
 
 export interface MonsterCombatTurn {
@@ -49,6 +51,7 @@ export class Monster implements Tickable {
   readonly might: number;
   readonly initiativeStat: number;
   readonly resistances: ResistanceMap;
+  readonly xpReward: number;
   readonly statusEffects = new StatusEffectSet();
 
   private readonly patrolPoints: GridPoint[];
@@ -72,6 +75,7 @@ export class Monster implements Tickable {
     this.might = options.might;
     this.initiativeStat = options.initiativeStat;
     this.resistances = options.resistances ?? {};
+    this.xpReward = options.xpReward ?? 0;
   }
 
   get isDown(): boolean {

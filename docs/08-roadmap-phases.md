@@ -437,9 +437,37 @@ independently):
     is now the one place that does the mode flip + queue clear, reached
     by the "I" key, the toggle button, and the Close button alike.
   - 184 tests passing.
-- ⬜ Batch 5 — Leveling (XP curve, level-up), a minimal party-creation/
-  naming screen, and a non-combat puzzle gated by a class ability or
-  found gear.
+- ✅ Batch 5 — Leveling (XP curve, level-up):
+  - `party/Leveling.ts` (new, plain functions over a `Character` — same
+    style as `GameLogic.ts`'s `equipItem`, not a `Character` method):
+    `xpToNextLevel(level)` is a fresh, linear, per-level threshold (no
+    level cap or difficulty curve exists yet to tune a real curve
+    against); `gainXp` applies every level-up a large XP award
+    triggers, each one via a fixed class-flavored growth table (stat
+    bonus + HP/Mana bonus) rather than a level-up-screen point-buy —
+    the doc's "stat points to allocate" is a deliberate simplification
+    here, same spirit as "no skill tree in v1"; `awardPartyXp` applies
+    it to every *living* member of the party and returns one
+    announcement per level gained.
+  - `Character` gained `xp`/`level` fields; `maxHp`/`maxMana` are no
+    longer `readonly` now that leveling grows them.
+  - `Monster` gained `xpReward` (defaults to 0), set per-type in
+    `bestiary.ts` (Rot-thing 15, Cinder Wretch 25 — worth more since
+    the resistance/weakness makes it the harder, more instructive
+    fight). `Game.checkCombatEnd` awards it on victory.
+  - `SecretWall` awards a flat 15 XP the *first* time it's found (per
+    docs/03-party-and-characters.md#leveling's "first-time discovery of
+    secrets" — re-searching an already-found wall grants nothing more),
+    which needed `interact` to start taking the `InteractionContext` it
+    always could (nothing used it before).
+  - HUD party line and the inventory screen's character cards both
+    gained a level readout (`Lv2`, etc.).
+  - 194 tests passing.
+- ⬜ Batch 6 — A minimal party-creation/naming screen (pick class +
+  portrait per slot; full point-buy attribute creation is a stretch
+  goal, not required).
+- ⬜ Batch 7 — A non-combat puzzle gated by a class ability or found
+  gear.
 
 ---
 

@@ -24,6 +24,7 @@ export function createRotThing(x: number, z: number, patrolPoints: GridPoint[], 
       // No resistances -- Phase 2's baseline monster, teaching front/back
       // rank and Attack/Defend fundamentals per docs/05-combat.md's
       // teaching ladder.
+      xpReward: 15,
     },
     dungeon,
     player,
@@ -54,6 +55,7 @@ export function createCinderWretch(
       might: 4,
       initiativeStat: 4,
       resistances: { physical: 0.5, fire: 2 },
+      xpReward: 25, // worth more than the Rot-thing -- the resistance/weakness makes it a harder, more instructive fight
     },
     dungeon,
     player,

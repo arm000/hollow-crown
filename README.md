@@ -66,7 +66,7 @@ src/
     interactables/       Door, Lever, PressurePlate, PushableBlock,
                          SecretWall, KeyItem, LoreItem, ExitTile,
                          EquipmentPickup, InteractableManager
-    party/               Character, Party, roster.ts, classes.ts (abilities), Equipment.ts
+    party/               Character, Party, roster.ts, classes.ts (abilities), Equipment.ts, Leveling.ts
     monster/             Monster (patrol/detection AI + its combat turn), bestiary.ts (monster types)
     combat/              CombatEngine (pure), CombatUI (DOM overlay),
                          DamageType.ts, StatusEffect.ts
@@ -101,8 +101,12 @@ lands in the shared inventory unequipped — tap the always-visible
 choose who wears what, swapping gear freely between party members.
 Consumables are usable mid-fight via the Item action, curing a status or
 dealing resistance-adjusted damage — a party without a Mage can still
-answer a Fire-weak monster by throwing the flask. Leveling and a
-party-creation screen don't exist yet — that's the rest of Phase 3.
+answer a Fire-weak monster by throwing the flask. Defeating a monster or
+finding a secret for the first time awards XP, and enough of it levels a
+character up (a class-flavored stat/HP/Mana bump, shown in the HUD and
+inventory screen as `Lv2`, etc.). A party-creation screen and a
+non-combat ability/gear-gated puzzle don't exist yet — that's the rest
+of Phase 3.
 
 ## Scripts
 

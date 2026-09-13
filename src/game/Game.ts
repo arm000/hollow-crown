@@ -23,6 +23,7 @@ import { STARTING_LEVEL_ENTITIES } from "./Level";
 import { createCinderWretch, createRotThing } from "./monster/bestiary";
 import type { Monster } from "./monster/Monster";
 import type { EquipmentSlot } from "./party/Equipment";
+import { awardPartyXp } from "./party/Leveling";
 import { createStartingParty } from "./party/roster";
 import { Player } from "./Player";
 import { RandomRng } from "./Rng";
@@ -357,7 +358,11 @@ export class Game {
     this.combatMonster = undefined;
 
     if (result === "victory") {
-      this.hud.showMessage(`${monster.name} is defeated! The party gains 10 XP.`);
+      const levelUps = awardPartyXp(this.world.party, monster.xpReward);
+      this.hud.showMessage(
+        [`${monster.name} is defeated! The party gains ${monster.xpReward} XP.`, ...levelUps].join(" "),
+      );
+      this.hud.updateParty(this.world.party.members); // a level-up can change HP/Mana shown there
       this.syncMonsterMesh(monster);
     } else if (result === "fled") {
       // Otherwise the still-alerted, still-adjacent monster would just

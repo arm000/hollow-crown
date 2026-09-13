@@ -30,6 +30,12 @@ export class Character {
   readonly side = "party" as const;
   hp: number;
   mana: number;
+  /** Grows via leveling (see `Leveling.ts`) -- not readonly like `stats`/`name`/`classId`, which never change after creation. */
+  maxHp: number;
+  maxMana: number;
+  /** Both start at 1/0 and only ever change through `Leveling.ts`'s `gainXp` -- kept as plain mutable fields here rather than methods, same as `hp`/`mana`, since `Character` itself owns no leveling rules. */
+  level = 1;
+  xp = 0;
   /** Base resistances are empty for every starting character — an equipped accessory is the only source. */
   resistances: ResistanceMap = {};
   readonly statusEffects = new StatusEffectSet();
@@ -40,9 +46,11 @@ export class Character {
     public readonly classId: ClassId,
     public rank: Rank,
     public readonly stats: CharacterStats,
-    public readonly maxHp: number,
-    public readonly maxMana: number,
+    maxHp: number,
+    maxMana: number,
   ) {
+    this.maxHp = maxHp;
+    this.maxMana = maxMana;
     this.hp = maxHp;
     this.mana = maxMana;
   }
