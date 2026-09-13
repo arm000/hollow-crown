@@ -14,6 +14,8 @@ export function createInteractableMesh(entity: Interactable, tileSize: number): 
   switch (entity.kind) {
     case "door":
       return buildDoor(entity, tileSize);
+    case "classGate":
+      return buildClassGate(entity, tileSize);
     case "keyItem":
       return buildKeyItem(entity, tileSize);
     case "exit":
@@ -43,6 +45,19 @@ function buildDoor(entity: Interactable, tileSize: number): THREE.Object3D {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(tileSize * 0.8, height, tileSize * 0.8),
     new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.9 }),
+  );
+  mesh.position.set(entity.x * tileSize, height / 2, entity.z * tileSize);
+  return mesh;
+}
+
+function buildClassGate(entity: Interactable, tileSize: number): THREE.Object3D {
+  // A colder, metallic tone next to Door's warm wood -- reads as
+  // "wrought fixture, not a plain door" even before it's interacted
+  // with, without stating outright what opens it.
+  const height = WALL_HEIGHT * 0.85;
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(tileSize * 0.7, height, tileSize * 0.7),
+    new THREE.MeshStandardMaterial({ color: 0x3a3a48, roughness: 0.6, metalness: 0.5 }),
   );
   mesh.position.set(entity.x * tileSize, height / 2, entity.z * tileSize);
   return mesh;

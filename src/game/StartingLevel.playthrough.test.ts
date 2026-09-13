@@ -5,7 +5,8 @@ import { InteractableManager } from "./interactables/InteractableManager";
 import { Inventory } from "./Inventory";
 import { STARTING_LEVEL_ENTITIES } from "./Level";
 import { Monster } from "./monster/Monster";
-import { createStartingParty } from "./party/roster";
+import type { Party } from "./party/Party";
+import { createParty, createStartingParty } from "./party/roster";
 import { Player } from "./Player";
 import { WorldClock } from "./WorldClock";
 
@@ -24,7 +25,7 @@ import { WorldClock } from "./WorldClock";
  * `RotThingEncounter.playthrough.test.ts` for a real encounter.
  */
 
-function newWorld(): WorldState {
+function newWorld(party: Party = createStartingParty()): WorldState {
   const dungeon = STARTING_LEVEL;
   const start = dungeon.findStart();
   const player = new Player(start.x, start.z, 1, 2, 1);
@@ -41,7 +42,7 @@ function newWorld(): WorldState {
     dungeon,
     interactables: InteractableManager.fromSpawns(STARTING_LEVEL_ENTITIES),
     inventory: new Inventory(),
-    party: createStartingParty(),
+    party,
     worldClock,
     monsters: [monster],
   };
@@ -181,5 +182,56 @@ describe("Starting level playthrough (headless)", () => {
 
     const readSecondLore = attemptInteract(world);
     expect(readSecondLore.message).toContain("never meant to stop looking");
+  });
+
+  it("a class-gated passage off the lever room opens for a party with a Rogue along", () => {
+    const world = newWorld(); // the default roster includes Ysolde the Rogue
+
+    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,1) -> (5,2)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,2) -> (5,3)
+    expect(move(world, 0, 1).moved).toBe(true); // (5,3) -> (5,4): the lever
+    expect(move(world, 1, 0).moved).toBe(true); // (5,4) -> (6,4)
+    expect(move(world, 1, 0).moved).toBe(true); // (6,4) -> (7,4): the gate's threshold
+
+    expect(move(world, 1, 0).moved).toBe(false); // the gate still blocks a plain step
+
+    const unlock = attemptInteract(world);
+    expect(unlock.message).toContain("Ysolde"); // credited by name, the Rogue who actually opened it
+
+    expect(move(world, 1, 0).moved).toBe(true); // (7,4) -> (8,4): now open
+    expect(move(world, 1, 0).moved).toBe(true); // (8,4) -> (9,4): the vault
+    expect(world.inventory.has("shadow-ring")).toBe(true);
+  });
+
+  it("the class-gated passage refuses a party with no Rogue", () => {
+    const noRogueParty = createParty([
+      { name: "Bram", classId: "warrior", portrait: "🔴" },
+      { name: "Corvin", classId: "mage", portrait: "🔵" },
+      { name: "Maren", classId: "cleric", portrait: "🟢" },
+    ]);
+    const world = newWorld(noRogueParty);
+
+    for (const [dx, dz] of [
+      [1, 0],
+      [1, 0],
+      [1, 0],
+      [1, 0],
+      [0, 1],
+      [0, 1],
+      [0, 1],
+      [1, 0],
+      [1, 0],
+    ]) {
+      expect(move(world, dx, dz).moved).toBe(true);
+    }
+    // Now at (7,4), facing the gate at (8,4).
+
+    const attempt = attemptInteract(world);
+    expect(attempt.message).toBe("The lock is far too intricate to force open.");
+    expect(move(world, 1, 0).moved).toBe(false); // still blocked -- no Rogue, no entry
   });
 });

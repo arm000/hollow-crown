@@ -64,8 +64,8 @@ src/
     WorldClock.ts        one player action -> every registered entity ticks once
     GameLogic.ts         pure move/interact/turn/equip resolution (no rendering) — headlessly testable
     interactables/       Door, Lever, PressurePlate, PushableBlock,
-                         SecretWall, KeyItem, LoreItem, ExitTile,
-                         EquipmentPickup, InteractableManager
+                         SecretWall, ClassGate, KeyItem, LoreItem,
+                         ExitTile, EquipmentPickup, InteractableManager
     party/               Character, Party, roster.ts, PartyCreationUI.ts,
                          classes.ts (abilities), Equipment.ts, Leveling.ts
     monster/             Monster (patrol/detection AI + its combat turn), bestiary.ts (monster types)
@@ -85,11 +85,16 @@ playable build before the next one starts.
 ## Status
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
-E2E layer left), Phase 2 complete, Phase 3 in progress (see the roadmap
-doc above). Playable now: grid movement (keyboard or touch) through a
-hand-authored level with a full interactable set (a mandatory
+E2E layer left), Phase 2 complete, **Phase 3 complete** (see the roadmap
+doc above; Phase 4 — multi-level descent & persistence — is next).
+Playable now: a one-time party-creation screen (name each of the four
+slots, pick a class and a color-swatch portrait — placeholder art, real
+pixel art is still ahead — or accept the defaults to get the original
+Bram/Ysolde/Corvin/Maren party), then grid movement (keyboard or touch)
+through a hand-authored level with a full interactable set (a mandatory
 key-and-door gate, an optional lever/plate/block bonus alcove, a secret
-wall) — and two monster types with real turn-based combat: a Rot-thing
+wall, and a passage that only opens for a party with a Rogue along) —
+and two monster types with real turn-based combat: a Rot-thing
 (telegraphed heavy strike) and a Cinder Wretch (resistant to Physical,
 weak to Fire — melee alone goes badly, the Mage's Firebolt turns it
 around). Attack/Defend/Ability/Flee/Item, status effects (Bleed is live via
@@ -105,12 +110,7 @@ dealing resistance-adjusted damage — a party without a Mage can still
 answer a Fire-weak monster by throwing the flask. Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
 character up (a class-flavored stat/HP/Mana bump, shown in the HUD and
-inventory screen as `Lv2`, etc.). Before any of that, a one-time party
-creation screen lets you name each of the four slots, pick its class,
-and pick a color-swatch portrait (placeholder art — real pixel art is
-still ahead) — accepting every default reproduces the original
-Bram/Ysolde/Corvin/Maren party exactly. A non-combat ability/gear-gated
-puzzle doesn't exist yet — that's the rest of Phase 3.
+inventory screen as `Lv2`, etc.).
 
 ## Scripts
 

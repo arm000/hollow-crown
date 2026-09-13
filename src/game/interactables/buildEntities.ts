@@ -1,4 +1,6 @@
+import type { ClassId } from "../party/Character";
 import { EQUIPMENT_ITEMS } from "../party/Equipment";
+import { ClassGate } from "./ClassGate";
 import { Door } from "./Door";
 import { EquipmentPickup } from "./EquipmentPickup";
 import { ExitTile } from "./ExitTile";
@@ -53,6 +55,14 @@ function buildOne(spawn: EntitySpawn): Interactable {
     }
     case "loreItem":
       return new LoreItem(spawn.x, spawn.z, params.text as string);
+    case "classGate":
+      return new ClassGate(
+        spawn.x,
+        spawn.z,
+        params.requiredClass as ClassId,
+        params.blockedText as string,
+        params.openText as string,
+      );
     case "pushableBlock":
       return new PushableBlock(spawn.x, spawn.z);
     case "secretWall":

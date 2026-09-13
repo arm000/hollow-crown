@@ -46,27 +46,32 @@ export class DungeonMap {
 /**
  * The opening level: a single main corridor from start to exit, with a
  * one-tile side room holding a key needed further down the corridor.
- * Two further branches are entirely optional, not required to win:
+ * Several further branches are entirely optional, not required to win:
  * a lever-and-plate room (either mechanism unlocks the same bonus
- * alcove door) and, past that alcove, a secret wall hiding one more
- * hidden pocket. Entity placements (keys, doors, lever, plate, block,
- * secret wall, exit, lore) live in `Level.ts`, layered on top of this
- * pure geometry.
+ * alcove door); past that alcove, a secret wall hiding one more hidden
+ * pocket; and, off the same room, a class-gated passage (row 4, columns
+ * 7-9) that only opens for a party with a Rogue along, guarding one
+ * more equipment pickup. Entity placements (keys, doors, lever, plate,
+ * block, secret wall, class gate, exit, lore) live in `Level.ts`,
+ * layered on top of this pure geometry.
  *
  * Note for `DungeonMap.test.ts`'s connectivity check: the tile behind
  * the secret wall at (6, 7) is deliberately *not* reachable by raw
  * wall/floor adjacency alone — that's what makes it a secret. See that
- * test for how it accounts for known secret walls.
+ * test for how it accounts for known secret walls. The class-gated
+ * passage, unlike the secret wall, sits on ordinary floor tiles (a
+ * `ClassGate` interactable controls whether it blocks movement, the
+ * same way a `Door` does) — no special-casing needed for it there.
  */
 export const STARTING_LEVEL = new DungeonMap([
-  "#########",
-  "#S......#",
-  "##..#.###",
-  "##.##.###",
-  "##.#...##",
-  "##.###.##",
-  "######.##",
-  "#########",
-  "######.##",
-  "#########",
+  "###########",
+  "#S......###",
+  "##..#.#####",
+  "##.##.#####",
+  "##.#......#",
+  "##.###.####",
+  "######.####",
+  "###########",
+  "######.####",
+  "###########",
 ]);

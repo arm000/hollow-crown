@@ -50,4 +50,10 @@ export const EQUIPMENT_ITEMS: Record<string, EquipmentItem> = {
     slot: "accessory",
     resistanceBonus: { fire: 0.5 },
   },
+  "shadow-ring": {
+    id: "shadow-ring",
+    name: "a Shadow Ring",
+    slot: "accessory",
+    statBonus: { grace: 2 },
+  },
 };

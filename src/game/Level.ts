@@ -20,11 +20,13 @@ import type { EntitySpawn } from "./interactables/types";
  *   known, accepted wrinkle here, not a bug to chase down).
  * - Beyond that bonus alcove's lore item, a secret wall hides one more
  *   hidden pocket with a second lore item.
- * - Two equipment pickups (docs/08-roadmap-phases.md Phase 3): a sword
- *   in the plate/block spur, and a fire-resisting charm in the room the
- *   Cinder Wretch patrols — finding it means passing through the exact
- *   monster its resistance answers. Both land in the shared inventory
- *   unequipped; who wears what is chosen via the inventory screen.
+ * - Three equipment pickups (docs/08-roadmap-phases.md Phase 3): a
+ *   sword in the plate/block spur, a fire-resisting charm in the room
+ *   the Cinder Wretch patrols — finding it means passing through the
+ *   exact monster its resistance answers — and a ring behind the
+ *   class-gated passage described below. All land in the shared
+ *   inventory unequipped; who wears what is chosen via the inventory
+ *   screen.
  * - Two consumables (docs/06-items-and-equipment.md combat-countering
  *   items): an Oil Flask in the entry corridor, everyone's first pickup,
  *   and an Antidote along the spur toward the lever room. Both reuse the
@@ -34,6 +36,13 @@ import type { EntitySpawn } from "./interactables/types";
  *   *effects* (what CONSUMABLE_ITEMS says an id does) are never named
  *   here or in the pickup message — discovering that is the player's
  *   job, per docs/06-items-and-equipment.md "Discovery, not explanation".
+ * - A class-gated passage off the lever room (docs/08-roadmap-phases.md
+ *   Phase 3's "non-combat puzzle gated by a class ability"): no key, no
+ *   lever, it only opens for a party with a living Rogue along, per
+ *   that class's "handles lockpicking... out of combat" job description
+ *   in docs/03-party-and-characters.md. Guards one more equipment
+ *   pickup, entirely optional and bypassable like everything past the
+ *   main corridor.
  */
 export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
   { type: "keyItem", x: 3, z: 2, params: { itemId: "rusted-key", name: "a Rusted Key" } },
@@ -69,4 +78,16 @@ export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
       text: "Scratched into the stone, barely legible: 'if you have found this, you were never meant to stop looking.'",
     },
   },
+
+  {
+    type: "classGate",
+    x: 8,
+    z: 4,
+    params: {
+      requiredClass: "rogue",
+      blockedText: "The lock is far too intricate to force open.",
+      openText: "{name} makes quick work of the lock — it clicks open.",
+    },
+  },
+  { type: "equipmentItem", x: 9, z: 4, params: { itemId: "shadow-ring" } },
 ];

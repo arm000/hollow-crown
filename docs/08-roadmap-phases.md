@@ -297,7 +297,7 @@ losing or costly outcome, then the same fight substituting a Fire spell
 or Oil Flask and assert a clearly better one — an actual pass/fail
 check, not a design intention.
 
-**Status:** In progress, shipped in batches (each pushed and deployed
+**Status:** Complete, shipped in batches (each pushed and deployed
 independently):
 
 - ✅ Batch 1 — Damage types, abilities, status effects, and a second
@@ -492,8 +492,35 @@ independently):
     deliberately-untested-DOM-class category as `CombatUI`/`InventoryUI`;
     `createParty`'s actual party-building logic is what's unit tested.
   - 198 tests passing.
-- ⬜ Batch 7 — A non-combat puzzle gated by a class ability or found
-  gear.
+- ✅ Batch 7 — A non-combat puzzle gated by a class ability:
+  - `ClassGate.ts` (new `Interactable`, same shape as `Door` but with
+    no key or lever — opens for whoever interacts with it only if a
+    living member of a given class is present). Generic over which
+    class rather than Rogue-specific, so a later level can reuse it for
+    a different class without a new type. Makes literal
+    docs/03-party-and-characters.md's class table entry for Rogue,
+    "handles lockpicking & trap disarm out of combat" — the first time
+    that line has actually done anything.
+  - Placed off the lever room, gating one more equipment pickup (a
+    Shadow Ring, `+2 Grace`) behind it — optional and bypassable, like
+    everything past the main corridor, and reachable via 2 new columns
+    added to `STARTING_LEVEL`'s grid (verified for connectivity the
+    same way the existing secret-wall pocket is).
+  - Two new headless playthrough tests in `StartingLevel.playthrough.test.ts`
+    prove it both ways with the actual level data: the default roster
+    (which includes Ysolde the Rogue) opens it and reaches the ring; a
+    custom Warrior/Mage/Cleric-only party is refused and stays blocked
+    — the automated form of "a specific build choice materially changes
+    how a puzzle plays out" from this phase's "Playable when" gate.
+  - No item's mechanical effect is stated anywhere in this batch, per
+    "Discovery, not explanation" — but a class's role already is public
+    information (the same ability description `CombatUI` shows mid-fight
+    doubles as this screen's tooltip), so crediting "Ysolde" by name in
+    the open message is a fair, in-bounds hint, not a spoiler.
+  - 205 tests passing.
+
+**Phase 3 is now complete** — every scope item above has shipped and
+been deployed. Phase 4 (multi-level descent & persistence) is next.
 
 ---
 

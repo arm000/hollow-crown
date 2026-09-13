@@ -251,7 +251,8 @@ export class Game {
     }
 
     const posKey = `${x},${z}`;
-    const stillVisible = entity !== undefined && !(entity.kind === "door" && !entity.blocksMovement());
+    const opensPermanently = entity?.kind === "door" || entity?.kind === "classGate";
+    const stillVisible = entity !== undefined && !(opensPermanently && !entity.blocksMovement());
     if (stillVisible) return;
 
     const mesh = this.entityMeshes.get(posKey);
