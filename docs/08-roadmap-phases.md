@@ -568,7 +568,7 @@ multi-level descent end to end. If Playwright landed in Phase 1, its
 suite gets a save/reload E2E case here too (quit and relaunch really is
 a browser-level concern, not just a logic one).
 
-**Status:** In progress, shipped in batches (each pushed and deployed
+**Status:** Complete, shipped in batches (each pushed and deployed
 independently):
 
 - ✅ Batch 1 — Multi-level descent (stairs/level-transition entity
@@ -713,8 +713,37 @@ independently):
     Wretch's lists *only* its two non-neutral resistances, not four
     entries with two neutral 1× multipliers padded in.
   - 245 tests passing.
-- ⬜ Batch 5 — A real difficulty curve across the 3 levels, tuned by
-  hand once the roster expansion above gives it something to tune with.
+- ✅ Batch 5 — A real difficulty curve across the 3 levels, tuned by
+  hand:
+  - Found and fixed a real gap while reviewing what each level actually
+    offers: `old-buckler` and `hardened-leather` had existed in
+    `Equipment.ts` since Phase 3 but were never placed in *any* level's
+    entity list — completely unreachable in the real game. Placed
+    `old-buckler` (Grace, helping against the Wraith's Fear via more
+    initiative) right at level 2's entrance, unmissable ahead of that
+    level's one fight; placed `hardened-leather` (Physical resistance)
+    in a new third alcove added to level 3's corridor, positioned
+    between its two back-to-back fights as a breather resource exactly
+    where the run needs it most. Without this, levels 2 and 3 escalated
+    in monster difficulty while offering the player zero new power to
+    answer it — a curve that only went up on one side.
+  - The fight structure itself already escalated correctly from the
+    Batch 1/3 level designs, so no changes were needed there: level 1's
+    one mandatory fight (plus an optional harder one) teaches the
+    baseline; level 2's one fight adds a status-effect mechanic; level
+    3's two mandatory fights land back-to-back with no recovery between
+    them, the most demanding arrangement in the descent.
+  - `DifficultyCurve.test.ts` (new): a data-driven regression guard
+    pinning the XP-pacing claim itself, computed from `LEVELS`' actual
+    monster data rather than asserted in prose — a full clear (every
+    monster, plus level 1's one secret) reaches at least level 4 by the
+    run's end; skipping every optional fight and secret still reaches
+    level 3. Either number drifting on a future tuning pass would fail
+    this test, not just go unnoticed.
+  - 247 tests passing.
+
+**Phase 4 is now complete** — every scope item above has shipped and
+been deployed. Phase 5 (content & narrative pass) is next.
 
 ---
 

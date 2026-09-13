@@ -72,7 +72,8 @@ src/
     party/               Character, Party, roster.ts, PartyCreationUI.ts,
                          classes.ts (abilities), Equipment.ts, Leveling.ts
     monster/             Monster (patrol/detection AI + its combat turn),
-                         bestiary.ts (monster types + MonsterSpawn/buildMonsters)
+                         bestiary.ts (monster types + MonsterSpawn/buildMonsters),
+                         BestiaryEntry.ts (describeMonster for the codex screen)
     combat/              CombatEngine (pure), CombatUI (DOM overlay),
                          DamageType.ts, StatusEffect.ts
     Game.ts              wires scene, renderer, input, and world state together
@@ -89,8 +90,9 @@ playable build before the next one starts.
 ## Status
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
-E2E layer left), Phase 2 complete, Phase 3 complete, Phase 4 in progress
-(see the roadmap doc above). Playable now: a one-time party-creation
+E2E layer left), Phase 2 complete, Phase 3 complete, **Phase 4 complete**
+(see the roadmap doc above; Phase 5 — content & narrative pass — is
+next). Playable now: a one-time party-creation
 screen (name each of the four slots, pick a class and a color-swatch
 portrait — placeholder art, real pixel art is still ahead — or accept
 the defaults to get the original Bram/Ysolde/Corvin/Maren party), then
@@ -110,8 +112,11 @@ Alchemist (heals itself instead of attacking on its telegraphed turn —
 burst it down or watch it undo your work). Attack/Defend/Ability/Flee/Item,
 status effects (Bleed and Fear are both live now; Poison/Silence are
 mechanically real but still await a source), victory/defeat/flee all
-handled. Two equipment pickups (a sword, a fire-resisting charm) and two
-consumables (an Oil Flask, an Antidote) are findable in the level. Gear
+handled. Five equipment pickups are spread across the descent (a sword,
+a fire-resisting charm, and a ring behind level 1's class-gated passage;
+a Grace-boosting buckler right at level 2's entrance; Physical-resisting
+armor in a breather alcove between level 3's two finale fights) and two
+consumables (an Oil Flask, an Antidote) are findable in level 1. Gear
 lands in the shared inventory unequipped — tap the always-visible
 "Inventory" button (or press `I`) to open a real inventory screen and
 choose who wears what, swapping gear freely between party members.
@@ -128,8 +133,7 @@ skipping straight back into the run. A "Bestiary" button there too
 opens a codex of every monster type encountered so far (win, lose, or
 flee all count), listing its resistances/weaknesses, any status effect
 its heavy strike inflicts, and whether it heals instead of attacking —
-so a repeat fight can be won on memory, not luck. A hand-tuned
-difficulty curve is the rest of Phase 4.
+so a repeat fight can be won on memory, not luck.
 
 ## Scripts
 

@@ -19,6 +19,13 @@ import type { LevelDef } from "./LevelDef";
 export const LEVEL_2_MAP = new DungeonMap(["#########", "#S......#", "##..#.###", "#########"]);
 
 export const LEVEL_2_ENTITIES: EntitySpawn[] = [
+  // Right at the entrance, unmissable -- the difficulty curve's first
+  // real gear reward (docs/08-roadmap-phases.md Phase 4's "tuned by
+  // hand"): a small Grace boost that helps against the Wraith's Fear
+  // (higher initiative, more chances to act before it does) waiting
+  // just ahead. `old-buckler` existed in Equipment.ts since Phase 3 but
+  // was never actually placed in a level until now.
+  { type: "equipmentItem", x: 2, z: 1, params: { itemId: "old-buckler" } },
   { type: "keyItem", x: 3, z: 2, params: { itemId: "iron-key", name: "an Iron Key" } },
   { type: "door", x: 6, z: 1, params: { keyId: "iron-key", locked: true } },
   { type: "stairsDown", x: 7, z: 1, params: { targetLevelId: "level-3" } },

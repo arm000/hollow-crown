@@ -9,13 +9,19 @@ import type { LevelDef } from "./LevelDef";
  * with no branch to duck down and no way around either monster
  * patrolling it — unlike level 1's Cinder Wretch, which sat in a room
  * the party could choose to avoid entirely. Both fights are mandatory,
- * back to back: the Cinder Wretch again (still a fair, earned finale
- * fight for whatever counter the party found on the way down), and the
- * Court Alchemist, new this batch, whose telegraphed heal-turn punishes
- * a party that hasn't learned to focus fire by now. The real,
- * run-ending `ExitTile` finally shows up here.
+ * back to back: the Court Alchemist first, whose telegraphed heal-turn
+ * punishes a party that hasn't learned to focus fire by now, then the
+ * Cinder Wretch again (still a fair, earned finale fight for whatever
+ * counter the party found on the way down). A third alcove between the
+ * two fights (added for docs/08-roadmap-phases.md Phase 4's "difficulty
+ * curve, tuned by hand") holds `hardened-leather` — existing since
+ * Phase 3 but, like `old-buckler`, never actually placed until now — a
+ * breather resource positioned exactly where the run needs it most: a
+ * defensive boost heading into the finale's second mandatory fight,
+ * already bruised from the first. The real, run-ending `ExitTile`
+ * finally shows up here.
  */
-export const LEVEL_3_MAP = new DungeonMap(["###########", "#S........#", "##.#####.##", "###########"]);
+export const LEVEL_3_MAP = new DungeonMap(["###########", "#S........#", "##.##.##.##", "###########"]);
 
 export const LEVEL_3_ENTITIES: EntitySpawn[] = [
   { type: "exit", x: 9, z: 1 },
@@ -27,6 +33,7 @@ export const LEVEL_3_ENTITIES: EntitySpawn[] = [
       text: "Claw marks score the stone at exactly shoulder height. Whatever made them was patient — this alcove wasn't a hiding spot, it was a blind.",
     },
   },
+  { type: "equipmentItem", x: 5, z: 2, params: { itemId: "hardened-leather" } },
   {
     type: "loreItem",
     x: 8,
