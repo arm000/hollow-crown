@@ -11,6 +11,7 @@ import {
   attemptMove,
   attemptTurn,
   equipItem,
+  facingToward,
   resolveStartPosition,
   unequipItem,
   type WorldState,
@@ -345,6 +346,12 @@ export class Game {
     this.visitedTiles.add(`${x},${z}`);
   }
 
+  /** Snaps the party to face `(targetX, targetZ)` instantly, no turn animation -- used when combat starts against a monster that isn't necessarily the direction the party happened to be looking (see `GameLogic.facingToward`'s doc comment). */
+  private faceToward(targetX: number, targetZ: number): void {
+    const facing = facingToward(this.player.gridX, this.player.gridZ, targetX, targetZ);
+    this.player.teleportTo(this.player.gridX, this.player.gridZ, facing);
+  }
+
   private refreshMinimap(): void {
     this.minimapUI.render(buildMinimapGrid(this.world.dungeon, this.world.interactables, this.visitedTiles), {
       x: this.player.gridX,
@@ -413,6 +420,14 @@ export class Game {
   private startCombat(monster: Monster): void {
     this.mode = "combat";
     this.input.clear(); // drop anything queued right as combat starts -- see InputManager.clear()
+    // Turning is locked for the whole fight along with everything else
+    // (see tick()'s mode gate) -- a monster can become adjacent from any
+    // side, not just the one the party happens to be facing, so without
+    // this the party could be fought entirely blind, staring at a wall
+    // while the combat log describes a monster they can't see. The
+    // corridor becoming the battlefield (docs/05-combat.md) only works
+    // if the party is actually looking at it.
+    this.faceToward(monster.x, monster.z);
     // Recorded here, not on victory/defeat/flee, so "win, lose, or
     // flee" all count as an encounter per docs/05-combat.md#the-bestiary
     // -- simply surviving the fight to any conclusion is enough.

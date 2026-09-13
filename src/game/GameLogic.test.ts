@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DungeonMap, STARTING_LEVEL } from "./DungeonMap";
-import { equipItem, resolveStartPosition, unequipItem, type WorldState } from "./GameLogic";
+import { equipItem, facingToward, resolveStartPosition, unequipItem, type WorldState } from "./GameLogic";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { Inventory } from "./Inventory";
 import { LEVELS } from "./levels";
@@ -149,5 +149,27 @@ describe("resolveStartPosition", () => {
       const position = resolveStartPosition(level.dungeon);
       expect(level.dungeon.isWall(position.x, position.z), `${level.id} start tile`).toBe(false);
     }
+  });
+});
+
+describe("facingToward", () => {
+  it.each([
+    [0, -1, 0], // north
+    [1, 0, 1], // east
+    [0, 1, 2], // south
+    [-1, 0, 3], // west
+  ] as const)("looking toward offset (%i, %i) resolves to facing %i", (dx, dz, expectedFacing) => {
+    expect(facingToward(5, 5, 5 + dx, 5 + dz)).toBe(expectedFacing);
+  });
+
+  it("a real shipped bug: combat locked all input including turning, so a monster adjacent from any side but the one the party happened to be facing was fought unseen (docs/05-combat.md's 'the corridor becomes the battlefield' only works if the party is looking at it) -- this is the fix, pinned for every adjacent direction at once", () => {
+    const directions: Array<[number, number]> = [
+      [0, -1],
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+    ];
+    const facings = directions.map(([dx, dz]) => facingToward(5, 5, 5 + dx, 5 + dz));
+    expect(new Set(facings).size).toBe(4); // every adjacent direction maps to its own distinct facing
   });
 });

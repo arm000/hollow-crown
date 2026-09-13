@@ -246,3 +246,29 @@ export function resolveStartPosition(
   const start = dungeon.findStart();
   return { x: start.x, z: start.z, facing: 1 }; // east -- the direction every hand-authored level's corridor extends from its 'S' tile
 }
+
+/**
+ * The cardinal facing that looks from `(fromX, fromZ)` toward
+ * `(toX, toZ)` — pulled out of `Game.startCombat` specifically so it's
+ * unit testable, the same reasoning as `resolveStartPosition` above: a
+ * real user-reported bug had combat lock every input, turning included,
+ * while the party stared at whatever wall they happened to be facing
+ * when a monster became adjacent from a different side entirely — "the
+ * corridor becomes the battlefield" (docs/05-combat.md) only works if
+ * the party is actually looking at it. `Game.startCombat` now snaps the
+ * party to face the monster the instant combat starts, using this.
+ * `(toX, toZ)` is always exactly one of the four adjacent tiles in
+ * practice (a monster only ever triggers combat within Manhattan
+ * distance 1, per `advanceWorldTurn` above) — the two identical tiles
+ * or an unreachable diagonal never actually occur, but still resolve to
+ * *some* facing rather than throwing, since this is a "look at the
+ * threat" cue, not a value worth crashing combat over if it's ever off.
+ */
+export function facingToward(fromX: number, fromZ: number, toX: number, toZ: number): Facing {
+  const dx = toX - fromX;
+  const dz = toZ - fromZ;
+  if (dz < 0) return 0; // north
+  if (dx > 0) return 1; // east
+  if (dz > 0) return 2; // south
+  return 3; // west (also the fallback for dx === 0 && dz === 0)
+}

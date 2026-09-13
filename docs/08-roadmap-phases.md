@@ -923,7 +923,20 @@ independently):
     the tile dead ahead — without extending the ray through them, so a
     side passage's entrance shows up without seeing further into it
     until that passage gets its own sightline.
-  - 278 tests passing.
+  - **Third follow-up fix (found via user report):** combat locks every
+    input for the whole fight, turning included (`tick()`'s `mode`
+    gate) — but a monster can become adjacent from any side, not just
+    whichever way the party happened to be facing, so a fight could
+    start with the party staring at a wall while the combat log
+    described a monster they couldn't see. `Game.startCombat` now
+    snaps the party to face the monster the instant combat starts, via
+    a new `GameLogic.facingToward(fromX, fromZ, toX, toZ)` — pulled out
+    into its own pure function, same reasoning as `resolveStartPosition`
+    after the earlier movement bug: `Game` itself has no test coverage
+    (it's the DOM/render shell), so the actual *decision* — which way
+    to face — needed to live somewhere testable, not buried in the
+    untestable glue that calls `player.teleportTo`.
+  - 283 tests passing.
 - ✅ Batch 3 — Procedural pixel art textures + the low-res rendering
   pipeline:
   - `Textures.ts` (new): `buildActOneMaterials(dungeon)` procedurally
