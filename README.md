@@ -53,7 +53,7 @@ src/
     DungeonMap.ts        ASCII level data + tile queries
     DungeonMesh.ts       builds floor/ceiling/wall geometry for a level
     Level.ts             level 1's entity/monster spawns (key, door, stairs, ...)
-    levels/              LevelDef.ts, level2.ts, level3.ts, index.ts (the LEVELS registry)
+    levels/              LevelDef.ts, level2.ts, level3.ts, level4.ts (boss arena), index.ts (the LEVELS registry)
     Player.ts            grid position, facing, move/turn animation, teleportTo (level transitions)
     InputManager.ts      keyboard/touch -> discrete action queue
     TouchControls.ts     on-screen movement/turn/interact buttons
@@ -68,7 +68,8 @@ src/
     SaveGame.ts          localStorage save/load: serialize/deserialize party+inventory+level+position
     interactables/       Door, Lever, PressurePlate, PushableBlock,
                          SecretWall, ClassGate, StairsDown, KeyItem,
-                         LoreItem, ExitTile, EquipmentPickup, InteractableManager
+                         LoreItem, NpcEncounter, ExitTile,
+                         EquipmentPickup, InteractableManager
     party/               Character, Party, roster.ts, PartyCreationUI.ts,
                          classes.ts (abilities), Equipment.ts, Leveling.ts
     monster/             Monster (patrol/detection AI + its combat turn),
@@ -90,26 +91,31 @@ playable build before the next one starts.
 ## Status
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
-E2E layer left), Phase 2 complete, Phase 3 complete, **Phase 4 complete**
-(see the roadmap doc above; Phase 5 — content & narrative pass — is
-next). Playable now: a one-time party-creation
-screen (name each of the four slots, pick a class and a color-swatch
-portrait — placeholder art, real pixel art is still ahead — or accept
-the defaults to get the original Bram/Ysolde/Corvin/Maren party), then
-grid movement (keyboard or touch) through a 3-level descent: level 1's
-hand-authored puzzle box (a mandatory key-and-door gate, an optional
+E2E layer left), Phase 2 complete, Phase 3 complete, Phase 4 complete,
+Phase 5 in progress (see the roadmap doc above). Playable now: a
+one-time party-creation screen (name each of the four slots, pick a
+class and a color-swatch portrait — placeholder art, real pixel art is
+still ahead — or accept the defaults to get the original
+Bram/Ysolde/Corvin/Maren party), then grid movement (keyboard or touch)
+through a 4-level descent, all of it Act 1 ("The Sunken Wards"): level
+1's hand-authored puzzle box (a mandatory key-and-door gate, an optional
 lever/plate/block bonus alcove, a secret wall, and a passage that only
-opens for a party with a Rogue along), then two smaller, more linear
-levels proving the descent mechanic itself — a `StairsDown` tile carries
-the party to the next level's own start tile, and only the final level's
-exit actually ends the run — with four monster types along the way with
-real turn-based combat: a Rot-thing (telegraphed heavy strike), a Cinder
-Wretch (resistant to Physical, weak to Fire — melee alone goes badly,
-the Mage's Firebolt turns it around), a Screeching Wraith (its heavy
-strike inflicts Fear, forcing a Defend next turn — the Resolve stat and
-Cleric's Cleanse finally have something to answer), and a Court
-Alchemist (heals itself instead of attacking on its telegraphed turn —
-burst it down or watch it undo your work). Attack/Defend/Ability/Flee/Item,
+opens for a party with a Rogue along), two smaller, more linear levels
+proving the descent mechanic itself — a `StairsDown` tile carries the
+party to the next level's own start tile — and a final open boss arena.
+Two sparse NPC encounters (a steward, a sentry naming the boss ahead)
+punctuate the corridors, and the current level's name shows in the HUD.
+Five monster types along the way, all with real turn-based combat: a
+Rot-thing (telegraphed heavy strike), a Cinder Wretch (resistant to
+Physical, weak to Fire — melee alone goes badly, the Mage's Firebolt
+turns it around), a Screeching Wraith (its heavy strike inflicts Fear,
+forcing a Defend next turn — the Resolve stat and Cleric's Cleanse
+finally have something to answer), a Court Alchemist (heals itself
+instead of attacking on its telegraphed turn — burst it down or watch it
+undo your work), and Steward Marrow, Act 1's boss — a "final exam"
+combining the Rot-thing's telegraph, the Wraith's Fear, and a
+Cinder-Wretch-shaped resistance profile (Physical-resistant, Holy-weak
+this time — Holy Water is the answer). Attack/Defend/Ability/Flee/Item,
 status effects (Bleed and Fear are both live now; Poison/Silence are
 mechanically real but still await a source), victory/defeat/flee all
 handled. Five equipment pickups are spread across the descent (a sword,

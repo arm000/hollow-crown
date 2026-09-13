@@ -125,6 +125,8 @@ export class Game {
     this.player.teleportTo(startPosition.x, startPosition.z, startPosition.facing);
     this.world = { player: this.player, inventory, party, worldClock, ...loaded };
     this.hud.updateParty(party.members);
+    this.hud.updateLevelName(firstLevel.name);
+    this.hud.showMessage(firstLevel.introMessage);
 
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
@@ -230,7 +232,12 @@ export class Game {
     const startPosition = resolveStartPosition(dungeon);
     this.player.teleportTo(startPosition.x, startPosition.z, startPosition.facing);
 
-    this.hud.showMessage("You descend deeper into the dungeon...");
+    this.hud.updateLevelName(level.name);
+    // For a level with a boss (level 4), this line *is* the mid-dungeon
+    // reveal (docs/02-setting-and-story.md's "a boss standing where you
+    // expected an empty hall") -- not a separate system, just this
+    // message landing at the right moment.
+    this.hud.showMessage(level.introMessage);
     this.hud.updateInventory(this.world.inventory.list());
   }
 

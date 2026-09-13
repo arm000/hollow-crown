@@ -15,17 +15,19 @@ describe("buildMonsters", () => {
         { type: "cinderWretch", x: 2, z: 2, patrolPoints: [{ x: 2, z: 2 }] },
         { type: "screechingWraith", x: 3, z: 3, patrolPoints: [{ x: 3, z: 3 }] },
         { type: "courtAlchemist", x: 4, z: 4, patrolPoints: [{ x: 4, z: 4 }] },
+        { type: "stewardMarrow", x: 5, z: 5, patrolPoints: [{ x: 5, z: 5 }] },
       ],
       OPEN_MAP,
       player,
     );
 
-    expect(monsters).toHaveLength(4);
+    expect(monsters).toHaveLength(5);
     expect(monsters[0].name).toBe("Rot-thing");
     expect(monsters[1].name).toBe("Cinder Wretch");
     expect(monsters[1].resistances.fire).toBe(2); // the Cinder Wretch's actual identity, not a placeholder
     expect(monsters[2].name).toBe("Screeching Wraith");
     expect(monsters[3].name).toBe("Court Alchemist");
+    expect(monsters[4].name).toBe("Steward Marrow");
   });
 
   it("returns an empty list for an empty spawn list", () => {
@@ -66,5 +68,22 @@ describe("createCourtAlchemist", () => {
 
     expect(heavy.damage).toBe(0);
     expect(alchemist.hp).toBeGreaterThan(hpBeforeHeal);
+  });
+});
+
+describe("createStewardMarrow", () => {
+  it("combines the Rot-thing's telegraph, the Wraith's Fear, and a Cinder-Wretch-shaped resistance profile", () => {
+    const [marrow] = buildMonsters(
+      [{ type: "stewardMarrow", x: 1, z: 1, patrolPoints: [{ x: 1, z: 1 }] }],
+      OPEN_MAP,
+      new Player(1, 1, 1, 2, 1),
+    );
+
+    expect(marrow.resistances.physical).toBeLessThan(1); // resistant, like the Cinder Wretch
+    expect(marrow.resistances.holy).toBeGreaterThan(1); // weak, but to Holy rather than Fire -- not the same trick again
+
+    const rng = new SeededRng(1);
+    marrow.takeCombatTurn(rng); // lighter hit
+    expect(marrow.takeCombatTurn(rng).statusEffect?.type).toBe("fear"); // the telegraphed strike
   });
 });

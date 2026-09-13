@@ -2,8 +2,15 @@ import { describe, expect, it } from "vitest";
 import { getLevel, LEVELS } from "./index";
 
 describe("LEVELS", () => {
-  it("has 3 levels, in descent order", () => {
-    expect(LEVELS.map((l) => l.id)).toEqual(["level-1", "level-2", "level-3"]);
+  it("has 4 levels, in descent order", () => {
+    expect(LEVELS.map((l) => l.id)).toEqual(["level-1", "level-2", "level-3", "level-4"]);
+  });
+
+  it("every level has a non-empty name and intro message (docs/08-roadmap-phases.md Phase 5)", () => {
+    for (const level of LEVELS) {
+      expect(level.name.length, `${level.id} name`).toBeGreaterThan(0);
+      expect(level.introMessage.length, `${level.id} introMessage`).toBeGreaterThan(0);
+    }
   });
 
   it("every non-final level's StairsDown points at the next level's id", () => {

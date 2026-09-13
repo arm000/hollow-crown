@@ -7,6 +7,7 @@ import { ExitTile } from "./ExitTile";
 import { KeyItem } from "./KeyItem";
 import { Lever } from "./Lever";
 import { LoreItem } from "./LoreItem";
+import { NpcEncounter } from "./NpcEncounter";
 import { PressurePlate } from "./PressurePlate";
 import { PushableBlock } from "./PushableBlock";
 import { SecretWall } from "./SecretWall";
@@ -56,6 +57,8 @@ function buildOne(spawn: EntitySpawn): Interactable {
     }
     case "loreItem":
       return new LoreItem(spawn.x, spawn.z, params.text as string);
+    case "npc":
+      return new NpcEncounter(spawn.x, spawn.z, params.name as string, params.line as string);
     case "classGate":
       return new ClassGate(
         spawn.x,

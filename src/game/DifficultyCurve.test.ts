@@ -9,9 +9,10 @@ import { Player } from "./Player";
 /**
  * A data-driven regression guard for the difficulty curve's XP pacing
  * (docs/08-roadmap-phases.md Phase 4's "a real difficulty curve...
- * tuned by hand"): pins how far a character actually levels up across
- * the 3-level descent, both for a full clear and for skipping every
- * optional fight/secret, so a future tweak to any one `xpReward` or
+ * tuned by hand", extended in Phase 5 to include the boss level): pins
+ * how far a character actually levels up across the full 4-level
+ * descent, both for a full clear and for skipping every optional
+ * fight/secret, so a future tweak to any one `xpReward` or
  * `xpToNextLevel` can't silently flatten or spike the curve without a
  * test noticing. Doesn't play out real combat (that's what the
  * per-encounter playthrough tests are for) -- just sums the actual XP
@@ -42,20 +43,23 @@ describe("descent XP pacing", () => {
     expect(character.level).toBeGreaterThanOrEqual(4);
   });
 
-  it("skipping every optional fight and secret still reaches level 3 by the final level", () => {
+  it("skipping every optional fight and secret still reaches level 4 by the boss", () => {
     // Optional, per Level.ts's own comments: level 1's Cinder Wretch
     // (sits in the lever spur's room, not the main corridor) and its
-    // secret wall. Everything else is mandatory: level 1's Rot-thing
-    // and every monster in level 2/level 3 all patrol a single-tile-wide
-    // corridor with no way around.
+    // secret wall. Everything else is mandatory: level 1's Rot-thing,
+    // every monster in level 2/level 3 (all patrol a single-tile-wide
+    // corridor with no way around), and level 4's Steward Marrow --
+    // technically walkable-around in that open room, but the boss this
+    // whole descent builds to, not content a real playthrough skips.
     const mandatoryXp =
       monstersOf("level-1").find((m) => m.name === "Rot-thing")!.xpReward +
       monstersOf("level-2").reduce((sum, m) => sum + m.xpReward, 0) +
-      monstersOf("level-3").reduce((sum, m) => sum + m.xpReward, 0);
+      monstersOf("level-3").reduce((sum, m) => sum + m.xpReward, 0) +
+      monstersOf("level-4").reduce((sum, m) => sum + m.xpReward, 0);
 
     const character = newTestCharacter();
     gainXp(character, mandatoryXp);
 
-    expect(character.level).toBe(3);
+    expect(character.level).toBe(4);
   });
 });

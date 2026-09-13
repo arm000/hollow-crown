@@ -53,6 +53,8 @@ export const LEVEL_2_MONSTERS: MonsterSpawn[] = [
 
 export const LEVEL_2: LevelDef = {
   id: "level-2",
+  name: "The Sunken Wards — Deeper Cellars",
+  introMessage: "The air changes below the wards proper. Less lived-in. Less a home, more a holding cell.",
   dungeon: LEVEL_2_MAP,
   entities: LEVEL_2_ENTITIES,
   monsters: LEVEL_2_MONSTERS,

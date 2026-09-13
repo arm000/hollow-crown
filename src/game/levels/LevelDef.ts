@@ -10,6 +10,10 @@ import type { MonsterSpawn } from "../monster/bestiary";
  */
 export interface LevelDef {
   id: string;
+  /** Shown in the HUD party line while on this level (docs/08-roadmap-phases.md Phase 5's narrative pass) — environmental/atmospheric, per docs/02-setting-and-story.md#how-story-is-delivered, not required reading. */
+  name: string;
+  /** Shown once, the moment the party arrives (initial load or via `StairsDown`) — the "no full cutscenes, big beats happen in the first-person view itself" delivery docs/02-setting-and-story.md calls for. For a level with a boss, this line *is* the reveal ("a boss standing where you expected an empty hall"), not a separate system. */
+  introMessage: string;
   dungeon: DungeonMap;
   entities: EntitySpawn[];
   monsters: MonsterSpawn[];

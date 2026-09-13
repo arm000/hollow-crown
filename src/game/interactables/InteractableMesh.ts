@@ -26,6 +26,8 @@ export function createInteractableMesh(entity: Interactable, tileSize: number): 
       return buildLever(entity, tileSize);
     case "loreItem":
       return buildLoreItem(entity, tileSize);
+    case "npc":
+      return buildNpc(entity, tileSize);
     case "pushableBlock":
       return buildPushableBlock(entity, tileSize);
     case "pressurePlate":
@@ -117,6 +119,20 @@ function buildLever(entity: Interactable, tileSize: number): THREE.Object3D {
     new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.5, metalness: 0.4 }),
   );
   mesh.position.set(entity.x * tileSize, 0.5, entity.z * tileSize);
+  return mesh;
+}
+
+function buildNpc(entity: Interactable, tileSize: number): THREE.Object3D {
+  // A standing, person-shaped silhouette -- deliberately not a monster
+  // capsule's low, ready-to-lunge posture, and not a lore page's flat
+  // plane. A dull, worn-cloth color rather than anything vivid: someone
+  // who's been standing here a very long time.
+  const height = 1.7;
+  const mesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.3, height - 0.6, 4, 8),
+    new THREE.MeshStandardMaterial({ color: 0x7a7264, roughness: 1 }),
+  );
+  mesh.position.set(entity.x * tileSize, height / 2, entity.z * tileSize);
   return mesh;
 }
 

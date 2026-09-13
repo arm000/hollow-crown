@@ -813,6 +813,67 @@ audio, and narrative content itself is **not** automatically verified —
 only the underlying logic and data are. "Does this feel tonally right"
 stays a human judgment call.
 
+**Status:** In progress, shipped in batches (each pushed and deployed
+independently):
+
+- ✅ Batch 1 — Story integration + boss fight:
+  - The existing 3-level descent is now explicitly Act 1, "The Sunken
+    Wards," per [02-setting-and-story.md](02-setting-and-story.md#structure)
+    — `LevelDef` gained `name` (shown in a small HUD line) and
+    `introMessage` (shown the moment the party arrives, via the initial
+    load and every `StairsDown`), giving every level a place-name and
+    an environmental-storytelling beat without a separate dialogue/text
+    system.
+  - `interactables/NpcEncounter.ts` (new): a "sparse NPC encounter"
+    (docs/02-setting-and-story.md#how-story-is-delivered) — mechanically
+    almost identical to `LoreItem` (interact -> a fixed, re-readable
+    line) but its own `kind`, so a figure reads distinctly from an inert
+    page and could later gain conditional hostility without conflating
+    the two. Two placed: a steward in level 1's main corridor, a sentry
+    in level 3's, the latter naming the boss ahead by name.
+  - `monster/bestiary.ts` gained `createStewardMarrow`: Act 1's boss,
+    assembled entirely from mechanics already taught rather than a new
+    gimmick, per
+    [05-combat.md](05-combat.md#a-teaching-ladder-illustrative-not-final-content) —
+    the Rot-thing's telegraphed heavy strike, the Screeching Wraith's
+    Fear on that strike, and a Cinder-Wretch-shaped resistance profile
+    (resistant to Physical, but weak to Holy rather than Fire, so the
+    answer isn't just the same trick again — Holy Water is currently
+    the only in-game Holy source, there's no Holy spell yet). Higher
+    HP/Might than anything before it.
+    `StewardMarrowEncounter.playthrough.test.ts` proves all three
+    mechanics through a real `CombatEngine` fight, matching the
+    per-encounter coverage every earlier monster type got.
+  - `levels/level4.ts` (new): Act 1's boss arena — deliberately a real
+    open room rather than another one-tile corridor, since the "no full
+    cutscenes... a boss standing where you expected an empty hall" beat
+    (docs/02-setting-and-story.md) needs somewhere to actually see
+    before the fight starts. Its `introMessage` delivers that reveal and
+    the boss's entrance in the same line, per that doc's "environmental
+    storytelling first" — not a separate reveal system. Level 3's old
+    run-ending `ExitTile` became a `StairsDown` to level 4; the real
+    exit now lives there alone.
+  - `MultiLevelDescent.playthrough.test.ts` and `DifficultyCurve.test.ts`
+    extended to the new level 4 and its boss — the full-descent
+    playthrough now ends by crossing the boss arena to the real exit,
+    and the XP-pacing regression guard now expects a full clear (Steward
+    Marrow's 50 XP included) to reach at least level 4, and a
+    mandatory-only run (the boss counted as mandatory — technically
+    walkable-around in that open room, but not content a real
+    playthrough skips) to reach level 4 as well.
+  - 258 tests passing.
+- ⬜ Batch 2 — Minimap (top-down render sourced from level data, with a
+  unit test on the room/corridor data mapping).
+- ⬜ Batch 3 — Procedural pixel art textures (canvas-drawn, nearest-
+  filtered, per [10-visual-style-guide.md](10-visual-style-guide.md)'s
+  low-internal-resolution pipeline) replacing the flat wall/floor/
+  ceiling colors, plus varied lighting per room.
+- ⬜ Batch 4 — Procedural audio (Web Audio API oscillators/noise, no
+  external asset files): footsteps, combat SFX, an ambient loop.
+- ⬜ Batch 5 (stretch, if still wanted) — fully-unidentified items and
+  cursed gear, the level-2 discovery tier from
+  [06-items-and-equipment.md](06-items-and-equipment.md#discovery-not-explanation).
+
 ---
 
 ## Phase 6 — Full Campaign & Release Polish

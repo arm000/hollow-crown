@@ -4,27 +4,35 @@ import type { MonsterSpawn } from "../monster/bestiary";
 import type { LevelDef } from "./LevelDef";
 
 /**
- * The third and final level of the opening descent
- * (docs/08-roadmap-phases.md Phase 4): a single one-tile-wide corridor
- * with no branch to duck down and no way around either monster
- * patrolling it — unlike level 1's Cinder Wretch, which sat in a room
- * the party could choose to avoid entirely. Both fights are mandatory,
- * back to back: the Court Alchemist first, whose telegraphed heal-turn
- * punishes a party that hasn't learned to focus fire by now, then the
- * Cinder Wretch again (still a fair, earned finale fight for whatever
- * counter the party found on the way down). A third alcove between the
- * two fights (added for docs/08-roadmap-phases.md Phase 4's "difficulty
+ * The third level of the descent: a single one-tile-wide corridor with
+ * no branch to duck down and no way around either monster patrolling
+ * it — unlike level 1's Cinder Wretch, which sat in a room the party
+ * could choose to avoid entirely. Both fights are mandatory, back to
+ * back: the Court Alchemist first, whose telegraphed heal-turn punishes
+ * a party that hasn't learned to focus fire by now, then the Cinder
+ * Wretch again (still a fair, earned finale fight for whatever counter
+ * the party found on the way down). A third alcove between the two
+ * fights (added for docs/08-roadmap-phases.md Phase 4's "difficulty
  * curve, tuned by hand") holds `hardened-leather` — existing since
  * Phase 3 but, like `old-buckler`, never actually placed until now — a
  * breather resource positioned exactly where the run needs it most: a
- * defensive boost heading into the finale's second mandatory fight,
- * already bruised from the first. The real, run-ending `ExitTile`
- * finally shows up here.
+ * defensive boost heading into this level's second mandatory fight,
+ * already bruised from the first. A stairway down to level 4 (Phase 5's
+ * boss arena) replaces what used to be this level's run-ending exit.
  */
 export const LEVEL_3_MAP = new DungeonMap(["###########", "#S........#", "##.##.##.##", "###########"]);
 
 export const LEVEL_3_ENTITIES: EntitySpawn[] = [
-  { type: "exit", x: 9, z: 1 },
+  { type: "stairsDown", x: 9, z: 1, params: { targetLevelId: "level-4" } },
+  {
+    type: "npc",
+    x: 2,
+    z: 1,
+    params: {
+      name: "An Old Sentry",
+      line: "Marrow still walks the far hall. Tell them supper's ready, if you get the chance. Tell them it's been ready a long while.",
+    },
+  },
   {
     type: "loreItem",
     x: 2,
@@ -67,6 +75,8 @@ export const LEVEL_3_MONSTERS: MonsterSpawn[] = [
 
 export const LEVEL_3: LevelDef = {
   id: "level-3",
+  name: "The Sunken Wards — Old Foundations",
+  introMessage: "The foundations groan under six generations of sinking stone. Something down here has been guarding it a long time.",
   dungeon: LEVEL_3_MAP,
   entities: LEVEL_3_ENTITIES,
   monsters: LEVEL_3_MONSTERS,

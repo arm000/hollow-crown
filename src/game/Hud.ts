@@ -9,6 +9,7 @@ import type { Character } from "./party/Character";
  */
 export class Hud {
   private readonly messageEl: HTMLElement;
+  private readonly levelEl: HTMLElement;
   private readonly inventoryEl: HTMLElement;
   private readonly partyEl: HTMLElement;
   private readonly winScreenEl: HTMLElement;
@@ -17,6 +18,7 @@ export class Hud {
 
   constructor(doc: Document = document) {
     this.messageEl = getRequiredElement(doc, "hud-message");
+    this.levelEl = getRequiredElement(doc, "hud-level");
     this.inventoryEl = getRequiredElement(doc, "hud-inventory");
     this.partyEl = getRequiredElement(doc, "hud-party");
     this.winScreenEl = getRequiredElement(doc, "win-screen");
@@ -26,6 +28,11 @@ export class Hud {
 
   showMessage(text: string): void {
     this.messageEl.textContent = text;
+  }
+
+  /** The current level's name (docs/08-roadmap-phases.md Phase 5) — environmental flavor, per docs/02-setting-and-story.md, not required reading. */
+  updateLevelName(name: string): void {
+    this.levelEl.textContent = name;
   }
 
   updateInventory(itemNames: string[]): void {

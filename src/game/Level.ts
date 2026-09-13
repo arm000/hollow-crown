@@ -48,11 +48,24 @@ import type { MonsterSpawn } from "./monster/bestiary";
  *   in docs/03-party-and-characters.md. Guards one more equipment
  *   pickup, entirely optional and bypassable like everything past the
  *   main corridor.
+ * - An NPC encounter (docs/08-roadmap-phases.md Phase 5,
+ *   docs/02-setting-and-story.md#how-story-is-delivered): a sparse,
+ *   non-hostile figure worth one memorable exchange, unmissable in the
+ *   main corridor.
  */
 export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
   { type: "keyItem", x: 3, z: 2, params: { itemId: "rusted-key", name: "a Rusted Key" } },
   { type: "door", x: 6, z: 1, params: { keyId: "rusted-key", locked: true } },
   { type: "stairsDown", x: 7, z: 1, params: { targetLevelId: "level-2" } },
+  {
+    type: "npc",
+    x: 3,
+    z: 1,
+    params: {
+      name: "A Gaunt Steward",
+      line: "The masters will be down for supper. They are always almost down for supper.",
+    },
+  },
 
   { type: "equipmentItem", x: 2, z: 3, params: { itemId: "rusted-sword" } },
   { type: "equipmentItem", x: 4, z: 4, params: { itemId: "ember-charm" } },

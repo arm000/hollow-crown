@@ -137,8 +137,52 @@ export function createCourtAlchemist(
   );
 }
 
+/**
+ * Steward Marrow (docs/08-roadmap-phases.md Phase 5): Act 1's boss,
+ * guarding the way down out of the Sunken Wards. Per
+ * docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content's
+ * "the boss should combine mechanics from 2-3 earlier monster types
+ * rather than introduce an unrelated new gimmick," this fight is
+ * assembled entirely from mechanics the party has already met: the
+ * Rot-thing's telegraphed heavy strike (baseline), the Screeching
+ * Wraith's Fear on that heavy strike, and a Cinder-Wretch-shaped
+ * resistance profile — resistant to Physical, but weak to Holy rather
+ * than Fire, so the exact answer isn't just "the same trick again."
+ * Higher HP/Might than anything before it, befitting "everything
+ * you've learned, at once."
+ */
+export function createStewardMarrow(
+  x: number,
+  z: number,
+  patrolPoints: GridPoint[],
+  dungeon: DungeonMap,
+  player: Player,
+): Monster {
+  return new Monster(
+    {
+      name: "Steward Marrow",
+      x,
+      z,
+      patrolPoints,
+      detectionRadius: 5,
+      maxHp: 40,
+      might: 5,
+      initiativeStat: 5,
+      resistances: { physical: 0.6, holy: 1.5 },
+      flavor: {
+        light: "raises a rusted ceremonial blade, still standing at their post!",
+        heavy: "brings the blade down with the full weight of six lost generations!",
+      },
+      heavyStatusEffect: { type: "fear", turnsRemaining: 2 },
+      xpReward: 50,
+    },
+    dungeon,
+    player,
+  );
+}
+
 /** Every monster type a level's data can spawn — adding a new one here is one line, not a change to `Game.ts`. */
-export type MonsterTypeId = "rotThing" | "cinderWretch" | "screechingWraith" | "courtAlchemist";
+export type MonsterTypeId = "rotThing" | "cinderWretch" | "screechingWraith" | "courtAlchemist" | "stewardMarrow";
 
 /** A level-data description of one monster placement, mirroring `EntitySpawn` for interactables (see `interactables/types.ts`) — plain data, not a constructed `Monster`, so level files stay pure data too. */
 export interface MonsterSpawn {
@@ -160,6 +204,8 @@ export function buildMonsters(spawns: MonsterSpawn[], dungeon: DungeonMap, playe
         return createScreechingWraith(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
       case "courtAlchemist":
         return createCourtAlchemist(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
+      case "stewardMarrow":
+        return createStewardMarrow(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
     }
   });
 }

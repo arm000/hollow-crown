@@ -10,9 +10,10 @@ import { WorldClock } from "./WorldClock";
 /**
  * The Phase 4 "headless scripted playthrough of the full multi-level
  * descent end to end"
- * (docs/08-roadmap-phases.md#phase-4--multi-level-descent--persistence):
- * proves the chain from level 1 through level 3 to the real win
- * condition, driving the exact same `attemptMove`/`attemptInteract`
+ * (docs/08-roadmap-phases.md#phase-4--multi-level-descent--persistence),
+ * extended in Phase 5 to cover the boss arena added at the end: proves
+ * the chain from level 1 through level 4 to the real win condition,
+ * driving the exact same `attemptMove`/`attemptInteract`
  * functions `Game` calls, and swapping `world.dungeon`/`interactables`
  * on a `levelTransition` the same way `Game.transitionToLevel` does
  * (minus the Three.js scene it also has to rebuild, which is outside
@@ -60,7 +61,7 @@ function move(world: WorldState, dx: number, dz: number) {
 }
 
 describe("Multi-level descent playthrough (headless)", () => {
-  it("descends from level 1 through level 3 and reaches the real exit", () => {
+  it("descends from level 1 through level 4 and reaches the real exit", () => {
     const world = newWorld();
 
     // Level 1: fetch the key, unlock the door, take the stairs down.
@@ -101,11 +102,25 @@ describe("Multi-level descent playthrough (headless)", () => {
     expect(world.player.gridZ).toBe(1);
     expect(world.dungeon).toBe(getLevel("level-3").dungeon);
 
-    // Level 3: a straight corridor to the real, run-ending exit -- no key needed.
+    // Level 3: a straight corridor to the stairs down -- no key needed.
     for (let step = 0; step < 7; step++) {
       expect(move(world, 1, 0).moved).toBe(true);
     }
-    const winningMove = move(world, 1, 0); // (8,1) -> (9,1): the exit
+    const toLevel4 = move(world, 1, 0); // (8,1) -> (9,1): stairs down
+    expect(toLevel4.won).toBe(false);
+    expect(toLevel4.levelTransition).toBe("level-4");
+    expect(world.player.gridX).toBe(1);
+    expect(world.player.gridZ).toBe(1);
+    expect(world.dungeon).toBe(getLevel("level-4").dungeon);
+
+    // Level 4: the boss arena -- cross the open hall to the real, run-ending exit.
+    for (let step = 0; step < 6; step++) {
+      expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (7,1)
+    }
+    for (let step = 0; step < 3; step++) {
+      expect(move(world, 0, 1).moved).toBe(true); // (7,1) -> (7,4)
+    }
+    const winningMove = move(world, 0, 1); // (7,4) -> (7,5): the exit
     expect(winningMove.moved).toBe(true);
     expect(winningMove.won).toBe(true);
     expect(winningMove.levelTransition).toBeUndefined();
