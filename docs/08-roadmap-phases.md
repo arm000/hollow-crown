@@ -280,6 +280,53 @@ losing or costly outcome, then the same fight substituting a Fire spell
 or Oil Flask and assert a clearly better one — an actual pass/fail
 check, not a design intention.
 
+**Status:** In progress, shipped in batches (each pushed and deployed
+independently):
+
+- ✅ Batch 1 — Damage types, abilities, status effects, and a second
+  monster type:
+  - `DamageType.ts`: Physical/Fire/Blight/Holy, a resistance/weakness
+    multiplier applied via `applyResistance`. `Character` and `Monster`
+    both carry a `resistances` map (empty by default — equipment is the
+    only source so far, and none exists yet).
+  - `StatusEffect.ts`: all five effects (Poison, Stun, Bleed, Fear,
+    Silence) fully mechanically wired into `CombatEngine` — DoT
+    ticking, skip-turn, forced-defend, ability-block — and unit tested
+    directly. Only Bleed has an actual in-game source this phase (the
+    Rogue's ability); the rest await a monster or item that inflicts
+    them (Phase 4's Screeching Wraith is exactly that for Fear). The
+    *mechanics* are real now, not placeholder — only some of their
+    in-game triggers are staged for later.
+  - `classes.ts` + `CombatEngine`: one ability per class, the "ability"
+    combat action goes live. Warrior's Guard (redirect + mitigate),
+    Rogue's Precision Strike (ignores resistance, applies Bleed),
+    Mage's Firebolt (Fire damage), Cleric's Cleanse (clears status
+    effects) — each answers something specific, per the counterplay
+    principle in [03-party-and-characters.md](03-party-and-characters.md#classes).
+  - `WorldState.monster` generalized to `monsters: Monster[]` — the
+    game now supports more than one monster type coexisting in a level
+    (this also directly sets up Phase 4's roster expansion).
+    `bestiary.ts` holds monster-type factories; the Cinder Wretch
+    (Physical-resistant, Fire-weak) now patrols the room by the lever,
+    alongside Phase 2's Rot-thing.
+  - Found and fixed a real timing bug while testing this: status
+    effects were ticking (and expiring) at the *start* of the round
+    they were applied in, so a 1-turn Stun/Fear/Silence would expire
+    before it ever blocked anything. Fixed by ticking at round *end*
+    instead — caught by the tests written specifically to exercise
+    these mechanics, exactly the point of writing them.
+  - `CinderWretchEncounter.playthrough.test.ts`: the phase's specific
+    automated-verification ask — a solo, fragile Mage loses (or at best
+    doesn't cleanly win) fighting the Wretch with melee alone under a
+    fixed seed, and wins decisively under the *same* seed by using
+    Firebolt instead. 148 tests passing.
+- ⬜ Batch 2 — Equipment slots + stat modifiers + slotted inventory UI.
+- ⬜ Batch 3 — Item combat action + combat-countering consumables (Oil
+  Flask, Antidote, Bandages, Smelling Salts, Holy Water).
+- ⬜ Batch 4 — Leveling (XP curve, level-up), a minimal party-creation/
+  naming screen, and a non-combat puzzle gated by a class ability or
+  found gear.
+
 ---
 
 ## Phase 4 — Multi-Level Descent & Persistence

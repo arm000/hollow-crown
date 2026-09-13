@@ -20,15 +20,18 @@ export interface WorldState {
   readonly inventory: Inventory;
   readonly party: Party;
   readonly worldClock: WorldClock;
-  readonly monster: Monster;
+  /** Every monster placed in the current level — Phase 3 onward supports more than one type coexisting (docs/08-roadmap-phases.md Phase 4 builds further on this). Combat is still always one-monster-at-a-time. */
+  readonly monsters: Monster[];
 }
 
-/** Ticks the world-turn clock once (docs/04-exploration-and-world.md#world-turns) and reports whether combat should now begin — the monster is alive and adjacent to (or on) the party's tile. */
-function advanceWorldTurn(world: WorldState): boolean {
+/** Ticks the world-turn clock once (docs/04-exploration-and-world.md#world-turns) and reports which monster (if any) is now adjacent to (or on) the party's tile — combat starts with that one. */
+function advanceWorldTurn(world: WorldState): Monster | undefined {
   world.worldClock.advance();
-  if (world.monster.isDown) return false;
-  const distance = Math.abs(world.monster.x - world.player.gridX) + Math.abs(world.monster.z - world.player.gridZ);
-  return distance <= 1;
+  return world.monsters.find((monster) => {
+    if (monster.isDown) return false;
+    const distance = Math.abs(monster.x - world.player.gridX) + Math.abs(monster.z - world.player.gridZ);
+    return distance <= 1;
+  });
 }
 
 export interface MoveOutcome {
@@ -39,8 +42,8 @@ export interface MoveOutcome {
   /** Set if a pushable block moved as a result of this action — for updating its visual. */
   pushedBlock?: { from: { x: number; z: number }; to: { x: number; z: number } };
   won: boolean;
-  /** True if this action's world-turn tick left the monster adjacent to (or on) the party — combat starts. */
-  combatTriggered: boolean;
+  /** Set if this action's world-turn tick left a monster adjacent to (or on) the party — combat starts against that one. */
+  combatTriggeredBy?: Monster;
 }
 
 /** True if (x, z) blocks movement — a registered interactable overrides the raw grid for its own tile, falling back to raw walls otherwise. */
@@ -81,22 +84,22 @@ export function attemptMove(world: WorldState, dx: number, dz: number): MoveOutc
   if (targetEntity?.kind === "pushableBlock") {
     const pushResult = tryPushBlock(world, nx, nz, dx, dz);
     if (!pushResult.pushed) {
-      return { moved: false, message: targetEntity.blockedMessage?.(), won: false, combatTriggered: false };
+      return { moved: false, message: targetEntity.blockedMessage?.(), won: false };
     }
     pushedBlock = { from: { x: nx, z: nz }, to: pushResult.to! };
   } else if (isBlocked(world, nx, nz)) {
-    return { moved: false, message: targetEntity?.blockedMessage?.(), won: false, combatTriggered: false };
+    return { moved: false, message: targetEntity?.blockedMessage?.(), won: false };
   }
 
   // A generic Passable object, not `world.dungeon` directly: the raw grid
   // never changes, so a revealed secret wall or an unlocked door only
   // actually opens up if the check here goes through `isBlocked` too.
   if (!world.player.tryMove(dx, dz, { isWall: (x, z) => isBlocked(world, x, z) })) {
-    return { moved: false, won: false, combatTriggered: false };
+    return { moved: false, won: false };
   }
 
   world.interactables.reevaluatePressurePlates(world.player.gridX, world.player.gridZ);
-  const combatTriggered = advanceWorldTurn(world);
+  const combatTriggeredBy = advanceWorldTurn(world);
 
   const result = world.interactables.handleEnter(nx, nz, { inventory: world.inventory });
   return {
@@ -105,7 +108,7 @@ export function attemptMove(world: WorldState, dx: number, dz: number): MoveOutc
     enteredTile: { x: nx, z: nz },
     pushedBlock,
     won: result.isExit,
-    combatTriggered,
+    combatTriggeredBy,
   };
 }
 
@@ -113,7 +116,7 @@ export interface InteractOutcome {
   message?: string;
   /** The tile whose interactable actually responded, if any — for refreshing its visual. */
   targetTile?: { x: number; z: number };
-  combatTriggered: boolean;
+  combatTriggeredBy?: Monster;
 }
 
 /**
@@ -133,23 +136,23 @@ export function attemptInteract(world: WorldState): InteractOutcome {
   const facedZ = gridZ + fz;
   const facedMessage = world.interactables.handleInteract(facedX, facedZ, ctx);
   if (facedMessage !== undefined) {
-    return { message: facedMessage, targetTile: { x: facedX, z: facedZ }, combatTriggered: advanceWorldTurn(world) };
+    return { message: facedMessage, targetTile: { x: facedX, z: facedZ }, combatTriggeredBy: advanceWorldTurn(world) };
   }
 
   const hereMessage = world.interactables.handleInteract(gridX, gridZ, ctx);
   if (hereMessage !== undefined) {
-    return { message: hereMessage, targetTile: { x: gridX, z: gridZ }, combatTriggered: advanceWorldTurn(world) };
+    return { message: hereMessage, targetTile: { x: gridX, z: gridZ }, combatTriggeredBy: advanceWorldTurn(world) };
   }
 
-  return { message: "Nothing to interact with here.", combatTriggered: advanceWorldTurn(world) };
+  return { message: "Nothing to interact with here.", combatTriggeredBy: advanceWorldTurn(world) };
 }
 
 export interface TurnOutcome {
-  combatTriggered: boolean;
+  combatTriggeredBy?: Monster;
 }
 
 /** Turning always succeeds once called (Game only calls this when the player isn't mid-animation), and — like every action — costs one world turn. */
 export function attemptTurn(world: WorldState, direction: 1 | -1): TurnOutcome {
   world.player.turn(direction);
-  return { combatTriggered: advanceWorldTurn(world) };
+  return { combatTriggeredBy: advanceWorldTurn(world) };
 }

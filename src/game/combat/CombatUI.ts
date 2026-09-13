@@ -1,10 +1,13 @@
 import type { CombatActionChoice, CombatEngine } from "./CombatEngine";
 import type { Monster } from "../monster/Monster";
+import { CLASS_ABILITIES } from "../party/classes";
+import type { Character } from "../party/Character";
 
 const ACTIONS: Array<{ choice: CombatActionChoice; label: string; key: string }> = [
   { choice: "attack", label: "Attack", key: "Digit1" },
   { choice: "defend", label: "Defend", key: "Digit2" },
-  { choice: "flee", label: "Flee", key: "Digit3" },
+  { choice: "ability", label: "Ability", key: "Digit3" },
+  { choice: "flee", label: "Flee", key: "Digit4" },
 ];
 
 /**
@@ -19,6 +22,7 @@ export class CombatUI {
   private readonly statusEl: HTMLElement;
   private readonly logEl: HTMLElement;
   private readonly actionsEl: HTMLElement;
+  private readonly buttons: Map<CombatActionChoice, HTMLButtonElement> = new Map();
   private active = false;
 
   constructor(private readonly onAction: (choice: CombatActionChoice) => void) {
@@ -41,9 +45,11 @@ export class CombatUI {
       button.textContent = label;
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
+        if (button.disabled) return;
         this.onAction(choice);
       });
       this.actionsEl.appendChild(button);
+      this.buttons.set(choice, button);
     }
 
     this.root.append(this.statusEl, this.logEl, this.actionsEl);
@@ -53,6 +59,8 @@ export class CombatUI {
       if (!this.active) return;
       const action = ACTIONS.find((a) => a.key === event.code);
       if (!action) return;
+      const button = this.buttons.get(action.choice);
+      if (button?.disabled) return;
       event.preventDefault();
       this.onAction(action.choice);
     });
@@ -73,5 +81,16 @@ export class CombatUI {
     this.statusEl.textContent = `${monster.name}: ${monster.hp}/${monster.maxHp} HP`;
     this.logEl.textContent = engine.log.slice(-6).join("\n");
     this.actionsEl.hidden = !engine.isPartyTurn;
+    if (!engine.isPartyTurn) return;
+
+    const actor = engine.currentActor as Character;
+    const ability = CLASS_ABILITIES[actor.classId];
+    const abilityButton = this.buttons.get("ability");
+    if (abilityButton) {
+      const canAfford = actor.mana >= ability.manaCost;
+      abilityButton.disabled = !canAfford;
+      abilityButton.textContent = ability.manaCost > 0 ? `${ability.name} (${ability.manaCost} MP)` : ability.name;
+      abilityButton.title = ability.description;
+    }
   }
 }

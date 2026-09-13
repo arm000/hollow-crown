@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ResistanceMap } from "./DamageType";
 import { DungeonMap } from "../DungeonMap";
 import { Monster } from "../monster/Monster";
 import { Character } from "../party/Character";
@@ -16,7 +17,7 @@ function newParty(): Party {
   ]);
 }
 
-function newMonster(overrides: Partial<{ maxHp: number; might: number }> = {}): Monster {
+function newMonster(overrides: Partial<{ maxHp: number; might: number; resistances: ResistanceMap }> = {}): Monster {
   return new Monster(
     {
       name: "Rot-thing",
@@ -27,6 +28,7 @@ function newMonster(overrides: Partial<{ maxHp: number; might: number }> = {}): 
       maxHp: overrides.maxHp ?? 20,
       might: overrides.might ?? 3,
       initiativeStat: 3,
+      resistances: overrides.resistances,
     },
     OPEN_MAP,
     new Player(1, 1, 1, 2, 1),
@@ -123,5 +125,172 @@ describe("CombatEngine", () => {
       engine.submitAction("attack");
       engine.submitAction("attack");
     }).not.toThrow();
+  });
+
+  it("a normal attack is reduced by the monster's Physical resistance", () => {
+    const party = new Party([
+      new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0),
+    ]);
+    const monster = newMonster({ maxHp: 9999, resistances: { physical: 0.5 } });
+    const engine = new CombatEngine(party, monster, new SeededRng(1));
+    if (engine.isPartyTurn) engine.submitAction("attack");
+    const dealt = 9999 - monster.hp;
+    expect(dealt).toBeLessThanOrEqual(Math.round((8 + 4) * 0.5)); // might(8) + max roll(4), halved
+  });
+
+  describe("abilities", () => {
+    it("Rogue's Precision Strike ignores Physical resistance and applies Bleed", () => {
+      const rogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
+      const party = new Party([rogue]);
+      const monster = newMonster({ maxHp: 9999, resistances: { physical: 0.1 } }); // would nearly nullify a normal attack
+      const engine = new CombatEngine(party, monster, new SeededRng(4));
+
+      if (engine.isPartyTurn) engine.submitAction("ability");
+
+      const dealt = 9999 - monster.hp;
+      expect(dealt).toBeGreaterThanOrEqual(rogue.stats.might); // full damage, not reduced to ~10%
+      expect(monster.statusEffects.has("bleed")).toBe(true);
+    });
+
+    it("Mage's Firebolt is amplified by a Fire weakness and spends mana", () => {
+      const mage = new Character("Corvin", "mage", "back", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 14, 20);
+      const party = new Party([mage]);
+      const monster = newMonster({ maxHp: 9999, resistances: { fire: 2 } });
+      const engine = new CombatEngine(party, monster, new SeededRng(5));
+
+      if (engine.isPartyTurn) engine.submitAction("ability");
+
+      const dealt = 9999 - monster.hp;
+      expect(dealt).toBeGreaterThan(mage.stats.focus); // amplified by the weakness
+      expect(mage.mana).toBe(14); // 20 - the 6-mana cost
+    });
+
+    it("Warrior's Guard makes the monster's next attack target Bram, not a random front-rank pick", () => {
+      // Grace 20 guarantees Bram wins initiative over both Ysolde (max roll 8+6=14) and the
+      // monster (max roll 3+6=9), so his Guard is always active before the first monster attack.
+      const warrior = new Character("Bram", "warrior", "front", { might: 8, grace: 20, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const rogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
+      const party = new Party([warrior, rogue]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(6));
+
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 8) {
+        if (engine.isPartyTurn) {
+          const actor = engine.currentActor as Character;
+          engine.submitAction(actor === warrior ? "ability" : "defend");
+        }
+        guard++;
+      }
+
+      expect(rogue.hp).toBe(rogue.maxHp);
+      expect(warrior.hp).toBeLessThan(warrior.maxHp);
+    });
+
+    it("Cleric's Cleanse removes status effects from the most-afflicted living ally", () => {
+      const cleric = new Character("Maren", "cleric", "back", { might: 3, grace: 5, vitality: 6, focus: 8, resolve: 7 }, 18, 18);
+      const ally = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      ally.statusEffects.apply({ type: "bleed", turnsRemaining: 3, tickDamage: 3 });
+      const party = new Party([cleric, ally]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(8));
+
+      let guard = 0;
+      let cleansed = false;
+      while (engine.result === "ongoing" && guard < 10 && !cleansed) {
+        if (engine.isPartyTurn) {
+          const actor = engine.currentActor as Character;
+          engine.submitAction(actor === cleric ? "ability" : "defend");
+          if (actor === cleric) cleansed = true;
+        }
+        guard++;
+      }
+
+      expect(ally.statusEffects.has("bleed")).toBe(false);
+    });
+
+    it("an ability without enough mana fails and spends no mana", () => {
+      const mage = new Character("Corvin", "mage", "back", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 14, 5); // Firebolt costs 6
+      const party = new Party([mage]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability");
+
+      expect(mage.mana).toBe(5);
+      expect(monster.hp).toBe(9999);
+    });
+  });
+
+  describe("status effects", () => {
+    it("a stunned monster skips its turn without attacking", () => {
+      const party = newParty();
+      const monster = newMonster({ maxHp: 9999 });
+      monster.statusEffects.apply({ type: "stun", turnsRemaining: 1 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("defend");
+
+      const hpLost = party.members.reduce((sum, m) => sum + (m.maxHp - m.hp), 0);
+      expect(hpLost).toBe(0);
+      expect(engine.log.some((line) => line.includes("stunned"))).toBe(true);
+    });
+
+    it("a feared character is forced to Defend regardless of the chosen action", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const corvin = new Character("Corvin", "mage", "back", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 14, 20);
+      corvin.statusEffects.apply({ type: "fear", turnsRemaining: 1 });
+      const party = new Party([bram, corvin]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(2));
+
+      let guard = 0;
+      let corvinTried = false;
+      while (engine.result === "ongoing" && guard < 10 && !corvinTried) {
+        if (engine.isPartyTurn) {
+          const actor = engine.currentActor as Character;
+          // Bram just defends (so any monster.hp change can only be attributed to
+          // Corvin); Corvin tries to attack despite being feared.
+          engine.submitAction(actor === corvin ? "attack" : "defend");
+          if (actor === corvin) corvinTried = true;
+        }
+        guard++;
+      }
+
+      expect(engine.log.some((line) => line.includes("afraid"))).toBe(true);
+      expect(monster.hp).toBe(9999); // Corvin's attack never actually landed
+    });
+
+    it("a silenced character's ability fails without consuming mana", () => {
+      const mage = new Character("Corvin", "mage", "back", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 14, 20);
+      mage.statusEffects.apply({ type: "silence", turnsRemaining: 1 });
+      const party = new Party([mage]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability");
+
+      expect(mage.mana).toBe(20);
+      expect(monster.hp).toBe(9999);
+      expect(engine.log.some((line) => line.includes("silence"))).toBe(true);
+    });
+
+    it("Bleed ticks damage each round until it expires", () => {
+      const party = newParty();
+      const monster = newMonster({ maxHp: 9999 });
+      monster.statusEffects.apply({ type: "bleed", turnsRemaining: 1, tickDamage: 5 });
+      const hpBefore = monster.hp;
+
+      // Any party action triggers finishPartyTurn -> eventually a new round's
+      // rollInitiative, which is where DoT ticks are applied.
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 6 && monster.hp === hpBefore) {
+        if (engine.isPartyTurn) engine.submitAction("defend");
+        guard++;
+      }
+
+      expect(monster.hp).toBeLessThanOrEqual(hpBefore - 5);
+    });
   });
 });

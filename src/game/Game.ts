@@ -19,7 +19,8 @@ import {
   TORCH_INTENSITY,
 } from "./Lighting";
 import { STARTING_LEVEL_ENTITIES } from "./Level";
-import { Monster } from "./monster/Monster";
+import { createCinderWretch, createRotThing } from "./monster/bestiary";
+import type { Monster } from "./monster/Monster";
 import { createStartingParty } from "./party/roster";
 import { Player } from "./Player";
 import { RandomRng } from "./Rng";
@@ -41,10 +42,11 @@ export class Game {
   private readonly hud = new Hud();
   private readonly combatUI: CombatUI;
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
-  private readonly monsterMesh: THREE.Object3D;
+  private readonly monsterMeshes = new Map<Monster, THREE.Object3D>();
   private readonly hideWallFace: (x: number, z: number) => void;
   private mode: Mode = "explore";
   private combatEngine: CombatEngine | undefined;
+  private combatMonster: Monster | undefined;
   /** True once the run is over (win or defeat) — freezes input, per the win/defeat screens. */
   private runEnded = false;
 
@@ -81,29 +83,37 @@ export class Game {
     this.player = new Player(start.x, start.z, 1, TILE_SIZE, aspect);
 
     const worldClock = new WorldClock();
-    const monster = new Monster(
-      {
-        name: "Rot-thing",
-        x: 4,
-        z: 1,
-        patrolPoints: [
-          { x: 4, z: 1 },
-          { x: 5, z: 1 },
-        ],
-        detectionRadius: 3,
-        maxHp: 18,
-        might: 3,
-        initiativeStat: 3,
-      },
+    const rotThing = createRotThing(
+      4,
+      1,
+      [
+        { x: 4, z: 1 },
+        { x: 5, z: 1 },
+      ],
       dungeon,
       this.player,
     );
-    worldClock.register(monster);
-    this.monsterMesh = buildMonsterMesh();
-    this.scene.add(this.monsterMesh);
-    this.syncMonsterMesh(monster);
+    const cinderWretch = createCinderWretch(
+      6,
+      4,
+      [
+        { x: 4, z: 4 },
+        { x: 6, z: 4 },
+      ],
+      dungeon,
+      this.player,
+    );
+    const monsters = [rotThing, cinderWretch];
+    for (const monster of monsters) {
+      worldClock.register(monster);
+      this.monsterMeshes.set(monster, buildMonsterMesh(monster));
+    }
+    for (const [monster, mesh] of this.monsterMeshes) {
+      this.scene.add(mesh);
+      this.syncMonsterMesh(monster);
+    }
 
-    this.world = { player: this.player, dungeon, interactables, inventory, party, worldClock, monster };
+    this.world = { player: this.player, dungeon, interactables, inventory, party, worldClock, monsters };
     this.hud.updateParty(party.members);
 
     const torch = new THREE.PointLight(TORCH_COLOR, TORCH_INTENSITY, TORCH_DISTANCE, TORCH_DECAY);
@@ -183,15 +193,15 @@ export class Game {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.enteredTile.x, outcome.enteredTile.z);
     }
-    this.syncMonsterMesh(this.world.monster);
+    this.syncAllMonsterMeshes();
     if (outcome.won) this.win();
-    if (outcome.combatTriggered) this.startCombat();
+    if (outcome.combatTriggeredBy) this.startCombat(outcome.combatTriggeredBy);
   }
 
   private handleTurn(direction: 1 | -1): void {
     const outcome = attemptTurn(this.world, direction);
-    this.syncMonsterMesh(this.world.monster);
-    if (outcome.combatTriggered) this.startCombat();
+    this.syncAllMonsterMeshes();
+    if (outcome.combatTriggeredBy) this.startCombat(outcome.combatTriggeredBy);
   }
 
   /** Repositions a pushed block's mesh to follow it — the only interactable in Phase 1 that moves after being placed. */
@@ -211,8 +221,8 @@ export class Game {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.targetTile.x, outcome.targetTile.z);
     }
-    this.syncMonsterMesh(this.world.monster);
-    if (outcome.combatTriggered) this.startCombat();
+    this.syncAllMonsterMeshes();
+    if (outcome.combatTriggeredBy) this.startCombat(outcome.combatTriggeredBy);
   }
 
   /** Removes an entity's placeholder mesh once it's gone (collected) or no longer worth showing (an unlocked door), and opens up a revealed secret wall's face. */
@@ -235,14 +245,21 @@ export class Game {
   }
 
   private syncMonsterMesh(monster: Monster): void {
-    this.monsterMesh.visible = !monster.isDown;
-    this.monsterMesh.position.set(monster.x * TILE_SIZE, MONSTER_HEIGHT / 2, monster.z * TILE_SIZE);
+    const mesh = this.monsterMeshes.get(monster);
+    if (!mesh) return;
+    mesh.visible = !monster.isDown;
+    mesh.position.set(monster.x * TILE_SIZE, MONSTER_HEIGHT / 2, monster.z * TILE_SIZE);
   }
 
-  private startCombat(): void {
+  private syncAllMonsterMeshes(): void {
+    for (const monster of this.world.monsters) this.syncMonsterMesh(monster);
+  }
+
+  private startCombat(monster: Monster): void {
     this.mode = "combat";
-    this.combatEngine = new CombatEngine(this.world.party, this.world.monster, new RandomRng());
-    this.hud.showMessage(`${this.world.monster.name} attacks!`);
+    this.combatMonster = monster;
+    this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng());
+    this.hud.showMessage(`${monster.name} attacks!`);
     this.combatUI.show();
     this.refreshCombatUI();
     this.checkCombatEnd();
@@ -256,26 +273,28 @@ export class Game {
   }
 
   private refreshCombatUI(): void {
-    if (!this.combatEngine) return;
-    this.combatUI.render(this.combatEngine, this.world.monster);
+    if (!this.combatEngine || !this.combatMonster) return;
+    this.combatUI.render(this.combatEngine, this.combatMonster);
     this.hud.updateParty(this.world.party.members);
   }
 
   private checkCombatEnd(): void {
-    if (!this.combatEngine || this.combatEngine.result === "ongoing") return;
+    if (!this.combatEngine || !this.combatMonster || this.combatEngine.result === "ongoing") return;
 
     const result = this.combatEngine.result;
+    const monster = this.combatMonster;
     this.combatUI.hide();
     this.mode = "explore";
     this.combatEngine = undefined;
+    this.combatMonster = undefined;
 
     if (result === "victory") {
-      this.hud.showMessage(`${this.world.monster.name} is defeated! The party gains 10 XP.`);
-      this.syncMonsterMesh(this.world.monster);
+      this.hud.showMessage(`${monster.name} is defeated! The party gains 10 XP.`);
+      this.syncMonsterMesh(monster);
     } else if (result === "fled") {
       // Otherwise the still-alerted, still-adjacent monster would just
       // trigger combat again on the party's very next action.
-      this.world.monster.disengage();
+      monster.disengage();
       this.hud.showMessage("The party breaks off and flees back down the corridor.");
     } else if (result === "defeat") {
       this.runEnded = true; // stub per docs/08-roadmap-phases.md Phase 2 -- freezes input, no revive system yet
@@ -295,9 +314,12 @@ export class Game {
   }
 }
 
-function buildMonsterMesh(): THREE.Object3D {
+function buildMonsterMesh(monster: Monster): THREE.Object3D {
+  // Cinder Wretch reads visually distinct (warm, ember-toned) from the Rot-thing (sickly green) --
+  // a placeholder cue toward its Fire-weak/Physical-resistant identity, ahead of the real Phase 5 art pass.
+  const color = monster.name === "Cinder Wretch" ? 0x8a3f2a : 0x5a6b4a;
   return new THREE.Mesh(
     new THREE.CapsuleGeometry(0.4, MONSTER_HEIGHT - 0.8, 4, 8),
-    new THREE.MeshStandardMaterial({ color: 0x5a6b4a, roughness: 0.9 }),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.9 }),
   );
 }

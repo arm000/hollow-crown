@@ -1,4 +1,6 @@
 import type { DungeonMap } from "../DungeonMap";
+import type { ResistanceMap } from "../combat/DamageType";
+import { StatusEffectSet } from "../combat/StatusEffect";
 import type { Player } from "../Player";
 import { rollInt, type Rng } from "../Rng";
 import type { Tickable } from "../WorldClock";
@@ -19,6 +21,8 @@ export interface MonsterOptions {
   maxHp: number;
   might: number;
   initiativeStat: number;
+  /** Damage-type resistances/weaknesses (docs/05-combat.md#monster-design-every-type-is-a-lesson) — empty by default, e.g. the Rot-thing has none. */
+  resistances?: ResistanceMap;
 }
 
 export interface MonsterCombatTurn {
@@ -44,6 +48,8 @@ export class Monster implements Tickable {
   readonly maxHp: number;
   readonly might: number;
   readonly initiativeStat: number;
+  readonly resistances: ResistanceMap;
+  readonly statusEffects = new StatusEffectSet();
 
   private readonly patrolPoints: GridPoint[];
   private readonly detectionRadius: number;
@@ -65,6 +71,7 @@ export class Monster implements Tickable {
     this.hp = options.maxHp;
     this.might = options.might;
     this.initiativeStat = options.initiativeStat;
+    this.resistances = options.resistances ?? {};
   }
 
   get isDown(): boolean {

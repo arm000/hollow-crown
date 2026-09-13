@@ -18,10 +18,10 @@ import { WorldClock } from "./WorldClock";
  * puzzle is actually required to win — not just that some sequence of
  * actions happens to win.
  *
- * This predates Phase 2's monster/combat system, so the monster here is
- * a harmless bystander (zero detection radius, tucked in a dead end)
+ * This predates the monster/combat system, so the monster here is a
+ * harmless bystander (zero detection radius, tucked in a dead end)
  * rather than a real part of these scripts — see
- * `Phase2Combat.playthrough.test.ts` for the encounter itself.
+ * `RotThingEncounter.playthrough.test.ts` for a real encounter.
  */
 
 function newWorld(): WorldState {
@@ -43,7 +43,7 @@ function newWorld(): WorldState {
     inventory: new Inventory(),
     party: createStartingParty(),
     worldClock,
-    monster,
+    monsters: [monster],
   };
 }
 

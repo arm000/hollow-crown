@@ -1,3 +1,6 @@
+import type { ResistanceMap } from "../combat/DamageType";
+import { StatusEffectSet } from "../combat/StatusEffect";
+
 /** One of the four starting classes (see docs/03-party-and-characters.md). No hybrid/multiclass in v1. */
 export type ClassId = "warrior" | "rogue" | "mage" | "cleric";
 
@@ -26,6 +29,9 @@ export class Character {
   readonly side = "party" as const;
   hp: number;
   mana: number;
+  /** Base resistances are empty for every starting character — equipment (Phase 3 accessories) is the only source so far. */
+  resistances: ResistanceMap = {};
+  readonly statusEffects = new StatusEffectSet();
 
   constructor(
     public readonly name: string,
