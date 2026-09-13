@@ -64,6 +64,19 @@
         font-size: 12px;
         opacity: 0.85;
       }
+      #hud-party {
+        position: fixed;
+        top: max(12px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        color: #d8c9a3;
+        text-shadow: 0 1px 3px #000;
+        pointer-events: none;
+        user-select: none;
+        font-size: 12px;
+        line-height: 1.5;
+        text-align: right;
+        white-space: pre-line;
+      }
       #win-screen {
         position: fixed;
         inset: 0;
@@ -158,6 +171,7 @@
   <body>
     <div id="app"></div>
     <div id="crosshair"></div>
+    <div id="hud-party"></div>
     <div id="hud">
       <div class="title">THE HOLLOW CROWN</div>
       <div class="keyboard-hint">W/S: walk &nbsp; A/D: strafe &nbsp; Q/E or ←/→: turn &nbsp; Space: interact</div>

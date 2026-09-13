@@ -4,6 +4,7 @@ import { attemptInteract, attemptMove, type WorldState } from "./GameLogic";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { Inventory } from "./Inventory";
 import { STARTING_LEVEL_ENTITIES } from "./Level";
+import { createStartingParty } from "./party/roster";
 import { Player } from "./Player";
 
 /**
@@ -24,6 +25,7 @@ function newWorld(): WorldState {
     dungeon,
     interactables: InteractableManager.fromSpawns(STARTING_LEVEL_ENTITIES),
     inventory: new Inventory(),
+    party: createStartingParty(),
   };
 }
 

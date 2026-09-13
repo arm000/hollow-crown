@@ -16,6 +16,7 @@ import {
   TORCH_INTENSITY,
 } from "./Lighting";
 import { STARTING_LEVEL_ENTITIES } from "./Level";
+import { createStartingParty } from "./party/roster";
 import { Player } from "./Player";
 import { TouchControls } from "./TouchControls";
 
@@ -37,6 +38,7 @@ export class Game {
     const dungeon: DungeonMap = STARTING_LEVEL;
     const interactables = InteractableManager.fromSpawns(STARTING_LEVEL_ENTITIES);
     const inventory = new Inventory();
+    const party = createStartingParty();
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -63,7 +65,8 @@ export class Game {
     const start = dungeon.findStart();
     const aspect = window.innerWidth / window.innerHeight;
     this.player = new Player(start.x, start.z, 1, TILE_SIZE, aspect);
-    this.world = { player: this.player, dungeon, interactables, inventory };
+    this.world = { player: this.player, dungeon, interactables, inventory, party };
+    this.hud.updateParty(party.members);
 
     const torch = new THREE.PointLight(TORCH_COLOR, TORCH_INTENSITY, TORCH_DISTANCE, TORCH_DECAY);
     torch.position.set(0, 0.1, 0);

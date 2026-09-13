@@ -1,6 +1,7 @@
 import type { DungeonMap } from "./DungeonMap";
 import type { InteractableManager } from "./interactables/InteractableManager";
 import type { Inventory } from "./Inventory";
+import type { Party } from "./party/Party";
 import type { Player } from "./Player";
 
 /**
@@ -15,6 +16,7 @@ export interface WorldState {
   readonly dungeon: DungeonMap;
   readonly interactables: InteractableManager;
   readonly inventory: Inventory;
+  readonly party: Party;
 }
 
 export interface MoveOutcome {
