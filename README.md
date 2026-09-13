@@ -149,10 +149,12 @@ opens a codex of every monster type encountered so far (win, lose, or
 flee all count), listing its resistances/weaknesses, any status effect
 its heavy strike inflicts, and whether it heals instead of attacking —
 so a repeat fight can be won on memory, not luck. A small minimap in
-the top-left corner fills in as you explore — a tile only appears once
-you've actually stood on it (or it's a wall right next to one you have),
-sourced from the same level data the 3D geometry reads, not a separate
-hand-drawn map. The dungeon itself now wears procedurally-drawn pixel
+the top-left corner fills in via real line of sight — a corridor you can
+see straight down is revealed even before you've walked it, stopping at
+whatever actually blocks sight (a wall, a closed door, an unrevealed
+secret) — sourced from the same level data the 3D geometry reads, not a
+separate hand-drawn map. Doors show up on it as their own color, seen or
+not yet opened. The dungeon itself now wears procedurally-drawn pixel
 art (no art tool or asset files — a canvas-drawn stone/moss pattern
 stands in for hand-painted textures) rendered through an actual
 low-resolution, nearest-neighbor-upscaled pipeline rather than full-

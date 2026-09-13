@@ -3,6 +3,12 @@ import type { MinimapCell } from "./Minimap";
 
 const CELL_SIZE = 7; // px per grid cell -- small on purpose, this is a corner overlay, not a map screen
 
+const CELL_COLORS: Record<Exclude<MinimapCell, "unknown">, string> = {
+  wall: "#8a7d5c",
+  floor: "#3a3428",
+  door: "#b5813f", // a warm wood tone, distinct from both wall and floor -- doors stay legible once seen, open or closed
+};
+
 /**
  * The minimap (docs/08-roadmap-phases.md Phase 5,
  * docs/07-technical-architecture.md#ui-layer): a plain DOM overlay like
@@ -39,7 +45,7 @@ export class MinimapUI {
       for (let x = 0; x < width; x++) {
         const cell = grid[z][x];
         if (cell === "unknown") continue;
-        this.ctx.fillStyle = cell === "wall" ? "#8a7d5c" : "#3a3428";
+        this.ctx.fillStyle = CELL_COLORS[cell];
         this.ctx.fillRect(x * CELL_SIZE, z * CELL_SIZE, CELL_SIZE, CELL_SIZE);
       }
     }

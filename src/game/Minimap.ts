@@ -1,14 +1,16 @@
 import type { DungeonMap } from "./DungeonMap";
+import type { InteractableManager } from "./interactables/InteractableManager";
 
 /**
  * One minimap cell's state — "unknown" for anything the party hasn't
  * revealed yet (docs/08-roadmap-phases.md Phase 5's minimap, sourced
  * from the same `DungeonMap` the 3D geometry reads, not a separately
- * authored asset). Kept deliberately smaller than the full tile
- * vocabulary (doors, levers, etc. don't get their own minimap symbol
- * yet) — small scope, per the roadmap doc's own framing.
+ * authored asset). "door" is its own cell distinct from "floor" so a
+ * door's location, once seen, stays legible on the map — open or
+ * closed, unlike a lever/lore item/key, which don't get a minimap
+ * symbol of their own yet (small scope, per the roadmap doc's framing).
  */
-export type MinimapCell = "unknown" | "wall" | "floor";
+export type MinimapCell = "unknown" | "wall" | "floor" | "door";
 
 const NEIGHBOR_STEPS: Array<[number, number]> = [
   [0, -1],
@@ -17,18 +19,71 @@ const NEIGHBOR_STEPS: Array<[number, number]> = [
   [-1, 0],
 ];
 
+/** Mirrors `GameLogic.ts`'s `isBlocked` exactly (an interactable's own `blocksMovement()` wins, falling back to the raw grid) — kept as its own small copy here rather than imported, so this module only depends on `DungeonMap`/`InteractableManager`, not the whole `WorldState`. Line of sight is blocked by exactly the same things movement is: a closed door, an unrevealed secret wall, an unopened class gate, a pushable block, or a plain wall. */
+function isBlocking(dungeon: DungeonMap, interactables: InteractableManager, x: number, z: number): boolean {
+  const entity = interactables.at(x, z);
+  if (entity) return entity.blocksMovement();
+  return dungeon.isWall(x, z);
+}
+
+function cellType(dungeon: DungeonMap, interactables: InteractableManager, x: number, z: number): MinimapCell {
+  const entity = interactables.at(x, z);
+  if (entity?.kind === "door") return "door";
+  if (dungeon.isWall(x, z)) {
+    // A revealed secret wall is passable despite its raw grid tile
+    // staying `#` forever (see `SecretWall.ts`) -- show the opened gap,
+    // not a solid block where the party can actually walk.
+    if (entity && !entity.blocksMovement()) return "floor";
+    return "wall";
+  }
+  return "floor";
+}
+
 /**
- * A tile is revealed once the party has actually stood on it, or once
- * an adjacent floor tile has been visited (so corridor walls show up
- * around a path you've walked without exposing whatever's on the far
- * side of them) — classic dungeon-crawler fog of war, and a deliberate
- * fit for pillar 3's "the dungeon is the character": the map earns
- * itself, it isn't handed over on arrival.
+ * Casts a straight sightline from `(startX, startZ)` in direction
+ * `(dx, dz)`, adding every tile up to and including whatever finally
+ * blocks it (a wall, a closed door, ...) to `revealed` — the blocker
+ * itself is seen (you can see the door you can't see past), nothing
+ * beyond it is.
  */
-function isRevealed(dungeon: DungeonMap, visitedFloors: ReadonlySet<string>, x: number, z: number): boolean {
-  if (visitedFloors.has(`${x},${z}`)) return true;
-  if (!dungeon.isWall(x, z)) return false; // an unvisited floor tile is never revealed just by proximity
-  return NEIGHBOR_STEPS.some(([dx, dz]) => visitedFloors.has(`${x + dx},${z + dz}`));
+function castSight(
+  dungeon: DungeonMap,
+  interactables: InteractableManager,
+  startX: number,
+  startZ: number,
+  [dx, dz]: [number, number],
+  revealed: Set<string>,
+): void {
+  let x = startX;
+  let z = startZ;
+  for (;;) {
+    x += dx;
+    z += dz;
+    revealed.add(`${x},${z}`);
+    if (isBlocking(dungeon, interactables, x, z)) return;
+  }
+}
+
+/**
+ * Every tile revealed so far: each visited floor tile itself, plus
+ * whatever's visible in a straight line from it in all four cardinal
+ * directions — "tiles in front of you you've seen, not just ones
+ * you've stood on," per docs/08-roadmap-phases.md Phase 5's minimap,
+ * stopping at the same things that block movement (walls, closed
+ * doors, unrevealed secrets, unopened class gates, pushable blocks).
+ */
+function computeRevealed(
+  dungeon: DungeonMap,
+  interactables: InteractableManager,
+  visitedFloors: ReadonlySet<string>,
+): Set<string> {
+  const revealed = new Set<string>();
+  for (const key of visitedFloors) {
+    revealed.add(key);
+    const [x, z] = key.split(",").map(Number);
+    for (const step of NEIGHBOR_STEPS) castSight(dungeon, interactables, x, z, step, revealed);
+  }
+  return revealed;
 }
 
 /**
@@ -39,16 +94,17 @@ function isRevealed(dungeon: DungeonMap, visitedFloors: ReadonlySet<string>, x: 
  * persisted across save/load, the same simplification `SaveGame.ts`
  * already makes for per-level interactable/monster state.
  */
-export function buildMinimapGrid(dungeon: DungeonMap, visitedFloors: ReadonlySet<string>): MinimapCell[][] {
+export function buildMinimapGrid(
+  dungeon: DungeonMap,
+  interactables: InteractableManager,
+  visitedFloors: ReadonlySet<string>,
+): MinimapCell[][] {
+  const revealed = computeRevealed(dungeon, interactables, visitedFloors);
   const grid: MinimapCell[][] = [];
   for (let z = 0; z < dungeon.height; z++) {
     const row: MinimapCell[] = [];
     for (let x = 0; x < dungeon.width; x++) {
-      if (!isRevealed(dungeon, visitedFloors, x, z)) {
-        row.push("unknown");
-      } else {
-        row.push(dungeon.isWall(x, z) ? "wall" : "floor");
-      }
+      row.push(revealed.has(`${x},${z}`) ? cellType(dungeon, interactables, x, z) : "unknown");
     }
     grid.push(row);
   }

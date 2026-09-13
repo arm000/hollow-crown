@@ -892,7 +892,28 @@ independently):
     interactable/monster state), marking a tile visited whenever a move
     actually enters it and re-rendering the minimap after every
     move/turn/level-load.
-  - 263 tests passing.
+  - **Follow-up fix (found via user report):** the original version
+    only revealed tiles actually stood on, plus their adjacent walls —
+    "I can see there's a wall two tiles ahead, but the corridor beyond a
+    junction I'm looking straight down stays blank until I walk there,"
+    which read as a bug more than a design choice. Reworked around a
+    real line-of-sight sweep: every visited tile now casts a ray in all
+    four cardinal directions, revealing whatever it can actually see —
+    "tiles in front of you you've seen, not just ones you've walked
+    on" — stopping at exactly the same things that block movement (a
+    wall, a closed door, an unrevealed secret wall, an unopened class
+    gate, a pushable block). Doors gained their own `MinimapCell` type
+    (`"door"`, a distinct color in `MinimapUI.ts`) instead of reading as
+    plain floor, per the same report — seen once, a door's location
+    stays legible on the map whether it's later open or closed, but a
+    *closed* one still stops the sightline from reaching past it. A
+    revealed secret wall correctly stops blocking sight and switches
+    from "wall" to "floor" once opened, matching what `DungeonMesh.ts`
+    already does visually in the 3D view. `Game.ts` now also refreshes
+    the minimap after every interact, not just move/turn, since
+    unlocking a door (directly, or via a lever/plate elsewhere) changes
+    what's visible without necessarily moving the party at all.
+  - 277 tests passing.
 - ✅ Batch 3 — Procedural pixel art textures + the low-res rendering
   pipeline:
   - `Textures.ts` (new): `buildActOneMaterials(dungeon)` procedurally

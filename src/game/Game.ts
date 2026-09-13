@@ -346,7 +346,7 @@ export class Game {
   }
 
   private refreshMinimap(): void {
-    this.minimapUI.render(buildMinimapGrid(this.world.dungeon, this.visitedTiles), {
+    this.minimapUI.render(buildMinimapGrid(this.world.dungeon, this.world.interactables, this.visitedTiles), {
       x: this.player.gridX,
       z: this.player.gridZ,
       facing: this.player.facing,
@@ -370,6 +370,11 @@ export class Game {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.targetTile.x, outcome.targetTile.z);
     }
+    // An interact can change what blocks sight anywhere on the level --
+    // unlocking a door, revealing a secret wall, or a lever/plate
+    // unlocking a door elsewhere entirely -- so the minimap always gets
+    // a full recompute here, not just on move/turn.
+    this.refreshMinimap();
     this.syncAllMonsterMeshes();
     if (outcome.combatTriggeredBy) this.startCombat(outcome.combatTriggeredBy);
   }
