@@ -741,6 +741,25 @@ independently):
     level 3. Either number drifting on a future tuning pass would fail
     this test, not just go unnoticed.
   - 247 tests passing.
+  - **Follow-up fix (found via user report: "I can no longer move
+    forward/back, only turn"):** `Game`'s constructor built the first
+    level's geometry via `enterLevel` but never actually called
+    `teleportTo` on a fresh game (only `transitionToLevel`, used for
+    *later* level changes, did that) — the player was left standing on
+    the untouched `(0, 0)` placeholder, a wall tile in every level.
+    Every forward/backward/strafe attempt was correctly refused as
+    blocked; turning has no wall check, so it alone kept working,
+    which is what made the symptom read as "movement is broken" rather
+    than an obvious crash. Fixed by pulling the "which tile, which
+    facing" decision out into `GameLogic.ts`'s `resolveStartPosition` —
+    zero rendering dependency, so unlike `Game` itself it's directly
+    unit-testable — and calling it (plus `teleportTo`) unconditionally
+    right after `enterLevel`, both in the constructor and in
+    `transitionToLevel`, replacing what had been two separate,
+    diverging copies of this logic with one. A new regression test
+    asserts `resolveStartPosition` never resolves to a wall tile for
+    any level in `LEVELS`, pinning the exact invariant that broke.
+    250 tests passing.
 
 **Phase 4 is now complete** — every scope item above has shipped and
 been deployed. Phase 5 (content & narrative pass) is next.

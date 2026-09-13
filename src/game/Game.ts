@@ -5,7 +5,15 @@ import { CombatEngine } from "./combat/CombatEngine";
 import { CombatUI } from "./combat/CombatUI";
 import type { DungeonMap } from "./DungeonMap";
 import { buildDungeonMesh } from "./DungeonMesh";
-import { attemptInteract, attemptMove, attemptTurn, equipItem, unequipItem, type WorldState } from "./GameLogic";
+import {
+  attemptInteract,
+  attemptMove,
+  attemptTurn,
+  equipItem,
+  resolveStartPosition,
+  unequipItem,
+  type WorldState,
+} from "./GameLogic";
 import { Hud } from "./Hud";
 import { InputManager, type Action } from "./InputManager";
 import { InteractableManager } from "./interactables/InteractableManager";
@@ -28,7 +36,7 @@ import type { Monster } from "./monster/Monster";
 import type { EquipmentSlot } from "./party/Equipment";
 import { awardPartyXp } from "./party/Leveling";
 import { createParty, DEFAULT_PARTY_SPEC, type PartyMemberSpec } from "./party/roster";
-import { Player, type Facing } from "./Player";
+import { Player } from "./Player";
 import { RandomRng } from "./Rng";
 import { deserializeInventory, deserializeParty, saveToStorage, serialize, type SaveData } from "./SaveGame";
 import { TouchControls } from "./TouchControls";
@@ -98,9 +106,11 @@ export class Game {
     // whole descent rather than rebuilt per level.
     this.scene.add(new THREE.AmbientLight(AMBIENT_LIGHT_COLOR, AMBIENT_LIGHT_INTENSITY));
 
-    // The player/camera exist before any level does -- `enterLevel` below
-    // repositions it via `teleportTo` before the first frame ever
-    // renders, so the (0, 0) placeholder here is never actually seen.
+    // The player/camera exist before any level does -- `enterLevel`
+    // only builds a level's geometry/monsters, it never moves the
+    // player (only `transitionToLevel` does that, for a level change
+    // after the first). The (0, 0) placeholder here is corrected
+    // explicitly below, before the first frame ever renders.
     const aspect = window.innerWidth / window.innerHeight;
     this.player = new Player(0, 0, 1, TILE_SIZE, aspect);
     const torch = new THREE.PointLight(TORCH_COLOR, TORCH_INTENSITY, TORCH_DISTANCE, TORCH_DECAY);
@@ -111,11 +121,8 @@ export class Game {
     const firstLevel = saveData ? getLevel(saveData.levelId) : LEVELS[0];
     const loaded = this.enterLevel(firstLevel, worldClock);
     this.currentLevelId = firstLevel.id;
-    if (saveData) {
-      // enterLevel already placed the player on the level's own start
-      // tile -- override with exactly where the save left off.
-      this.player.teleportTo(saveData.playerX, saveData.playerZ, saveData.playerFacing as Facing);
-    }
+    const startPosition = resolveStartPosition(loaded.dungeon, saveData);
+    this.player.teleportTo(startPosition.x, startPosition.z, startPosition.facing);
     this.world = { player: this.player, inventory, party, worldClock, ...loaded };
     this.hud.updateParty(party.members);
 
@@ -220,8 +227,8 @@ export class Game {
     this.world.monsters = monsters;
     this.currentLevelId = level.id;
 
-    const start = dungeon.findStart();
-    this.player.teleportTo(start.x, start.z, 1);
+    const startPosition = resolveStartPosition(dungeon);
+    this.player.teleportTo(startPosition.x, startPosition.z, startPosition.facing);
 
     this.hud.showMessage("You descend deeper into the dungeon...");
     this.hud.updateInventory(this.world.inventory.list());

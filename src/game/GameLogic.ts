@@ -4,7 +4,7 @@ import type { Inventory } from "./Inventory";
 import type { Monster } from "./monster/Monster";
 import { EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
 import type { Party } from "./party/Party";
-import type { Player } from "./Player";
+import type { Facing, Player } from "./Player";
 import type { WorldClock } from "./WorldClock";
 
 /**
@@ -196,4 +196,34 @@ export function unequipItem(world: WorldState, characterName: string, slot: Equi
 
   world.inventory.add(item.id, item.name);
   return { success: true, message: `${character.name} stows ${item.name}.` };
+}
+
+export interface StartPosition {
+  x: number;
+  z: number;
+  facing: Facing;
+}
+
+/**
+ * Where the player should actually be placed when a level is entered —
+ * pulled out of `Game`'s constructor specifically so it's unit
+ * testable: a real shipped bug had the constructor build a level's
+ * geometry via `enterLevel` and simply never call `teleportTo`,
+ * leaving a fresh game's player sitting on the untouched (0, 0)
+ * placeholder — a wall tile in every level, silently blocking every
+ * forward/backward/strafe move while turning (which does no wall
+ * check) kept working. `Game` itself still isn't unit tested (it's the
+ * DOM/render shell, per docs/11-testing-strategy.md), but *this*
+ * decision — which tile, which facing — has zero rendering dependency
+ * and never needed to live inside the untestable part.
+ */
+export function resolveStartPosition(
+  dungeon: DungeonMap,
+  saveData?: { playerX: number; playerZ: number; playerFacing: number },
+): StartPosition {
+  if (saveData) {
+    return { x: saveData.playerX, z: saveData.playerZ, facing: saveData.playerFacing as Facing };
+  }
+  const start = dungeon.findStart();
+  return { x: start.x, z: start.z, facing: 1 }; // east -- the direction every hand-authored level's corridor extends from its 'S' tile
 }
