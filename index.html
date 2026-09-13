@@ -83,6 +83,29 @@
         text-align: right;
         white-space: pre-line;
       }
+      /* Minimap: mounted by MinimapUI.ts, a <canvas> drawn a handful of
+         pixels per grid cell. image-rendering: pixelated keeps those
+         cells crisp blocky squares at CSS-scaled-up size instead of a
+         blurry upscale -- the same nearest-neighbor look
+         docs/10-visual-style-guide.md wants for the eventual texture
+         pass, cheaply true here already. Top-left, below the Inventory
+         button: every other corner is already spoken for on a touch
+         device (move pad bottom-left, turn pad bottom-right, party
+         status top-right), but there's clear space under that one
+         button on any reasonably tall screen. */
+      #minimap {
+        position: fixed;
+        left: max(12px, env(safe-area-inset-left));
+        top: calc(max(12px, env(safe-area-inset-top)) + 44px);
+        width: 120px;
+        max-width: 32vw;
+        height: auto;
+        image-rendering: pixelated;
+        border: 1px solid rgba(216, 201, 163, 0.4);
+        border-radius: 4px;
+        pointer-events: none;
+        z-index: 2;
+      }
       /* Always visible on both desktop and mobile -- unlike the touch
          move/turn pads (CSS-gated to coarse pointers only), this is the
          only way to reach the inventory screen on a device with no

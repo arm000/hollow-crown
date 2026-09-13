@@ -20,6 +20,8 @@ import { InteractableManager } from "./interactables/InteractableManager";
 import { createInteractableMesh } from "./interactables/InteractableMesh";
 import { Inventory } from "./Inventory";
 import { InventoryUI } from "./InventoryUI";
+import { buildMinimapGrid } from "./Minimap";
+import { MinimapUI } from "./MinimapUI";
 import {
   AMBIENT_LIGHT_COLOR,
   AMBIENT_LIGHT_INTENSITY,
@@ -60,6 +62,9 @@ export class Game {
   private readonly bestiaryUI: BestiaryUI;
   /** One representative `Monster` per encountered type name, for the bestiary screen (docs/05-combat.md#the-bestiary) to describe — recorded the moment combat starts, per "win, lose, or flee" all counting as an encounter. Not persisted across save/load, same simplification as per-level interactable/monster state (see `SaveGame.ts`). */
   private readonly encounteredMonsters = new Map<string, Monster>();
+  private readonly minimapUI = new MinimapUI();
+  /** Grid tiles the party has actually stood on this level, as `"x,z"` keys (docs/08-roadmap-phases.md Phase 5's minimap fog of war) — reset on every level transition, never persisted across save/load, same simplification as per-level interactable/monster state. */
+  private visitedTiles = new Set<string>();
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
   private readonly monsterMeshes = new Map<Monster, THREE.Object3D>();
   private hideWallFace: (x: number, z: number) => void = () => {};
@@ -127,6 +132,8 @@ export class Game {
     this.hud.updateParty(party.members);
     this.hud.updateLevelName(firstLevel.name);
     this.hud.showMessage(firstLevel.introMessage);
+    this.markVisited(startPosition.x, startPosition.z);
+    this.refreshMinimap();
 
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
@@ -239,6 +246,10 @@ export class Game {
     // message landing at the right moment.
     this.hud.showMessage(level.introMessage);
     this.hud.updateInventory(this.world.inventory.list());
+
+    this.visitedTiles = new Set(); // a new level's minimap starts fully unexplored
+    this.markVisited(startPosition.x, startPosition.z);
+    this.refreshMinimap();
   }
 
   private tick(): void {
@@ -289,14 +300,17 @@ export class Game {
     if (outcome.enteredTile) {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.enteredTile.x, outcome.enteredTile.z);
+      this.markVisited(outcome.enteredTile.x, outcome.enteredTile.z);
     }
     if (outcome.levelTransition) {
       // The old level (and any monster on it) is gone the instant this
       // fires -- skip syncing meshes or starting combat against a
-      // level we've already left behind.
+      // level we've already left behind. transitionToLevel resets and
+      // redraws the minimap itself, for the new level.
       this.transitionToLevel(outcome.levelTransition);
       return;
     }
+    this.refreshMinimap();
     this.syncAllMonsterMeshes();
     if (outcome.won) this.win();
     if (outcome.combatTriggeredBy) this.startCombat(outcome.combatTriggeredBy);
@@ -304,8 +318,21 @@ export class Game {
 
   private handleTurn(direction: 1 | -1): void {
     const outcome = attemptTurn(this.world, direction);
+    this.refreshMinimap(); // facing changed -- the minimap's player arrow needs to follow
     this.syncAllMonsterMeshes();
     if (outcome.combatTriggeredBy) this.startCombat(outcome.combatTriggeredBy);
+  }
+
+  private markVisited(x: number, z: number): void {
+    this.visitedTiles.add(`${x},${z}`);
+  }
+
+  private refreshMinimap(): void {
+    this.minimapUI.render(buildMinimapGrid(this.world.dungeon, this.visitedTiles), {
+      x: this.player.gridX,
+      z: this.player.gridZ,
+      facing: this.player.facing,
+    });
   }
 
   /** Repositions a pushed block's mesh to follow it — the only interactable in Phase 1 that moves after being placed. */

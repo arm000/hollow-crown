@@ -61,6 +61,8 @@ src/
     Hud.ts               DOM message line, party/inventory status, win/defeat screens
     InventoryUI.ts       DOM overlay: view carried items, equip/unequip gear across the party
     BestiaryUI.ts        DOM overlay: encountered monsters' resistances/status/mechanics
+    Minimap.ts           pure data: dungeon -> revealed wall/floor/unknown grid, fog of war
+    MinimapUI.ts         <canvas> overlay rendering Minimap.ts's grid + player position/facing
     Lighting.ts          light color/intensity constants — headlessly testable
     Rng.ts               seedable RNG (mulberry32) for testable combat/AI randomness
     WorldClock.ts        one player action -> every registered entity ticks once
@@ -139,7 +141,11 @@ skipping straight back into the run. A "Bestiary" button there too
 opens a codex of every monster type encountered so far (win, lose, or
 flee all count), listing its resistances/weaknesses, any status effect
 its heavy strike inflicts, and whether it heals instead of attacking —
-so a repeat fight can be won on memory, not luck.
+so a repeat fight can be won on memory, not luck. A small minimap in
+the top-left corner fills in as you explore — a tile only appears once
+you've actually stood on it (or it's a wall right next to one you have),
+sourced from the same level data the 3D geometry reads, not a separate
+hand-drawn map.
 
 ## Scripts
 

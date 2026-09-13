@@ -862,8 +862,37 @@ independently):
     walkable-around in that open room, but not content a real
     playthrough skips) to reach level 4 as well.
   - 258 tests passing.
-- ⬜ Batch 2 — Minimap (top-down render sourced from level data, with a
-  unit test on the room/corridor data mapping).
+- ✅ Batch 2 — Minimap:
+  - `Minimap.ts` (new, pure data): `buildMinimapGrid(dungeon, visitedFloors)`
+    reads straight from the same `DungeonMap` the 3D geometry does — not
+    a separately authored asset, per the roadmap doc's own framing. Fog
+    of war: a tile is revealed once actually stood on, or once it's a
+    wall adjacent to a visited floor (so corridor walls show up around
+    a walked path without exposing what's past them) — a deliberate fit
+    for pillar 3's "the dungeon is the character," the map earns itself
+    rather than being handed over. `Minimap.test.ts` is the phase's
+    specific "unit test on the minimap's data mapping" ask: an unvisited
+    grid is all-unknown, a visited floor tile and its adjacent walls
+    resolve correctly, tiles two steps away don't, and every *revealed*
+    cell matches the source `DungeonMap` exactly once fully explored
+    (an isolated wall corner with no orthogonal floor neighbor
+    legitimately never reveals — that's a real invariant of the fog-of-
+    war rule, not a bug the test papers over).
+  - `MinimapUI.ts` (new, same DOM-overlay family as the rest of the UI
+    layer per docs/07-technical-architecture.md#ui-layer): a small
+    `<canvas>`, always mounted top-left, `image-rendering: pixelated`
+    for crisp blocky cells at CSS-scaled size — the same nearest-
+    neighbor look the eventual texture pass wants, already true here
+    for free. No toggle: small enough in a corner that hiding it was
+    never actually necessary, and every other screen corner was already
+    spoken for by existing touch/HUD elements.
+  - `Game.ts` tracks `visitedTiles` per level (reset on every
+    `transitionToLevel`, never persisted across save/load — the same
+    simplification `SaveGame.ts` already makes for per-level
+    interactable/monster state), marking a tile visited whenever a move
+    actually enters it and re-rendering the minimap after every
+    move/turn/level-load.
+  - 263 tests passing.
 - ⬜ Batch 3 — Procedural pixel art textures (canvas-drawn, nearest-
   filtered, per [10-visual-style-guide.md](10-visual-style-guide.md)'s
   low-internal-resolution pipeline) replacing the flat wall/floor/
