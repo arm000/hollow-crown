@@ -184,6 +184,52 @@ Defends through the telegraphed strike and asserts the resulting loss —
 the automated version of "this loss was fair and avoidable," not just an
 assertion in prose.
 
+**Status:** Complete.
+
+- `party/`: `Character` (five stats, HP/mana, Grace as the initiative
+  stat), `Party` (isDefeated/livingMembers/livingFrontRank), and
+  `roster.ts`'s hardcoded four (Bram/Ysolde/Corvin/Maren, one per
+  class). HUD gained a party status line.
+- `WorldClock`: one player action (move, turn, or interact — all three,
+  not just movement) advances every registered `Tickable` once, per
+  docs/04-exploration-and-world.md.
+- `Monster` (`monster/Monster.ts`): patrols between fixed points,
+  notices the party within a Manhattan-distance radius, closes in once
+  alerted, and stops at adjacency rather than stacking onto the party's
+  tile. Its combat turn alternates a lighter hit with a telegraphed
+  heavy strike (might x3) — the "every monster is a lesson" mechanic
+  from [05-combat.md](05-combat.md#monster-design-every-type-is-a-lesson),
+  proven by the headless playthrough below rather than asserted in
+  prose. `disengage()` clears alert state on a successful flee, so the
+  party actually gets away instead of re-triggering combat next turn.
+- `Rng` (`Rng.ts`): a `SeededRng` (mulberry32) and a `RandomRng`
+  wrapping `Math.random()` — the seedable-RNG architecture requirement
+  landed here as planned, threaded through initiative, damage rolls,
+  the monster's target pick, and flee chance.
+- `CombatEngine` (`combat/CombatEngine.ts`): pure logic, zero rendering
+  dependency. Initiative re-rolled each round (Grace + d6), Attack/
+  Defend/Flee, melee targets the front rank, Defend halves the next hit
+  taken before the actor's next turn, victory/defeat/fled all handled.
+  `CombatUI` (`combat/CombatUI.ts`) is the thin DOM layer on top —
+  buttons plus number-key shortcuts, shown/hidden via the same
+  `display:none` + `:not([hidden])` pattern learned from the win-screen
+  bug (applied proactively this time, not as a second fix).
+- One Rot-thing patrols the main corridor between the key and lever
+  branches in `STARTING_LEVEL` — the encounter is mandatory, not a side
+  room, so the "Playable when" gate is actually exercised by anyone
+  reaching the exit.
+- Defeat is the stub the roadmap allows: a `#defeat-screen` overlay and
+  frozen input, no revive/reload system yet.
+
+Tests: `WorldClock`, `Rng`/`SeededRng`, `Monster` (patrol, detection,
+chase, combat-turn alternation, disengage), `CombatEngine` (attack,
+victory, defeat, Defend's mitigation, flee, turn-order safety), plus
+`RotThingEncounter.playthrough.test.ts` — a full party winning by
+attacking, and (the phase's specific automated-verification ask) a
+solo fragile combatant who is *guaranteed* downed within two monster
+turns by never Defending, and *survives those same two hits* under the
+same seed by Defending instead. 119 tests passing.
+
 ---
 
 ## Phase 3 — Character Depth & Equipment

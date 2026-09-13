@@ -4,8 +4,10 @@ import { attemptInteract, attemptMove, type WorldState } from "./GameLogic";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { Inventory } from "./Inventory";
 import { STARTING_LEVEL_ENTITIES } from "./Level";
+import { Monster } from "./monster/Monster";
 import { createStartingParty } from "./party/roster";
 import { Player } from "./Player";
+import { WorldClock } from "./WorldClock";
 
 /**
  * A headless scripted playthrough of the starting level — the automated
@@ -15,17 +17,33 @@ import { Player } from "./Player";
  * `Game` calls, with no rendering involved at all, and checks that the
  * puzzle is actually required to win — not just that some sequence of
  * actions happens to win.
+ *
+ * This predates Phase 2's monster/combat system, so the monster here is
+ * a harmless bystander (zero detection radius, tucked in a dead end)
+ * rather than a real part of these scripts — see
+ * `Phase2Combat.playthrough.test.ts` for the encounter itself.
  */
 
 function newWorld(): WorldState {
   const dungeon = STARTING_LEVEL;
   const start = dungeon.findStart();
+  const player = new Player(start.x, start.z, 1, 2, 1);
+  const worldClock = new WorldClock();
+  const monster = new Monster(
+    { name: "Rot-thing", x: 8, z: 8, patrolPoints: [{ x: 8, z: 8 }], detectionRadius: 0, maxHp: 18, might: 3, initiativeStat: 3 },
+    dungeon,
+    player,
+  );
+  worldClock.register(monster);
+
   return {
-    player: new Player(start.x, start.z, 1, 2, 1),
+    player,
     dungeon,
     interactables: InteractableManager.fromSpawns(STARTING_LEVEL_ENTITIES),
     inventory: new Inventory(),
     party: createStartingParty(),
+    worldClock,
+    monster,
   };
 }
 

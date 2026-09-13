@@ -12,12 +12,14 @@ export class Hud {
   private readonly inventoryEl: HTMLElement;
   private readonly partyEl: HTMLElement;
   private readonly winScreenEl: HTMLElement;
+  private readonly defeatScreenEl: HTMLElement;
 
   constructor(doc: Document = document) {
     this.messageEl = getRequiredElement(doc, "hud-message");
     this.inventoryEl = getRequiredElement(doc, "hud-inventory");
     this.partyEl = getRequiredElement(doc, "hud-party");
     this.winScreenEl = getRequiredElement(doc, "win-screen");
+    this.defeatScreenEl = getRequiredElement(doc, "defeat-screen");
   }
 
   showMessage(text: string): void {
@@ -36,6 +38,11 @@ export class Hud {
 
   showWinScreen(): void {
     this.winScreenEl.hidden = false;
+  }
+
+  /** Phase 2's defeat stub (docs/08-roadmap-phases.md#phase-2--party--turn-based-combat) — ends the run, no revive system yet. */
+  showDefeatScreen(): void {
+    this.defeatScreenEl.hidden = false;
   }
 }
 

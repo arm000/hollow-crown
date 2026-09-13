@@ -99,6 +99,86 @@
       #win-screen:not([hidden]) {
         display: flex;
       }
+      #defeat-screen {
+        position: fixed;
+        inset: 0;
+        display: none; /* see the #win-screen comment above for why this default has to be explicit */
+        align-items: center;
+        justify-content: center;
+        background: rgba(20, 3, 3, 0.88);
+        color: #d8b3a3;
+        text-shadow: 0 1px 3px #000;
+        font-size: 32px;
+        letter-spacing: 0.1em;
+        z-index: 10;
+      }
+      #defeat-screen:not([hidden]) {
+        display: flex;
+      }
+
+      /* Combat overlay: mounted by CombatUI.ts. Same "spell out display:none
+         explicitly" pattern as #win-screen above, learned from that bug --
+         an ID selector would otherwise beat the browser's own [hidden] rule
+         and leave this visible from page load. The background dims the
+         corridor and, deliberately, blocks taps to whatever is underneath
+         (the touch move-pad included) so combat fully replaces exploration
+         input rather than layering confusingly on top of it. */
+      #combat-ui {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        padding: 24px;
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+        background: rgba(5, 4, 2, 0.35);
+        pointer-events: auto;
+        z-index: 8;
+      }
+      #combat-ui:not([hidden]) {
+        display: flex;
+      }
+      #combat-status {
+        color: #d8c9a3;
+        text-shadow: 0 1px 3px #000;
+        font-size: 18px;
+      }
+      #combat-log {
+        color: #d8c9a3;
+        text-shadow: 0 1px 3px #000;
+        background: rgba(5, 4, 2, 0.55);
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: pre-line;
+        max-width: 480px;
+        width: 90%;
+        text-align: center;
+      }
+      #combat-actions {
+        display: flex;
+        gap: 12px;
+      }
+      #combat-actions[hidden] {
+        display: none;
+      }
+      .combat-action-btn {
+        font-size: 16px;
+        padding: 10px 22px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.75);
+        color: #d8c9a3;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+      .combat-action-btn:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
 
       /* Touch controls: mounted by TouchControls.ts, hidden by default so
          mouse-driven desktops don't see buttons they don't need. Shown for
@@ -180,6 +260,7 @@
       <div id="hud-inventory"></div>
     </div>
     <div id="win-screen" hidden>YOU ESCAPED</div>
+    <div id="defeat-screen" hidden>THE PARTY HAS FALLEN</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

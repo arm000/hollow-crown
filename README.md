@@ -29,11 +29,13 @@ Then open the printed local URL in a browser.
 | `Q` / `E`      | Turn left / right |
 | `←` / `→`      | Turn left / right |
 | `Space`        | Interact (doors, levers, items, ...) |
+| `1` / `2` / `3` | In combat: Attack / Defend / Flee |
 
 On a touchscreen device, on-screen pads (move, bottom-left; turn,
 bottom-right) replace the keyboard automatically — no setup needed, and
-no keyboard/mouse required to play. The game targets touch and desktop
-as equally first-class from the start; see
+no keyboard/mouse required to play. Combat's Attack/Defend/Flee buttons
+work the same way on both. The game targets touch and desktop as
+equally first-class from the start; see
 [docs/01-vision.md](docs/01-vision.md#platform--scope).
 
 Movement and turning are locked to the dungeon grid, animated smoothly
@@ -52,12 +54,17 @@ src/
     InputManager.ts      keyboard/touch -> discrete action queue
     TouchControls.ts     on-screen movement/turn/interact buttons
     Inventory.ts         shared party inventory (placeholder: id -> name)
-    Hud.ts               DOM message line, inventory list, win screen
+    Hud.ts               DOM message line, party/inventory status, win/defeat screens
     Lighting.ts          light color/intensity constants — headlessly testable
-    GameLogic.ts         pure move/interact resolution (no rendering) — headlessly testable
+    Rng.ts               seedable RNG (mulberry32) for testable combat/AI randomness
+    WorldClock.ts        one player action -> every registered entity ticks once
+    GameLogic.ts         pure move/interact/turn resolution (no rendering) — headlessly testable
     interactables/       Door, Lever, PressurePlate, PushableBlock,
                          SecretWall, KeyItem, LoreItem, ExitTile,
                          InteractableManager
+    party/               Character, Party, roster.ts (the 4 starting classes)
+    monster/             Monster (patrol/detection AI + its combat turn)
+    combat/              CombatEngine (pure) + CombatUI (DOM overlay)
     Game.ts              wires scene, renderer, input, and world state together
 ```
 
@@ -71,14 +78,16 @@ playable build before the next one starts.
 
 ## Status
 
-Phase 0 complete, Phase 1 nearly complete (see the roadmap doc above).
-Playable now: grid movement (keyboard or touch) through a hand-authored
-level with a full interactable set — a key and locked door gating the
-exit (mandatory), plus an optional lever, a pushable block and pressure
-plate (either unlocks the same bonus alcove), and a secret wall hiding
-one more hidden pocket. Only a Playwright end-to-end test layer remains
-a deliberate deferral for this phase. No combat, character stats, or
-equipment yet — that's Phase 2 onward.
+Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
+E2E layer left), Phase 2 complete (see the roadmap doc above). Playable
+now: grid movement (keyboard or touch) through a hand-authored level
+with a full interactable set (a mandatory key-and-door gate, an
+optional lever/plate/block bonus alcove, a secret wall) — and a
+patrolling Rot-thing blocking the main corridor that triggers real
+turn-based combat: initiative order, Attack/Defend/Flee, a telegraphed
+heavy strike you can see coming and Defend through, victory/defeat/flee
+all handled. Party stats and equipment don't do anything yet beyond
+combat's basic Might/Grace/Resolve math — that's Phase 3.
 
 ## Scripts
 

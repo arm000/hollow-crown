@@ -1,7 +1,10 @@
 import * as THREE from "three";
+import type { CombatActionChoice } from "./combat/CombatEngine";
+import { CombatEngine } from "./combat/CombatEngine";
+import { CombatUI } from "./combat/CombatUI";
 import { STARTING_LEVEL, type DungeonMap } from "./DungeonMap";
 import { buildDungeonMesh } from "./DungeonMesh";
-import { attemptInteract, attemptMove, type WorldState } from "./GameLogic";
+import { attemptInteract, attemptMove, attemptTurn, type WorldState } from "./GameLogic";
 import { Hud } from "./Hud";
 import { InputManager, type Action } from "./InputManager";
 import { InteractableManager } from "./interactables/InteractableManager";
@@ -16,11 +19,17 @@ import {
   TORCH_INTENSITY,
 } from "./Lighting";
 import { STARTING_LEVEL_ENTITIES } from "./Level";
+import { Monster } from "./monster/Monster";
 import { createStartingParty } from "./party/roster";
 import { Player } from "./Player";
+import { RandomRng } from "./Rng";
 import { TouchControls } from "./TouchControls";
+import { WorldClock } from "./WorldClock";
 
 const TILE_SIZE = 2;
+const MONSTER_HEIGHT = 1.4;
+
+type Mode = "explore" | "combat";
 
 export class Game {
   private readonly renderer: THREE.WebGLRenderer;
@@ -30,9 +39,14 @@ export class Game {
   private readonly clock = new THREE.Clock();
   private readonly world: WorldState;
   private readonly hud = new Hud();
+  private readonly combatUI: CombatUI;
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
+  private readonly monsterMesh: THREE.Object3D;
   private readonly hideWallFace: (x: number, z: number) => void;
-  private won = false;
+  private mode: Mode = "explore";
+  private combatEngine: CombatEngine | undefined;
+  /** True once the run is over (win or defeat) — freezes input, per the win/defeat screens. */
+  private runEnded = false;
 
   constructor(container: HTMLElement) {
     const dungeon: DungeonMap = STARTING_LEVEL;
@@ -65,7 +79,31 @@ export class Game {
     const start = dungeon.findStart();
     const aspect = window.innerWidth / window.innerHeight;
     this.player = new Player(start.x, start.z, 1, TILE_SIZE, aspect);
-    this.world = { player: this.player, dungeon, interactables, inventory, party };
+
+    const worldClock = new WorldClock();
+    const monster = new Monster(
+      {
+        name: "Rot-thing",
+        x: 4,
+        z: 1,
+        patrolPoints: [
+          { x: 4, z: 1 },
+          { x: 5, z: 1 },
+        ],
+        detectionRadius: 3,
+        maxHp: 18,
+        might: 3,
+        initiativeStat: 3,
+      },
+      dungeon,
+      this.player,
+    );
+    worldClock.register(monster);
+    this.monsterMesh = buildMonsterMesh();
+    this.scene.add(this.monsterMesh);
+    this.syncMonsterMesh(monster);
+
+    this.world = { player: this.player, dungeon, interactables, inventory, party, worldClock, monster };
     this.hud.updateParty(party.members);
 
     const torch = new THREE.PointLight(TORCH_COLOR, TORCH_INTENSITY, TORCH_DISTANCE, TORCH_DECAY);
@@ -75,6 +113,7 @@ export class Game {
 
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
+    this.combatUI = new CombatUI((choice) => this.handleCombatAction(choice));
 
     window.addEventListener("resize", () => this.onResize());
     // Mobile browsers can be slow to fire `resize` on rotation, so also
@@ -98,7 +137,7 @@ export class Game {
   private tick(): void {
     const delta = this.clock.getDelta();
 
-    if (!this.won && !this.player.isAnimating) {
+    if (!this.runEnded && this.mode === "explore" && !this.player.isAnimating) {
       const action = this.input.next();
       if (action) this.applyAction(action);
     }
@@ -125,10 +164,10 @@ export class Game {
         this.handleMove(rx, rz);
         break;
       case "turnLeft":
-        this.player.turn(-1);
+        this.handleTurn(-1);
         break;
       case "turnRight":
-        this.player.turn(1);
+        this.handleTurn(1);
         break;
       case "interact":
         this.handleInteract();
@@ -144,7 +183,15 @@ export class Game {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.enteredTile.x, outcome.enteredTile.z);
     }
+    this.syncMonsterMesh(this.world.monster);
     if (outcome.won) this.win();
+    if (outcome.combatTriggered) this.startCombat();
+  }
+
+  private handleTurn(direction: 1 | -1): void {
+    const outcome = attemptTurn(this.world, direction);
+    this.syncMonsterMesh(this.world.monster);
+    if (outcome.combatTriggered) this.startCombat();
   }
 
   /** Repositions a pushed block's mesh to follow it — the only interactable in Phase 1 that moves after being placed. */
@@ -164,6 +211,8 @@ export class Game {
       this.hud.updateInventory(this.world.inventory.list());
       this.refreshEntityVisual(outcome.targetTile.x, outcome.targetTile.z);
     }
+    this.syncMonsterMesh(this.world.monster);
+    if (outcome.combatTriggered) this.startCombat();
   }
 
   /** Removes an entity's placeholder mesh once it's gone (collected) or no longer worth showing (an unlocked door), and opens up a revealed secret wall's face. */
@@ -185,8 +234,57 @@ export class Game {
     }
   }
 
+  private syncMonsterMesh(monster: Monster): void {
+    this.monsterMesh.visible = !monster.isDown;
+    this.monsterMesh.position.set(monster.x * TILE_SIZE, MONSTER_HEIGHT / 2, monster.z * TILE_SIZE);
+  }
+
+  private startCombat(): void {
+    this.mode = "combat";
+    this.combatEngine = new CombatEngine(this.world.party, this.world.monster, new RandomRng());
+    this.hud.showMessage(`${this.world.monster.name} attacks!`);
+    this.combatUI.show();
+    this.refreshCombatUI();
+    this.checkCombatEnd();
+  }
+
+  private handleCombatAction(choice: CombatActionChoice): void {
+    if (!this.combatEngine) return;
+    this.combatEngine.submitAction(choice);
+    this.refreshCombatUI();
+    this.checkCombatEnd();
+  }
+
+  private refreshCombatUI(): void {
+    if (!this.combatEngine) return;
+    this.combatUI.render(this.combatEngine, this.world.monster);
+    this.hud.updateParty(this.world.party.members);
+  }
+
+  private checkCombatEnd(): void {
+    if (!this.combatEngine || this.combatEngine.result === "ongoing") return;
+
+    const result = this.combatEngine.result;
+    this.combatUI.hide();
+    this.mode = "explore";
+    this.combatEngine = undefined;
+
+    if (result === "victory") {
+      this.hud.showMessage(`${this.world.monster.name} is defeated! The party gains 10 XP.`);
+      this.syncMonsterMesh(this.world.monster);
+    } else if (result === "fled") {
+      // Otherwise the still-alerted, still-adjacent monster would just
+      // trigger combat again on the party's very next action.
+      this.world.monster.disengage();
+      this.hud.showMessage("The party breaks off and flees back down the corridor.");
+    } else if (result === "defeat") {
+      this.runEnded = true; // stub per docs/08-roadmap-phases.md Phase 2 -- freezes input, no revive system yet
+      this.hud.showDefeatScreen();
+    }
+  }
+
   private win(): void {
-    this.won = true;
+    this.runEnded = true;
     this.hud.showWinScreen();
   }
 
@@ -195,4 +293,11 @@ export class Game {
     this.player.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
+}
+
+function buildMonsterMesh(): THREE.Object3D {
+  return new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.4, MONSTER_HEIGHT - 0.8, 4, 8),
+    new THREE.MeshStandardMaterial({ color: 0x5a6b4a, roughness: 0.9 }),
+  );
 }
