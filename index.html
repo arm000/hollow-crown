@@ -318,6 +318,101 @@
         margin-bottom: 6px;
       }
 
+      /* Party-creation screen: mounted by PartyCreationUI.ts, shown once
+         before Game (and its WebGL context) even exists -- see main.ts.
+         No [hidden]-vs-display gotcha to worry about here (unlike
+         #win-screen etc.): this element is only ever created once the
+         player still needs to see it, and removed outright on confirm,
+         never toggled. */
+      #party-creation {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 20px;
+        padding-top: max(20px, env(safe-area-inset-top));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        background: #0a0906;
+        color: #d8c9a3;
+        overflow-y: auto;
+        z-index: 20;
+      }
+      #party-creation-title {
+        font-size: 26px;
+        letter-spacing: 0.1em;
+        margin-top: 8px;
+      }
+      #party-creation-subtitle {
+        font-size: 14px;
+        opacity: 0.75;
+        margin-bottom: 8px;
+      }
+      #party-creation-slots {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        max-width: 420px;
+      }
+      .party-creation-slot {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.3);
+        background: rgba(216, 201, 163, 0.06);
+      }
+      .party-creation-name {
+        font-size: 15px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(216, 201, 163, 0.4);
+        background: rgba(5, 4, 2, 0.6);
+        color: #d8c9a3;
+        font-family: inherit;
+      }
+      .party-creation-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .party-creation-choice-btn {
+        font-size: 13px;
+        padding: 7px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(216, 201, 163, 0.35);
+        background: rgba(20, 17, 13, 0.6);
+        color: #d8c9a3;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+      .party-creation-choice-btn.selected {
+        border-color: #d8c9a3;
+        background: rgba(216, 201, 163, 0.3);
+      }
+      .party-creation-portrait-btn {
+        font-size: 16px;
+        padding: 6px 10px;
+      }
+      #party-creation-confirm {
+        margin: 10px 0 24px;
+        font-size: 16px;
+        padding: 12px 32px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.75);
+        color: #d8c9a3;
+        letter-spacing: 0.05em;
+        touch-action: none;
+      }
+      #party-creation-confirm:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
+
       /* Touch controls: mounted by TouchControls.ts, hidden by default so
          mouse-driven desktops don't see buttons they don't need. Shown for
          any device whose primary pointer is coarse and has no hover (i.e.

@@ -463,9 +463,35 @@ independently):
   - HUD party line and the inventory screen's character cards both
     gained a level readout (`Lv2`, etc.).
   - 194 tests passing.
-- ⬜ Batch 6 — A minimal party-creation/naming screen (pick class +
-  portrait per slot; full point-buy attribute creation is a stretch
-  goal, not required).
+- ✅ Batch 6 — A minimal party-creation/naming screen:
+  - `roster.ts` refactored around a `CLASS_BASE_STATS` table (the exact
+    numbers the old hardcoded four always used, per class) and a new
+    `createParty(specs: PartyMemberSpec[])`, so any class can now go in
+    any slot instead of one fixed character per class.
+    `createStartingParty()` still exists, now just `createParty(DEFAULT_PARTY_SPEC)`
+    — every existing test that calls it is unaffected. Each character
+    gets its own copy of the class's stats object; a unit test in the
+    new `roster.test.ts` specifically guards against two same-class
+    slots silently sharing one mutable stats reference.
+  - `Character` gained a `portrait` field — a plain color-swatch emoji
+    (`PORTRAIT_OPTIONS`), not real character art (still
+    [10-visual-style-guide.md](10-visual-style-guide.md)'s job ahead),
+    just enough for a slot and later the HUD/inventory screen to be
+    visually distinguishable at a glance. Both now show it next to the
+    name.
+  - `PartyCreationUI.ts` (new): shown once, before `Game` (and its
+    WebGL context) even exists — see `main.ts`. Four slots, each
+    prefilled with `DEFAULT_PARTY_SPEC`, a name field, and buttons for
+    class and portrait; confirming builds the actual `Party` from
+    whatever was chosen. A class's ability description is shown as a
+    tooltip (the same text `CombatUI` already surfaces mid-fight) since
+    a class's role is public information — unlike an item's mechanical
+    effect, which [06-items-and-equipment.md](06-items-and-equipment.md#discovery-not-explanation)
+    keeps hidden, this was never in scope for that principle.
+  - No test coverage of `PartyCreationUI.ts` itself, same
+    deliberately-untested-DOM-class category as `CombatUI`/`InventoryUI`;
+    `createParty`'s actual party-building logic is what's unit tested.
+  - 198 tests passing.
 - ⬜ Batch 7 — A non-combat puzzle gated by a class ability or found
   gear.
 

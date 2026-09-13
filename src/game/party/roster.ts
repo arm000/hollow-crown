@@ -1,45 +1,65 @@
-import { Character } from "./Character";
+import { Character, type CharacterStats, type ClassId, type Rank } from "./Character";
 import { Party } from "./Party";
 
 /**
- * The Phase 2 starting party: one pre-built character per class
+ * Base stat block per class — the exact numbers the Phase 2 hardcoded
+ * roster always used for that class, now reusable for *any* slot a
+ * party-creation screen assigns that class to
  * (docs/03-party-and-characters.md#party-creation-vs-pre-generated).
- * Stats are a first pass, not balanced against real content yet — Phase
- * 3 is where these numbers get tuned against actual fights and gear.
+ * Not balanced against real content yet — Phase 3 is where these get
+ * tuned against actual fights and gear.
  */
+const CLASS_BASE_STATS: Record<ClassId, { rank: Rank; stats: CharacterStats; maxHp: number; maxMana: number }> = {
+  warrior: { rank: "front", stats: { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, maxHp: 30, maxMana: 0 },
+  rogue: { rank: "front", stats: { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, maxHp: 22, maxMana: 0 },
+  mage: { rank: "back", stats: { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, maxHp: 14, maxMana: 20 },
+  cleric: { rank: "back", stats: { might: 3, grace: 5, vitality: 6, focus: 8, resolve: 7 }, maxHp: 18, maxMana: 18 },
+};
+
+/**
+ * A handful of plain color-swatch "portraits" — honest about there being
+ * no real character art yet (that's docs/10-visual-style-guide.md's job,
+ * still ahead), while still letting a party-creation slot, and later the
+ * HUD/inventory screen, be visually distinguishable at a glance.
+ */
+export const PORTRAIT_OPTIONS = ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣"];
+
+export interface PartyMemberSpec {
+  name: string;
+  classId: ClassId;
+  portrait: string;
+}
+
+/**
+ * The Phase 2 defaults — also what `PartyCreationUI` prefills every slot
+ * with, so accepting every default without changing anything reproduces
+ * the exact party earlier phases hardcoded.
+ */
+export const DEFAULT_PARTY_SPEC: PartyMemberSpec[] = [
+  { name: "Bram", classId: "warrior", portrait: PORTRAIT_OPTIONS[0] },
+  { name: "Ysolde", classId: "rogue", portrait: PORTRAIT_OPTIONS[2] },
+  { name: "Corvin", classId: "mage", portrait: PORTRAIT_OPTIONS[4] },
+  { name: "Maren", classId: "cleric", portrait: PORTRAIT_OPTIONS[3] },
+];
+
+/**
+ * Builds a party from a player's choices — any class in any slot, per
+ * docs/03-party-and-characters.md#party-creation-vs-pre-generated's
+ * "pick a class and a portrait per slot, assign a name." Each character
+ * gets its own copy of the class's base stats block: two characters
+ * sharing a class must never share one mutable `stats` object, or
+ * equipping gear or leveling one would silently affect the other.
+ */
+export function createParty(specs: PartyMemberSpec[]): Party {
+  return new Party(
+    specs.map(({ name, classId, portrait }) => {
+      const base = CLASS_BASE_STATS[classId];
+      return new Character(name, classId, base.rank, { ...base.stats }, base.maxHp, base.maxMana, portrait);
+    }),
+  );
+}
+
+/** The Phase 2 starting party — unchanged for every test and code path that hasn't moved to `PartyCreationUI` yet. */
 export function createStartingParty(): Party {
-  return new Party([
-    new Character(
-      "Bram",
-      "warrior",
-      "front",
-      { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 },
-      30,
-      0,
-    ),
-    new Character(
-      "Ysolde",
-      "rogue",
-      "front",
-      { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 },
-      22,
-      0,
-    ),
-    new Character(
-      "Corvin",
-      "mage",
-      "back",
-      { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 },
-      14,
-      20,
-    ),
-    new Character(
-      "Maren",
-      "cleric",
-      "back",
-      { might: 3, grace: 5, vitality: 6, focus: 8, resolve: 7 },
-      18,
-      18,
-    ),
-  ]);
+  return createParty(DEFAULT_PARTY_SPEC);
 }

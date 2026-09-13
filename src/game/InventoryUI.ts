@@ -145,7 +145,7 @@ export class InventoryUI {
 
       const name = document.createElement("div");
       name.className = "inventory-character-name";
-      name.textContent = `${character.name} (Lv${character.level})${character.isDown ? " — down" : ""}`;
+      name.textContent = `${character.portrait} ${character.name} (Lv${character.level})${character.isDown ? " — down" : ""}`;
       card.appendChild(name);
 
       for (const { slot, label } of SLOTS) {

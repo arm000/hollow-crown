@@ -24,7 +24,7 @@ import { createCinderWretch, createRotThing } from "./monster/bestiary";
 import type { Monster } from "./monster/Monster";
 import type { EquipmentSlot } from "./party/Equipment";
 import { awardPartyXp } from "./party/Leveling";
-import { createStartingParty } from "./party/roster";
+import { createParty, DEFAULT_PARTY_SPEC, type PartyMemberSpec } from "./party/roster";
 import { Player } from "./Player";
 import { RandomRng } from "./Rng";
 import { TouchControls } from "./TouchControls";
@@ -54,11 +54,12 @@ export class Game {
   /** True once the run is over (win or defeat) — freezes input, per the win/defeat screens. */
   private runEnded = false;
 
-  constructor(container: HTMLElement) {
+  /** `partySpecs` defaults to the Phase 2 roster so anything that constructs `Game` directly (tests included) doesn't need to know `PartyCreationUI` exists — `main.ts` is the only real caller that passes a player's actual choices. */
+  constructor(container: HTMLElement, partySpecs: PartyMemberSpec[] = DEFAULT_PARTY_SPEC) {
     const dungeon: DungeonMap = STARTING_LEVEL;
     const interactables = InteractableManager.fromSpawns(STARTING_LEVEL_ENTITIES);
     const inventory = new Inventory();
-    const party = createStartingParty();
+    const party = createParty(partySpecs);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));

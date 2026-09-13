@@ -22,9 +22,11 @@ export interface CharacterStats {
 }
 
 /**
- * A party member. Phase 2 hardcodes the roster (see `roster.ts`) — no
- * creation UI and no leveling yet (docs/03-party-and-characters.md
- * "Party creation vs. pre-generated" — that's Phase 3).
+ * A party member. Phase 3's `PartyCreationUI`/`roster.createParty` build
+ * these from a player's class/name/portrait choices
+ * (docs/03-party-and-characters.md "Party creation vs. pre-generated");
+ * `roster.createStartingParty` still hardcodes the Phase 2 defaults for
+ * anything that skips character creation, tests included.
  */
 export class Character {
   readonly side = "party" as const;
@@ -48,6 +50,8 @@ export class Character {
     public readonly stats: CharacterStats,
     maxHp: number,
     maxMana: number,
+    /** A plain color-swatch placeholder, not real character art (that's docs/10-visual-style-guide.md's job, still ahead) — enough for a party-creation slot and the HUD/inventory screen to be visually distinguishable at a glance. */
+    public readonly portrait: string = "⚪",
   ) {
     this.maxHp = maxHp;
     this.maxMana = maxMana;
