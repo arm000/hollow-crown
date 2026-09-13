@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DungeonMap } from "./DungeonMap";
+import { ClassGate } from "./interactables/ClassGate";
 import { Door } from "./interactables/Door";
 import { InteractableManager } from "./interactables/InteractableManager";
+import { PushableBlock } from "./interactables/PushableBlock";
 import { SecretWall } from "./interactables/SecretWall";
 import { Inventory } from "./Inventory";
 import { buildMinimapGrid } from "./Minimap";
+import { Character } from "./party/Character";
 import { Party } from "./party/Party";
 
 const NO_INTERACTABLES = new InteractableManager([]);
@@ -122,6 +125,38 @@ describe("buildMinimapGrid", () => {
       const grid = buildMinimapGrid(SECRET_CORRIDOR, managerWithSecret(true), new Set(["1,1"]));
       expect(grid[1][3]).toBe("floor"); // the opened passage, not a solid wall block
       expect(grid[1][4]).toBe("floor"); // now visible beyond it
+    });
+
+    it("a pushable block sitting on a floor tile shows as an obstacle, not plain floor -- the bug where the map showed an open hallway right up to an unmarked dead end", () => {
+      const manager = new InteractableManager([new PushableBlock(3, 1)]);
+      const grid = buildMinimapGrid(CORRIDOR, manager, new Set(["1,1"]));
+      expect(grid[1][2]).toBe("floor"); // between the party and the block
+      expect(grid[1][3]).toBe("obstacle"); // the block itself, currently blocking
+      expect(grid[1][4]).toBe("unknown"); // it blocks sight too, same as a closed door
+    });
+
+    it("once a pushable block moves off a tile, that tile reverts to floor", () => {
+      const block = new PushableBlock(3, 1);
+      const manager = new InteractableManager([block]);
+      manager.moveEntity(block, 4, 1); // simulates GameLogic pushing it one tile further down the corridor
+      const grid = buildMinimapGrid(CORRIDOR, manager, new Set(["1,1"]));
+      expect(grid[1][3]).toBe("floor");
+      expect(grid[1][4]).toBe("obstacle");
+    });
+
+    it("an unopened class gate shows as an obstacle, same as a pushable block", () => {
+      const gate = new ClassGate(3, 1, "rogue", "blocked", "opened");
+      const grid = buildMinimapGrid(CORRIDOR, new InteractableManager([gate]), new Set(["1,1"]));
+      expect(grid[1][3]).toBe("obstacle");
+    });
+
+    it("an opened class gate shows as plain floor and stops blocking sight", () => {
+      const gate = new ClassGate(3, 1, "rogue", "blocked", "opened");
+      const rogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
+      gate.interact({ inventory: new Inventory(), party: new Party([rogue]) });
+      const grid = buildMinimapGrid(CORRIDOR, new InteractableManager([gate]), new Set(["1,1"]));
+      expect(grid[1][3]).toBe("floor");
+      expect(grid[1][4]).toBe("floor");
     });
 
     it("reveals the walls flanking a corridor, not just the tiles straight down it", () => {

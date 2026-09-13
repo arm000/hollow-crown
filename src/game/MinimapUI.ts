@@ -7,6 +7,7 @@ const CELL_COLORS: Record<Exclude<MinimapCell, "unknown">, string> = {
   wall: "#8a7d5c",
   floor: "#3a3428",
   door: "#b5813f", // a warm wood tone, distinct from both wall and floor -- doors stay legible once seen, open or closed
+  obstacle: "#7a2f2f", // a dull red, distinct from all three of the above -- flags a floor tile that's currently blocked (a pushable block, an unopened class gate) so a dead end always has *some* visual reason on the map, per the bug this cell type fixes (see Minimap.ts's doc comment)
 };
 
 /**

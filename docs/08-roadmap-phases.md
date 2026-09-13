@@ -936,7 +936,20 @@ independently):
     (it's the DOM/render shell), so the actual *decision* — which way
     to face — needed to live somewhere testable, not buried in the
     untestable glue that calls `player.teleportTo`.
-  - 283 tests passing.
+  - **Fourth follow-up fix (found via user report):** a pushable block
+    or an unopened class gate sits on an ordinary floor tile in the raw
+    grid — only the entity on top of it, not the tile itself, currently
+    blocks movement — but `cellType` only special-cased *walls* that
+    turn out passable (a revealed secret wall) and *doors*; anything
+    else blocking a floor tile just fell through to plain "floor." A
+    player walking south from level 1's start room hit exactly this:
+    the map showed an open hallway right up to the unpushed block, with
+    no visual reason for the dead end that stopped them there. `Minimap`
+    gained a fourth `MinimapCell`, `"obstacle"` (its own color in
+    `MinimapUI.ts`), for any non-door entity currently blocking a floor
+    tile; it reverts to "floor" the moment that entity stops blocking
+    (block pushed elsewhere, gate opened), same as a door already does.
+  - 303 tests passing.
 - ✅ Batch 3 — Procedural pixel art textures + the low-res rendering
   pipeline:
   - `Textures.ts` (new): `buildActOneMaterials(dungeon)` procedurally

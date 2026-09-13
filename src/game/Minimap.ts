@@ -9,8 +9,19 @@ import type { InteractableManager } from "./interactables/InteractableManager";
  * door's location, once seen, stays legible on the map — open or
  * closed, unlike a lever/lore item/key, which don't get a minimap
  * symbol of their own yet (small scope, per the roadmap doc's framing).
+ *
+ * "obstacle" is the same idea applied to anything else that currently
+ * blocks movement while sitting on an ordinary floor tile — a pushable
+ * block, or an unopened class-gated passage — rather than a wall or a
+ * door. Bug report: a player walking a corridor toward an unpushed
+ * block saw it rendered as plain "floor" (the raw grid tile under it
+ * really is floor), so the map showed an open hallway right up to a
+ * dead end the map itself gave no hint of. Once the obstacle is gone
+ * (block pushed elsewhere, gate opened), that tile's `blocksMovement()`
+ * goes false and it reverts to "floor" on the very next render, same as
+ * an opened door already did.
  */
-export type MinimapCell = "unknown" | "wall" | "floor" | "door";
+export type MinimapCell = "unknown" | "wall" | "floor" | "door" | "obstacle";
 
 const NEIGHBOR_STEPS: Array<[number, number]> = [
   [0, -1],
@@ -36,6 +47,11 @@ function cellType(dungeon: DungeonMap, interactables: InteractableManager, x: nu
     if (entity && !entity.blocksMovement()) return "floor";
     return "wall";
   }
+  // A pushable block or an unopened class gate sits on an otherwise
+  // plain floor tile but still blocks movement -- see this type's doc
+  // comment for the bug this fixes. A door already gets its own case
+  // above; this is everything else that can block a floor tile.
+  if (entity?.blocksMovement()) return "obstacle";
   return "floor";
 }
 
