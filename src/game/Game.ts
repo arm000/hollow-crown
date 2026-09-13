@@ -4,12 +4,13 @@ import { CombatEngine } from "./combat/CombatEngine";
 import { CombatUI } from "./combat/CombatUI";
 import { STARTING_LEVEL, type DungeonMap } from "./DungeonMap";
 import { buildDungeonMesh } from "./DungeonMesh";
-import { attemptInteract, attemptMove, attemptTurn, type WorldState } from "./GameLogic";
+import { attemptInteract, attemptMove, attemptTurn, equipItem, unequipItem, type WorldState } from "./GameLogic";
 import { Hud } from "./Hud";
 import { InputManager, type Action } from "./InputManager";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { createInteractableMesh } from "./interactables/InteractableMesh";
 import { Inventory } from "./Inventory";
+import { InventoryUI } from "./InventoryUI";
 import {
   AMBIENT_LIGHT_COLOR,
   AMBIENT_LIGHT_INTENSITY,
@@ -21,6 +22,7 @@ import {
 import { STARTING_LEVEL_ENTITIES } from "./Level";
 import { createCinderWretch, createRotThing } from "./monster/bestiary";
 import type { Monster } from "./monster/Monster";
+import type { EquipmentSlot } from "./party/Equipment";
 import { createStartingParty } from "./party/roster";
 import { Player } from "./Player";
 import { RandomRng } from "./Rng";
@@ -30,7 +32,7 @@ import { WorldClock } from "./WorldClock";
 const TILE_SIZE = 2;
 const MONSTER_HEIGHT = 1.4;
 
-type Mode = "explore" | "combat";
+type Mode = "explore" | "combat" | "inventory";
 
 export class Game {
   private readonly renderer: THREE.WebGLRenderer;
@@ -41,6 +43,7 @@ export class Game {
   private readonly world: WorldState;
   private readonly hud = new Hud();
   private readonly combatUI: CombatUI;
+  private readonly inventoryUI: InventoryUI;
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
   private readonly monsterMeshes = new Map<Monster, THREE.Object3D>();
   private readonly hideWallFace: (x: number, z: number) => void;
@@ -125,11 +128,21 @@ export class Game {
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
     this.combatUI = new CombatUI((choice, itemId) => this.handleCombatAction(choice, itemId));
+    this.inventoryUI = new InventoryUI(
+      (characterName, itemId) => this.handleEquip(characterName, itemId),
+      (characterName, slot) => this.handleUnequip(characterName, slot),
+    );
+    this.hud.onInventoryToggle(() => this.toggleInventory());
 
     window.addEventListener("resize", () => this.onResize());
     // Mobile browsers can be slow to fire `resize` on rotation, so also
     // listen for orientationchange explicitly.
     window.addEventListener("orientationchange", () => this.onResize());
+    window.addEventListener("keydown", (event) => {
+      if (event.code !== "KeyI" && !(event.code === "Escape" && this.mode === "inventory")) return;
+      event.preventDefault();
+      this.toggleInventory();
+    });
   }
 
   start(): void {
@@ -278,6 +291,37 @@ export class Game {
     this.combatUI.render(this.combatEngine, this.combatMonster, this.world.inventory);
     this.hud.updateParty(this.world.party.members);
     this.hud.updateInventory(this.world.inventory.list());
+  }
+
+  /** Opens the inventory screen from exploration only — not mid-combat or after the run has ended, same gate as movement. */
+  private toggleInventory(): void {
+    if (this.mode === "inventory") {
+      this.mode = "explore";
+      this.inventoryUI.hide();
+      return;
+    }
+    if (this.mode !== "explore" || this.runEnded) return;
+    this.mode = "inventory";
+    this.inventoryUI.show();
+    this.refreshInventoryUI();
+  }
+
+  private handleEquip(characterName: string, itemId: string): void {
+    equipItem(this.world, characterName, itemId);
+    this.refreshInventoryUI();
+    this.hud.updateParty(this.world.party.members);
+    this.hud.updateInventory(this.world.inventory.list());
+  }
+
+  private handleUnequip(characterName: string, slot: EquipmentSlot): void {
+    unequipItem(this.world, characterName, slot);
+    this.refreshInventoryUI();
+    this.hud.updateParty(this.world.party.members);
+    this.hud.updateInventory(this.world.inventory.list());
+  }
+
+  private refreshInventoryUI(): void {
+    this.inventoryUI.render(this.world.party, this.world.inventory);
   }
 
   private checkCombatEnd(): void {

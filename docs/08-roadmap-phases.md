@@ -385,8 +385,38 @@ independently):
     Neither pickup's message names its mechanical effect, per
     [06-items-and-equipment.md](06-items-and-equipment.md#discovery-not-explanation).
   - 178 tests passing.
-- ⬜ Batch 4 — A real inventory UI (view/equip/swap gear across the
-  party, not just auto-equip-on-pickup).
+- ✅ Batch 4 — A real inventory UI:
+  - `GameLogic.ts` gained `equipItem`/`unequipItem`: pure functions
+    (no DOM) that move an item between the shared `Inventory` and a
+    named character's slot, swapping whatever was already worn back
+    into the inventory rather than discarding it — freely reversible,
+    not a one-way commitment. Directly unit tested in the new
+    `GameLogic.test.ts`.
+  - `InventoryUI.ts` (new, same DOM-overlay family as `CombatUI`): a
+    "Carried" list of everything held, and a per-character card showing
+    all four slots. Tap an equippable item to select it, then tap a
+    slot to equip it there (a mismatched slot tap is a no-op); tap a
+    filled slot with nothing selected to unequip it. Never states an
+    item's mechanical effect, only its name, matching the "Discovery,
+    not explanation" principle already followed by `CombatUI`'s item
+    row.
+  - Opened via an always-visible "Inventory" button (top-left, works by
+    mouse click or touch tap — unlike the touch move/turn pads, this
+    needed to be reachable on both desktop and mobile without relying
+    on a keyboard) or the `I` key; `Escape` or the button again closes
+    it. Only available from exploration, same gate as movement — not
+    mid-combat or after the run has ended.
+  - `EquipmentPickup` no longer auto-equips onto a level-designated
+    character (Batch 2's stopgap): it now adds the item to the shared
+    inventory unequipped, same as `KeyItem`, and the player chooses who
+    wears it via the new screen.
+  - No test coverage of `InventoryUI.ts` itself, deliberately — it's a
+    DOM-rendering class in the same untested-by-design category as
+    `CombatUI` (no unit test exists for that one either), the kind of
+    thing [11-testing-strategy.md](11-testing-strategy.md#3-browser-end-to-end-smoke-tests--playwright-real-headless-browser)
+    earmarks for the still-deferred Playwright layer; the equip/unequip
+    logic it calls into (`GameLogic.ts`) is what's actually unit tested.
+  - 183 tests passing.
 - ⬜ Batch 5 — Leveling (XP curve, level-up), a minimal party-creation/
   naming screen, and a non-combat puzzle gated by a class ability or
   found gear.

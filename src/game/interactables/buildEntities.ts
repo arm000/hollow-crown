@@ -49,7 +49,7 @@ function buildOne(spawn: EntitySpawn): Interactable {
     case "equipmentItem": {
       const item = EQUIPMENT_ITEMS[params.itemId as string];
       if (!item) throw new Error(`Unknown equipment item id: "${params.itemId}"`);
-      return new EquipmentPickup(spawn.x, spawn.z, item, params.equipTo as string);
+      return new EquipmentPickup(spawn.x, spawn.z, item);
     }
     case "loreItem":
       return new LoreItem(spawn.x, spawn.z, params.text as string);

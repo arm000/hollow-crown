@@ -2,6 +2,7 @@ import type { DungeonMap } from "./DungeonMap";
 import type { InteractableManager } from "./interactables/InteractableManager";
 import type { Inventory } from "./Inventory";
 import type { Monster } from "./monster/Monster";
+import { EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
 import type { Party } from "./party/Party";
 import type { Player } from "./Player";
 import type { WorldClock } from "./WorldClock";
@@ -155,4 +156,40 @@ export interface TurnOutcome {
 export function attemptTurn(world: WorldState, direction: 1 | -1): TurnOutcome {
   world.player.turn(direction);
   return { combatTriggeredBy: advanceWorldTurn(world) };
+}
+
+export interface EquipOutcome {
+  success: boolean;
+  message?: string;
+}
+
+/**
+ * Equips `itemId` (must currently be held in the shared inventory) onto
+ * `characterName`, per docs/06-items-and-equipment.md#inventory-model —
+ * the inventory screen is what calls this, not the level. Whatever was
+ * already worn in that slot, if anything, goes back into the inventory
+ * rather than vanishing — this is meant to be freely reversible, not a
+ * one-way commitment. Doesn't cost a world turn: unlike moving or
+ * interacting, this isn't something the dungeon reacts to.
+ */
+export function equipItem(world: WorldState, characterName: string, itemId: string): EquipOutcome {
+  const item = EQUIPMENT_ITEMS[itemId];
+  const character = world.party.members.find((member) => member.name === characterName);
+  if (!item || !character) return { success: false };
+  if (!world.inventory.consume(itemId)) return { success: false };
+
+  const previous = character.equip(item);
+  if (previous) world.inventory.add(previous.id, previous.name);
+  return { success: true, message: `${character.name} equips ${item.name}.` };
+}
+
+/** Moves whatever `characterName` has worn in `slot`, if anything, back into the shared inventory. */
+export function unequipItem(world: WorldState, characterName: string, slot: EquipmentSlot): EquipOutcome {
+  const character = world.party.members.find((member) => member.name === characterName);
+  if (!character) return { success: false };
+  const item = character.unequip(slot);
+  if (!item) return { success: false };
+
+  world.inventory.add(item.id, item.name);
+  return { success: true, message: `${character.name} stows ${item.name}.` };
 }

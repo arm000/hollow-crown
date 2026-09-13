@@ -21,9 +21,10 @@ import type { EntitySpawn } from "./interactables/types";
  * - Beyond that bonus alcove's lore item, a secret wall hides one more
  *   hidden pocket with a second lore item.
  * - Two equipment pickups (docs/08-roadmap-phases.md Phase 3): a sword
- *   for Bram in the plate/block spur, and a fire-resisting charm for
- *   Corvin in the room the Cinder Wretch patrols — finding it means
- *   passing through the exact monster its resistance answers.
+ *   in the plate/block spur, and a fire-resisting charm in the room the
+ *   Cinder Wretch patrols — finding it means passing through the exact
+ *   monster its resistance answers. Both land in the shared inventory
+ *   unequipped; who wears what is chosen via the inventory screen.
  * - Two consumables (docs/06-items-and-equipment.md combat-countering
  *   items): an Oil Flask in the entry corridor, everyone's first pickup,
  *   and an Antidote along the spur toward the lever room. Both reuse the
@@ -39,8 +40,8 @@ export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
   { type: "door", x: 6, z: 1, params: { keyId: "rusted-key", locked: true } },
   { type: "exit", x: 7, z: 1 },
 
-  { type: "equipmentItem", x: 2, z: 3, params: { itemId: "rusted-sword", equipTo: "Bram" } },
-  { type: "equipmentItem", x: 4, z: 4, params: { itemId: "ember-charm", equipTo: "Corvin" } },
+  { type: "equipmentItem", x: 2, z: 3, params: { itemId: "rusted-sword" } },
+  { type: "equipmentItem", x: 4, z: 4, params: { itemId: "ember-charm" } },
 
   { type: "keyItem", x: 2, z: 1, params: { itemId: "oil-flask", name: "an Oil Flask" } },
   { type: "keyItem", x: 5, z: 3, params: { itemId: "antidote", name: "an Antidote" } },

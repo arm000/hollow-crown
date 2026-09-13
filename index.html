@@ -77,6 +77,29 @@
         text-align: right;
         white-space: pre-line;
       }
+      /* Always visible on both desktop and mobile -- unlike the touch
+         move/turn pads (CSS-gated to coarse pointers only), this is the
+         only way to reach the inventory screen on a device with no
+         keyboard, so it can't be hidden behind a media query. */
+      #inventory-toggle {
+        position: fixed;
+        top: max(12px, env(safe-area-inset-top));
+        left: max(12px, env(safe-area-inset-left));
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.65);
+        color: #d8c9a3;
+        text-shadow: 0 1px 3px #000;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+        z-index: 6;
+      }
+      #inventory-toggle:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
       #win-screen {
         position: fixed;
         inset: 0;
@@ -194,6 +217,107 @@
         opacity: 0.4;
       }
 
+      /* Inventory/equip overlay: mounted by InventoryUI.ts. Same
+         explicit "display:none by default" pattern as #win-screen and
+         #combat-ui above -- an ID selector would otherwise beat the
+         browser's own [hidden] rule. Opened from exploration only (see
+         Game.ts's toggleInventory), so unlike #combat-ui it never needs
+         to coexist with the touch move/turn pads underneath. */
+      #inventory-ui {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        gap: 12px;
+        background: rgba(5, 4, 2, 0.92);
+        color: #d8c9a3;
+        pointer-events: auto;
+        overflow-y: auto;
+        z-index: 12;
+      }
+      #inventory-ui:not([hidden]) {
+        display: flex;
+      }
+      #inventory-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 20px;
+        letter-spacing: 0.08em;
+        border-bottom: 1px solid rgba(216, 201, 163, 0.3);
+        padding-bottom: 10px;
+      }
+      #inventory-close {
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.75);
+        color: #d8c9a3;
+        touch-action: none;
+      }
+      #inventory-close:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
+      #inventory-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .inventory-heading {
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        opacity: 0.75;
+        margin-bottom: 8px;
+      }
+      #inventory-carried {
+        display: flex;
+        flex-direction: column;
+      }
+      .inventory-empty {
+        font-size: 13px;
+        opacity: 0.6;
+        font-style: italic;
+      }
+      .inventory-item-btn,
+      .inventory-slot-btn {
+        display: block;
+        width: 100%;
+        text-align: left;
+        font-size: 14px;
+        padding: 9px 12px;
+        margin-bottom: 6px;
+        border-radius: 6px;
+        border: 1px solid rgba(216, 201, 163, 0.3);
+        background: rgba(20, 17, 13, 0.5);
+        color: #d8c9a3;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+      .inventory-item-btn.not-equippable {
+        opacity: 0.65;
+      }
+      .inventory-item-btn.selected {
+        border-color: #d8c9a3;
+        background: rgba(216, 201, 163, 0.25);
+      }
+      .inventory-slot-btn.match {
+        border-color: rgba(140, 200, 140, 0.8);
+      }
+      #inventory-party {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .inventory-character-name {
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
       /* Touch controls: mounted by TouchControls.ts, hidden by default so
          mouse-driven desktops don't see buttons they don't need. Shown for
          any device whose primary pointer is coarse and has no hover (i.e.
@@ -265,6 +389,7 @@
   <body>
     <div id="app"></div>
     <div id="crosshair"></div>
+    <button id="inventory-toggle" type="button">Inventory</button>
     <div id="hud-party"></div>
     <div id="hud">
       <div class="title">THE HOLLOW CROWN</div>

@@ -13,6 +13,7 @@ export class Hud {
   private readonly partyEl: HTMLElement;
   private readonly winScreenEl: HTMLElement;
   private readonly defeatScreenEl: HTMLElement;
+  private readonly inventoryToggleEl: HTMLElement;
 
   constructor(doc: Document = document) {
     this.messageEl = getRequiredElement(doc, "hud-message");
@@ -20,6 +21,7 @@ export class Hud {
     this.partyEl = getRequiredElement(doc, "hud-party");
     this.winScreenEl = getRequiredElement(doc, "win-screen");
     this.defeatScreenEl = getRequiredElement(doc, "defeat-screen");
+    this.inventoryToggleEl = getRequiredElement(doc, "inventory-toggle");
   }
 
   showMessage(text: string): void {
@@ -47,6 +49,14 @@ export class Hud {
   /** Phase 2's defeat stub (docs/08-roadmap-phases.md#phase-2--party--turn-based-combat) — ends the run, no revive system yet. */
   showDefeatScreen(): void {
     this.defeatScreenEl.hidden = false;
+  }
+
+  /** Wires the always-visible "Inventory" button (works by mouse click or touch tap alike, unlike the touch-only move/turn pads) — `Game` decides whether the tap is actually allowed to open anything right now. */
+  onInventoryToggle(callback: () => void): void {
+    this.inventoryToggleEl.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      callback();
+    });
   }
 }
 

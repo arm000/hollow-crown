@@ -30,11 +30,14 @@ Then open the printed local URL in a browser.
 | `←` / `→`      | Turn left / right |
 | `Space`        | Interact (doors, levers, items, ...) |
 | `1` / `2` / `3` / `4` | In combat: Attack / Defend / Ability / Flee |
+| `I` / Escape   | Open / close the inventory screen |
 
 On a touchscreen device, on-screen pads (move, bottom-left; turn,
 bottom-right) replace the keyboard automatically — no setup needed, and
 no keyboard/mouse required to play. Combat's Attack/Defend/Flee buttons
-work the same way on both. The game targets touch and desktop as
+work the same way on both. The inventory screen opens from its own
+always-visible button (top-left) instead, since that one needs to work
+identically with no keyboard at all. The game targets touch and desktop as
 equally first-class from the start; see
 [docs/01-vision.md](docs/01-vision.md#platform--scope).
 
@@ -53,15 +56,16 @@ src/
     Player.ts            grid position, facing, and move/turn animation
     InputManager.ts      keyboard/touch -> discrete action queue
     TouchControls.ts     on-screen movement/turn/interact buttons
-    Inventory.ts         shared party inventory (placeholder: id -> name)
+    Inventory.ts         shared party inventory (id -> name/count)
     Hud.ts               DOM message line, party/inventory status, win/defeat screens
+    InventoryUI.ts       DOM overlay: view carried items, equip/unequip gear across the party
     Lighting.ts          light color/intensity constants — headlessly testable
     Rng.ts               seedable RNG (mulberry32) for testable combat/AI randomness
     WorldClock.ts        one player action -> every registered entity ticks once
-    GameLogic.ts         pure move/interact/turn resolution (no rendering) — headlessly testable
+    GameLogic.ts         pure move/interact/turn/equip resolution (no rendering) — headlessly testable
     interactables/       Door, Lever, PressurePlate, PushableBlock,
                          SecretWall, KeyItem, LoreItem, ExitTile,
-                         InteractableManager
+                         EquipmentPickup, InteractableManager
     party/               Character, Party, roster.ts, classes.ts (abilities), Equipment.ts
     monster/             Monster (patrol/detection AI + its combat turn), bestiary.ts (monster types)
     combat/              CombatEngine (pure), CombatUI (DOM overlay),
@@ -90,11 +94,12 @@ weak to Fire — melee alone goes badly, the Mage's Firebolt turns it
 around). Attack/Defend/Ability/Flee/Item, status effects (Bleed is live via
 the Rogue; Poison/Stun/Fear/Silence are mechanically real but mostly
 await a monster or item that inflicts them), victory/defeat/flee all
-handled. Two equipment pickups (a sword, a fire-resisting charm)
-auto-equip onto a designated character and genuinely change combat
-math — there's no inventory UI to choose who wears what yet, that's
-still open. Two consumables (an Oil Flask, an Antidote) are findable in
-the level and usable mid-fight via the Item action, curing a status or
+handled. Two equipment pickups (a sword, a fire-resisting charm) and two
+consumables (an Oil Flask, an Antidote) are findable in the level. Gear
+lands in the shared inventory unequipped — tap the always-visible
+"Inventory" button (or press `I`) to open a real inventory screen and
+choose who wears what, swapping gear freely between party members.
+Consumables are usable mid-fight via the Item action, curing a status or
 dealing resistance-adjusted damage — a party without a Mage can still
 answer a Fire-weak monster by throwing the flask. Leveling and a
 party-creation screen don't exist yet — that's the rest of Phase 3.
