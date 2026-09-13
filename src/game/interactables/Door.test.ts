@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Inventory } from "../Inventory";
+import { Party } from "../party/Party";
 import { Door } from "./Door";
 
 describe("Door", () => {
@@ -15,7 +16,7 @@ describe("Door", () => {
 
   it("refuses to unlock without the required key", () => {
     const door = new Door(1, 1, "rusted-key");
-    const message = door.interact({ inventory: new Inventory() });
+    const message = door.interact({ inventory: new Inventory(), party: new Party([]) });
     expect(door.locked).toBe(true);
     expect(message).toBe("The door is locked.");
   });
@@ -25,7 +26,7 @@ describe("Door", () => {
     const inventory = new Inventory();
     inventory.add("rusted-key");
 
-    const message = door.interact({ inventory });
+    const message = door.interact({ inventory, party: new Party([]) });
 
     expect(door.locked).toBe(false);
     expect(door.blocksMovement()).toBe(false);
@@ -36,16 +37,16 @@ describe("Door", () => {
     const door = new Door(1, 1, "rusted-key");
     const inventory = new Inventory();
     inventory.add("rusted-key");
-    door.interact({ inventory });
+    door.interact({ inventory, party: new Party([]) });
 
-    const message = door.interact({ inventory });
+    const message = door.interact({ inventory, party: new Party([]) });
 
     expect(message).toBe("The door is already open.");
   });
 
   it("with no required key stays locked until unlocked some other way (e.g. a lever)", () => {
     const door = new Door(1, 1, undefined);
-    const message = door.interact({ inventory: new Inventory() });
+    const message = door.interact({ inventory: new Inventory(), party: new Party([]) });
     expect(door.locked).toBe(true);
     expect(message).toBe("The door is locked.");
   });

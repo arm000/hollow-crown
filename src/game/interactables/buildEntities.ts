@@ -1,4 +1,6 @@
+import { EQUIPMENT_ITEMS } from "../party/Equipment";
 import { Door } from "./Door";
+import { EquipmentPickup } from "./EquipmentPickup";
 import { ExitTile } from "./ExitTile";
 import { KeyItem } from "./KeyItem";
 import { Lever } from "./Lever";
@@ -44,6 +46,11 @@ function buildOne(spawn: EntitySpawn): Interactable {
       );
     case "keyItem":
       return new KeyItem(spawn.x, spawn.z, params.itemId as string, (params.name as string) ?? "an item");
+    case "equipmentItem": {
+      const item = EQUIPMENT_ITEMS[params.itemId as string];
+      if (!item) throw new Error(`Unknown equipment item id: "${params.itemId}"`);
+      return new EquipmentPickup(spawn.x, spawn.z, item, params.equipTo as string);
+    }
     case "loreItem":
       return new LoreItem(spawn.x, spawn.z, params.text as string);
     case "pushableBlock":

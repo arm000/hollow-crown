@@ -32,7 +32,11 @@ export class Hud {
 
   updateParty(members: Character[]): void {
     this.partyEl.textContent = members
-      .map((member) => `${member.name} ${member.hp}/${member.maxHp}${member.isDown ? " (down)" : ""}`)
+      .map((member) => {
+        const status = `${member.name} ${member.hp}/${member.maxHp}${member.isDown ? " (down)" : ""}`;
+        const gear = member.listEquipment();
+        return gear.length > 0 ? `${status} [${gear.map((item) => item.name).join(", ")}]` : status;
+      })
       .join("\n");
   }
 

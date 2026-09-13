@@ -62,7 +62,7 @@ src/
     interactables/       Door, Lever, PressurePlate, PushableBlock,
                          SecretWall, KeyItem, LoreItem, ExitTile,
                          InteractableManager
-    party/               Character, Party, roster.ts, classes.ts (per-class abilities)
+    party/               Character, Party, roster.ts, classes.ts (abilities), Equipment.ts
     monster/             Monster (patrol/detection AI + its combat turn), bestiary.ts (monster types)
     combat/              CombatEngine (pure), CombatUI (DOM overlay),
                          DamageType.ts, StatusEffect.ts
@@ -90,8 +90,10 @@ weak to Fire — melee alone goes badly, the Mage's Firebolt turns it
 around). Attack/Defend/Ability/Flee, status effects (Bleed is live via
 the Rogue; Poison/Stun/Fear/Silence are mechanically real but await a
 monster or item that inflicts them), victory/defeat/flee all handled.
-Equipment, consumable items, and leveling don't exist yet — that's the
-rest of Phase 3.
+Two equipment pickups (a sword, a fire-resisting charm) auto-equip onto
+a designated character and genuinely change combat math — there's no
+inventory UI to choose who wears what yet, that's still open. Consumable
+items and leveling don't exist yet either — that's the rest of Phase 3.
 
 ## Scripts
 

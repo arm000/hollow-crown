@@ -1,4 +1,5 @@
 import type { Inventory } from "../Inventory";
+import type { Party } from "../party/Party";
 
 /**
  * Raw level-data description of an interactable's placement, per
@@ -15,6 +16,7 @@ export interface EntitySpawn {
 
 export interface InteractionContext {
   inventory: Inventory;
+  party: Party;
 }
 
 /**

@@ -66,7 +66,7 @@ export class CombatEngine {
 
     switch (choice) {
       case "attack": {
-        const rawDamage = actor.stats.might + rollInt(this.rng, 1, 4);
+        const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 4);
         const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
         this.monster.takeDamage(damage);
         this.log.push(`${actor.name} attacks for ${damage} damage.`);
@@ -82,7 +82,7 @@ export class CombatEngine {
         break;
       }
       case "flee": {
-        const chance = 30 + actor.stats.resolve * 5;
+        const chance = 30 + actor.effectiveStats.resolve * 5;
         if (rollInt(this.rng, 1, 100) <= chance) {
           this.result = "fled";
           this.log.push(`${actor.name} leads the party in a hasty retreat!`);
@@ -128,14 +128,14 @@ export class CombatEngine {
         break;
       }
       case "rogue": {
-        const rawDamage = actor.stats.might + rollInt(this.rng, 1, 4) + 2;
+        const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 4) + 2;
         this.monster.takeDamage(rawDamage); // ignores resistance entirely -- that's the point
         this.monster.statusEffects.apply({ type: "bleed", turnsRemaining: BLEED_DURATION, tickDamage: BLEED_TICK_DAMAGE });
         this.log.push(`${actor.name}'s Precision Strike finds a weak point for ${rawDamage} damage and draws blood!`);
         break;
       }
       case "mage": {
-        const rawDamage = actor.stats.focus + rollInt(this.rng, 1, 6);
+        const rawDamage = actor.effectiveStats.focus + rollInt(this.rng, 1, 6);
         const damage = applyResistance(rawDamage, this.monster.resistances, "fire");
         this.monster.takeDamage(damage);
         this.log.push(`${actor.name} hurls a Firebolt for ${damage} fire damage.`);
@@ -233,7 +233,7 @@ export class CombatEngine {
     const target = this.pickTarget();
     const defended = this.defending.has(target);
     const baseDamage = defended ? Math.ceil(action.damage / 2) : action.damage;
-    const dealt = applyResistance(baseDamage, target.resistances, "physical");
+    const dealt = applyResistance(baseDamage, target.effectiveResistances, "physical");
     target.takeDamage(dealt);
     this.log.push(`${target.name} takes ${dealt} damage${defended ? " (defended)" : ""}.`);
 

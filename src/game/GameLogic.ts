@@ -101,7 +101,7 @@ export function attemptMove(world: WorldState, dx: number, dz: number): MoveOutc
   world.interactables.reevaluatePressurePlates(world.player.gridX, world.player.gridZ);
   const combatTriggeredBy = advanceWorldTurn(world);
 
-  const result = world.interactables.handleEnter(nx, nz, { inventory: world.inventory });
+  const result = world.interactables.handleEnter(nx, nz, { inventory: world.inventory, party: world.party });
   return {
     moved: true,
     message: result.message,
@@ -128,7 +128,7 @@ export interface InteractOutcome {
  * underfoot always winning.
  */
 export function attemptInteract(world: WorldState): InteractOutcome {
-  const ctx = { inventory: world.inventory };
+  const ctx = { inventory: world.inventory, party: world.party };
   const { gridX, gridZ } = world.player;
 
   const [fx, fz] = world.player.forwardStep();

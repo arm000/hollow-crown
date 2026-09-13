@@ -3,6 +3,7 @@ import type { ResistanceMap } from "./DamageType";
 import { DungeonMap } from "../DungeonMap";
 import { Monster } from "../monster/Monster";
 import { Character } from "../party/Character";
+import { EQUIPMENT_ITEMS } from "../party/Equipment";
 import { Party } from "../party/Party";
 import { Player } from "../Player";
 import { SeededRng } from "../Rng";
@@ -136,6 +137,23 @@ describe("CombatEngine", () => {
     if (engine.isPartyTurn) engine.submitAction("attack");
     const dealt = 9999 - monster.hp;
     expect(dealt).toBeLessThanOrEqual(Math.round((8 + 4) * 0.5)); // might(8) + max roll(4), halved
+  });
+
+  it("equipped gear changes actual combat damage, not just the Character unit in isolation", () => {
+    const bareHanded = new Character("Bram", "warrior", "front", { might: 5, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+    const bareMonster = newMonster({ maxHp: 9999 });
+    const bareEngine = new CombatEngine(new Party([bareHanded]), bareMonster, new SeededRng(2));
+    if (bareEngine.isPartyTurn) bareEngine.submitAction("attack");
+    const bareDamage = 9999 - bareMonster.hp;
+
+    const armed = new Character("Bram", "warrior", "front", { might: 5, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+    armed.equip(EQUIPMENT_ITEMS["rusted-sword"]); // +2 might
+    const armedMonster = newMonster({ maxHp: 9999 });
+    const armedEngine = new CombatEngine(new Party([armed]), armedMonster, new SeededRng(2)); // same seed
+    if (armedEngine.isPartyTurn) armedEngine.submitAction("attack");
+    const armedDamage = 9999 - armedMonster.hp;
+
+    expect(armedDamage).toBeGreaterThan(bareDamage);
   });
 
   describe("abilities", () => {

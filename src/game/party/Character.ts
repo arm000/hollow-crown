@@ -1,5 +1,6 @@
 import type { ResistanceMap } from "../combat/DamageType";
 import { StatusEffectSet } from "../combat/StatusEffect";
+import type { EquipmentItem, EquipmentSlot } from "./Equipment";
 
 /** One of the four starting classes (see docs/03-party-and-characters.md). No hybrid/multiclass in v1. */
 export type ClassId = "warrior" | "rogue" | "mage" | "cleric";
@@ -29,9 +30,10 @@ export class Character {
   readonly side = "party" as const;
   hp: number;
   mana: number;
-  /** Base resistances are empty for every starting character — equipment (Phase 3 accessories) is the only source so far. */
+  /** Base resistances are empty for every starting character — an equipped accessory is the only source. */
   resistances: ResistanceMap = {};
   readonly statusEffects = new StatusEffectSet();
+  private readonly equipment: Partial<Record<EquipmentSlot, EquipmentItem>> = {};
 
   constructor(
     public readonly name: string,
@@ -45,9 +47,56 @@ export class Character {
     this.mana = maxMana;
   }
 
-  /** Grace stands in as this character's initiative stat (docs/05-combat.md#initiative). */
+  equip(item: EquipmentItem): EquipmentItem | undefined {
+    const previous = this.equipment[item.slot];
+    this.equipment[item.slot] = item;
+    return previous;
+  }
+
+  unequip(slot: EquipmentSlot): EquipmentItem | undefined {
+    const previous = this.equipment[slot];
+    delete this.equipment[slot];
+    return previous;
+  }
+
+  equippedIn(slot: EquipmentSlot): EquipmentItem | undefined {
+    return this.equipment[slot];
+  }
+
+  /** Everything currently worn, across all slots — for a HUD/inventory screen to list. */
+  listEquipment(): EquipmentItem[] {
+    return Object.values(this.equipment).filter((item): item is EquipmentItem => item !== undefined);
+  }
+
+  /** Base stats plus every equipped item's bonus — this is what combat math should always read, not `.stats` directly. */
+  get effectiveStats(): CharacterStats {
+    const effective = { ...this.stats };
+    for (const item of Object.values(this.equipment)) {
+      if (!item?.statBonus) continue;
+      for (const key of Object.keys(item.statBonus) as Array<keyof CharacterStats>) {
+        effective[key] += item.statBonus[key] ?? 0;
+      }
+    }
+    return effective;
+  }
+
+  /** Base resistances plus every equipped item's bonus, stacked multiplicatively. */
+  get effectiveResistances(): ResistanceMap {
+    const effective: ResistanceMap = { ...this.resistances };
+    for (const item of Object.values(this.equipment)) {
+      if (!item?.resistanceBonus) continue;
+      for (const [type, multiplier] of Object.entries(item.resistanceBonus) as Array<
+        [keyof ResistanceMap, number]
+      >) {
+        effective[type] = (effective[type] ?? 1) * multiplier;
+      }
+    }
+    return effective;
+  }
+
+  /** Grace (including equipment) stands in as this character's initiative stat (docs/05-combat.md#initiative). */
   get initiativeStat(): number {
-    return this.stats.grace;
+    return this.effectiveStats.grace;
   }
 
   get isDown(): boolean {

@@ -320,9 +320,32 @@ independently):
     doesn't cleanly win) fighting the Wretch with melee alone under a
     fixed seed, and wins decisively under the *same* seed by using
     Firebolt instead. 148 tests passing.
-- ⬜ Batch 2 — Equipment slots + stat modifiers + slotted inventory UI.
-- ⬜ Batch 3 — Item combat action + combat-countering consumables (Oil
-  Flask, Antidote, Bandages, Smelling Salts, Holy Water).
+- ✅ Batch 2 — Equipment slots + stat modifiers:
+  - `Equipment.ts`: the four slots (Weapon/Off-hand/Armor/Accessory),
+    `EQUIPMENT_ITEMS` as plain data (a sword, a buckler, armor, a
+    charm). `Character` gained `equip`/`unequip`/`equippedIn`/
+    `listEquipment`, plus `effectiveStats`/`effectiveResistances`
+    getters that merge base stats/resistances with everything
+    equipped — base `stats`/`resistances` never mutate.
+  - `CombatEngine` now reads `effectiveStats`/`effectiveResistances`
+    everywhere it used to read the raw fields (Attack, Precision
+    Strike, Firebolt, flee chance, initiative, incoming damage) — an
+    integration test confirms equipment changes real combat damage,
+    not just the `Character` unit in isolation.
+  - Two findable pickups: a sword for Bram, and — pointedly — a
+    fire-resisting charm for Corvin sitting in the room the Cinder
+    Wretch patrols, so finding it means passing through the exact
+    monster its resistance answers.
+  - **Deliberate simplification, not the full roadmap ask**: gear
+    auto-equips onto a level-designated character on pickup
+    (`EquipmentPickup`). There's no slot-management/inventory UI yet
+    to let the player choose who wears what or swap gear later — that
+    UI is still open roadmap scope, not done here.
+  - 164 tests passing.
+- ⬜ Batch 3 — A real inventory UI (view/equip/swap gear across the
+  party, not just auto-equip-on-pickup), the Item combat action, and
+  combat-countering consumables (Oil Flask, Antidote, Bandages,
+  Smelling Salts, Holy Water).
 - ⬜ Batch 4 — Leveling (XP curve, level-up), a minimal party-creation/
   naming screen, and a non-combat puzzle gated by a class ability or
   found gear.

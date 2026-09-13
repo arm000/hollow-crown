@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Inventory } from "../Inventory";
+import { Party } from "../party/Party";
 import { InteractableManager } from "./InteractableManager";
 
 describe("InteractableManager", () => {
@@ -36,7 +37,7 @@ describe("InteractableManager", () => {
     ]);
     const inventory = new Inventory();
 
-    const result = manager.handleEnter(1, 1, { inventory });
+    const result = manager.handleEnter(1, 1, { inventory, party: new Party([]) });
 
     expect(result.message).toBe("You found a key.");
     expect(result.isExit).toBe(false);
@@ -45,19 +46,19 @@ describe("InteractableManager", () => {
 
   it("reports isExit when the exit tile is entered", () => {
     const manager = InteractableManager.fromSpawns([{ type: "exit", x: 1, z: 1 }]);
-    const result = manager.handleEnter(1, 1, { inventory: new Inventory() });
+    const result = manager.handleEnter(1, 1, { inventory: new Inventory(), party: new Party([]) });
     expect(result.isExit).toBe(true);
   });
 
   it("handleEnter on an empty tile is a no-op", () => {
     const manager = InteractableManager.fromSpawns([]);
-    const result = manager.handleEnter(0, 0, { inventory: new Inventory() });
+    const result = manager.handleEnter(0, 0, { inventory: new Inventory(), party: new Party([]) });
     expect(result).toEqual({ isExit: false });
   });
 
   it("handleInteract on an empty tile returns undefined rather than a message", () => {
     const manager = InteractableManager.fromSpawns([]);
-    const message = manager.handleInteract(0, 0, { inventory: new Inventory() });
+    const message = manager.handleInteract(0, 0, { inventory: new Inventory(), party: new Party([]) });
     expect(message).toBeUndefined();
   });
 });

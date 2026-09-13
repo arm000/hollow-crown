@@ -20,11 +20,18 @@ import type { EntitySpawn } from "./interactables/types";
  *   known, accepted wrinkle here, not a bug to chase down).
  * - Beyond that bonus alcove's lore item, a secret wall hides one more
  *   hidden pocket with a second lore item.
+ * - Two equipment pickups (docs/08-roadmap-phases.md Phase 3): a sword
+ *   for Bram in the plate/block spur, and a fire-resisting charm for
+ *   Corvin in the room the Cinder Wretch patrols — finding it means
+ *   passing through the exact monster its resistance answers.
  */
 export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
   { type: "keyItem", x: 3, z: 2, params: { itemId: "rusted-key", name: "a Rusted Key" } },
   { type: "door", x: 6, z: 1, params: { keyId: "rusted-key", locked: true } },
   { type: "exit", x: 7, z: 1 },
+
+  { type: "equipmentItem", x: 2, z: 3, params: { itemId: "rusted-sword", equipTo: "Bram" } },
+  { type: "equipmentItem", x: 4, z: 4, params: { itemId: "ember-charm", equipTo: "Corvin" } },
 
   { type: "lever", x: 5, z: 4, params: { doorX: 6, doorZ: 5 } },
   { type: "door", x: 6, z: 5, params: { locked: true } },

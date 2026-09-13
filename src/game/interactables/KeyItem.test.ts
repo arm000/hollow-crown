@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Inventory } from "../Inventory";
+import { Party } from "../party/Party";
 import { KeyItem } from "./KeyItem";
 
 describe("KeyItem", () => {
@@ -12,7 +13,7 @@ describe("KeyItem", () => {
     const key = new KeyItem(1, 1, "rusted-key", "a Rusted Key");
     const inventory = new Inventory();
 
-    const message = key.onEnter({ inventory });
+    const message = key.onEnter({ inventory, party: new Party([]) });
 
     expect(inventory.has("rusted-key")).toBe(true);
     expect(message).toBe("You found a Rusted Key.");
@@ -27,9 +28,9 @@ describe("KeyItem", () => {
   it("does nothing on a second onEnter (already collected)", () => {
     const key = new KeyItem(1, 1, "rusted-key", "a Rusted Key");
     const inventory = new Inventory();
-    key.onEnter({ inventory });
+    key.onEnter({ inventory, party: new Party([]) });
 
-    const message = key.onEnter({ inventory });
+    const message = key.onEnter({ inventory, party: new Party([]) });
 
     expect(message).toBeUndefined();
   });
