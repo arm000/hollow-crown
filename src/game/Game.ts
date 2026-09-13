@@ -46,12 +46,12 @@ export class Game {
     // harshly or (with weak lights) sit so low they read as near-black.
     // ACES is the standard choice paired with physically-correct lights.
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.4;
+    this.renderer.toneMappingExposure = 1.0;
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x05060a);
-    this.scene.fog = new THREE.FogExp2(0x05060a, 0.045);
+    this.scene.fog = new THREE.FogExp2(0x05060a, 0.07);
     const dungeonMesh = buildDungeonMesh(dungeon, TILE_SIZE);
     this.scene.add(dungeonMesh.group);
     this.hideWallFace = dungeonMesh.hideWallFace;

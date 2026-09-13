@@ -2,43 +2,39 @@
  * Scene light tuning, pulled out of `Game.ts` as plain constants
  * specifically so `Lighting.test.ts` can sanity-check them without a
  * WebGL context — see docs/11-testing-strategy.md's worked example for
- * exactly what this guard rail can and can't catch (short version: it
- * stops a known-bad value from coming back; it would not have caught
- * the original bug, since nothing about `1.6` looked wrong on its own).
+ * what this guard rail can and can't catch, and for the full story
+ * behind the numbers here (short version below).
  *
- * Three.js has used physically-correct light units (candela-scale)
- * for years — there is no "legacy lights" toggle left in this version
- * to fall back on. Pre-physically-correct tutorial code (and this
- * project's own original scaffold) commonly used small values like
- * 0.5-2, which render as near-black under the current model.
- *
- * This has already been tuned blind twice without anyone confirming the
- * result on an actual screen (no rendering/screenshot tool is available
- * in this environment) — first ambient 0.7/torch 1.6 (reported as
- * unreadably dark), then ambient 3/torch 40 with no tone mapping
- * (*also* reported as too dark). The current values, paired with
- * `Game.ts` now setting `ACESFilmicToneMapping`, are a considerably
- * more generous third attempt, biased toward "definitely visible, maybe
- * too bright" rather than repeating an undershoot. Still unconfirmed —
- * see the note in Game.ts and ask for a screenshot before tuning this
- * again rather than guessing a fourth time.
+ * Three.js has used physically-correct light units (candela-scale) for
+ * years, with no "legacy lights" toggle left in this version to fall
+ * back on. This project's original scaffold used small pre-correction
+ * values (ambient 0.7, torch 1.6), which was a real mismatch — but *not*
+ * the actual cause of the "too dark" reports it got blamed for. The
+ * real cause was an unrelated CSS bug (a near-opaque full-screen overlay
+ * visible from page load); once that was fixed, a second round of much
+ * larger values tuned to compensate for it (ambient 12, torch 150,
+ * exposure 1.4) turned out too bright. These are a third, deliberately
+ * modest pass — closer to the first correction than the second — now
+ * that the overlay confound is gone and "too bright" is real signal
+ * about the lights specifically, not about something else on top of
+ * them.
  */
 
 export const AMBIENT_LIGHT_COLOR = 0x40405a;
-export const AMBIENT_LIGHT_INTENSITY = 12;
+export const AMBIENT_LIGHT_INTENSITY = 3;
 
 export const TORCH_COLOR = 0xffb46b;
-export const TORCH_INTENSITY = 150;
-export const TORCH_DISTANCE = 15;
+export const TORCH_INTENSITY = 35;
+export const TORCH_DISTANCE = 10;
 export const TORCH_DECAY = 2;
 
 /**
- * Floors below which a physically-correct-units light is known, from
- * this project's own two prior misses, to be too dark in a small
- * dungeon corridor. Not a promise that clearing these floors looks
- * *good* — only that we've already confirmed (by user report) that
- * ambient 3 / torch 40 without tone mapping was still too dark, so
- * settling for that regime again would be a known regression.
+ * Floors guarding against reverting to the original pre-physically-
+ * correct-units values (ambient 0.7, torch 1.6) specifically — that
+ * mismatch was real even though it wasn't the actual cause of either
+ * "too dark" report. Not a claim that anything just above these floors
+ * is confirmed to look right; only that going back to the old scale
+ * would be a known regression in convention, not just in brightness.
  */
-export const MIN_AMBIENT_LIGHT_INTENSITY = 8;
-export const MIN_TORCH_INTENSITY = 80;
+export const MIN_AMBIENT_LIGHT_INTENSITY = 2;
+export const MIN_TORCH_INTENSITY = 15;
