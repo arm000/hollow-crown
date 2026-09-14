@@ -1385,6 +1385,34 @@ true before shipping.
   mirroring `onInventoryToggle`/`onMuteToggle` exactly.
   - 335 tests passing (unchanged — same untested-UI-layer reasoning as
     batch 2).
+- ✅ Batch 4 — Attack animations (player request: "there should be
+  attack animations"): the monster capsule mesh sat dead still through
+  an entire fight, win or lose, with only the combat log and HP numbers
+  saying anything happened.
+  - `MonsterAnimator.ts` (new): pure animation math for two beats —
+    "attack" (a short lunge toward the party, world-space, along
+    whatever direction the monster actually is from them) and "hit" (a
+    quick scale punch plus an emissive flash). No Three.js scene access
+    of its own; `Game.ts` reads `positionOffset`/`scale`/`flashIntensity`
+    every frame and applies them to the real mesh — the same
+    "pure state, dumb renderer applies it" split `Player.ts`'s own
+    move/turn animation already uses, and why this is a real,
+    unit-tested class rather than inline state in `Game.ts`. `play()`
+    queues instead of overwriting: a party hit and the monster's own
+    automatic counter-attack can both resolve within one
+    `CombatEngine.submitAction` call, and playing them as two beats in
+    a row (hit flash, then the counter's lunge) reads far better than
+    the second instantly cutting the first off.
+  - `Game.ts`'s `handleCombatAction` snapshots the monster's HP and the
+    party's total HP before calling `submitAction`, comparing after to
+    decide which animation(s) to queue — no `CombatEngine` changes
+    needed, since a `Monster`'s own `hp` already is the fact this reads.
+    `checkCombatEnd` resets the animator and force-resyncs the mesh to
+    a clean base pose the instant a fight ends, regardless of which one
+    of victory/defeat/fled it was — otherwise a monster that fled
+    mid-animation would keep walking its patrol visibly frozen
+    mid-lunge until the next unrelated mesh resync.
+  - 343 tests passing.
 
 ---
 

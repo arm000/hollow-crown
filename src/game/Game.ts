@@ -29,6 +29,7 @@ import { LevelUpUI } from "./LevelUpUI";
 import type { MenuNavCallbacks } from "./MenuNav";
 import { buildMinimapGrid } from "./Minimap";
 import { MinimapUI } from "./MinimapUI";
+import { MonsterAnimator } from "./MonsterAnimator";
 import { OptionsUI } from "./OptionsUI";
 import { loadSettings, saveSettings } from "./Settings";
 import {
@@ -79,7 +80,7 @@ export class Game {
   /** Grid tiles the party has actually stood on this level, as `"x,z"` keys (docs/08-roadmap-phases.md Phase 5's minimap fog of war) — reset on every level transition, never persisted across save/load, same simplification as per-level interactable/monster state. */
   private visitedTiles = new Set<string>();
   private readonly entityMeshes = new Map<string, THREE.Object3D>();
-  private readonly monsterMeshes = new Map<Monster, THREE.Object3D>();
+  private readonly monsterMeshes = new Map<Monster, THREE.Mesh>();
   private hideWallFace: (x: number, z: number) => void = () => {};
   /** The current level's floor/wall geometry — torn down and rebuilt whole on every level transition, unlike entity/monster meshes which get their own maps. */
   private dungeonMeshGroup: THREE.Group | undefined;
@@ -87,6 +88,8 @@ export class Game {
   private mode: Mode = "explore";
   private combatEngine: CombatEngine | undefined;
   private combatMonster: Monster | undefined;
+  /** Drives the current combat monster's attack-lunge/hit-reaction animation (docs/08-roadmap-phases.md Phase 7, on a player request for attack animations) — see `MonsterAnimator.ts` and `tick()`. Only ever animates `combatMonster`; every other monster on the level (patrolling, not yet engaged) stays at rest. */
+  private readonly monsterAnimator = new MonsterAnimator();
   /** True once the run is over (win or defeat) — freezes input, per the win/defeat screens. */
   private runEnded = false;
 
@@ -334,6 +337,15 @@ export class Game {
     }
     this.player.update(delta);
 
+    if (this.combatMonster) {
+      // Runs every frame during combat, not just on the action that
+      // triggered an animation -- the lunge/punch play out smoothly
+      // over several frames, not instantly. A no-op resync (offset
+      // zero, scale 1) once nothing is actually animating.
+      this.monsterAnimator.update(delta);
+      this.syncMonsterMesh(this.combatMonster);
+    }
+
     this.renderer.render(this.scene, this.player.camera);
   }
 
@@ -465,7 +477,24 @@ export class Game {
     const mesh = this.monsterMeshes.get(monster);
     if (!mesh) return;
     mesh.visible = !monster.isDown;
-    mesh.position.set(monster.x * TILE_SIZE, MONSTER_HEIGHT / 2, monster.z * TILE_SIZE);
+
+    const basePosition = { x: monster.x * TILE_SIZE, z: monster.z * TILE_SIZE };
+    // Only the monster actually in combat ever has anything to animate
+    // -- everyone else (patrolling, not yet engaged) stays exactly at
+    // its grid position, scale 1, no flash.
+    if (monster === this.combatMonster) {
+      const offset = this.monsterAnimator.positionOffset(
+        basePosition.x,
+        basePosition.z,
+        this.player.gridX * TILE_SIZE,
+        this.player.gridZ * TILE_SIZE,
+      );
+      mesh.position.set(basePosition.x + offset.x, MONSTER_HEIGHT / 2 + offset.y, basePosition.z + offset.z);
+      mesh.scale.setScalar(this.monsterAnimator.scale);
+      (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = this.monsterAnimator.flashIntensity;
+    } else {
+      mesh.position.set(basePosition.x, MONSTER_HEIGHT / 2, basePosition.z);
+    }
   }
 
   private syncAllMonsterMeshes(): void {
@@ -487,6 +516,7 @@ export class Game {
     // flee" all count as an encounter per docs/05-combat.md#the-bestiary
     // -- simply surviving the fight to any conclusion is enough.
     this.encounteredMonsters.set(monster.name, monster);
+    this.monsterAnimator.reset(); // a clean start regardless of how the last fight (if any) ended
     this.combatMonster = monster;
     this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng(), this.world.inventory);
     this.hud.showMessage(`${monster.name} attacks!`);
@@ -497,11 +527,30 @@ export class Game {
   }
 
   private handleCombatAction(choice: CombatActionChoice, itemId?: string, skillId?: string): void {
-    if (!this.combatEngine) return;
+    if (!this.combatEngine || !this.combatMonster) return;
+    const monster = this.combatMonster;
+    const monsterHpBefore = monster.hp;
+    const partyHpBefore = this.totalPartyHp();
+
+    // A single `submitAction` call can resolve both halves of an
+    // exchange at once -- the party's action, then (via
+    // `CombatEngine.resolveAutomaticTurns`) the monster's own reply --
+    // so both HP deltas below can fire from one call. `MonsterAnimator.play`
+    // queues rather than overwrites for exactly this reason: the hit
+    // reaction and the counter-attack's lunge play as two beats in a
+    // row, not one cutting the other off.
     this.combatEngine.submitAction(choice, itemId, skillId);
+
+    if (monster.hp < monsterHpBefore) this.monsterAnimator.play("hit");
+    if (this.totalPartyHp() < partyHpBefore) this.monsterAnimator.play("attack");
+
     this.audio.playHit(); // one generic impact sound for any resolved action -- not yet differentiated by action or damage type
     this.refreshCombatUI();
     this.checkCombatEnd();
+  }
+
+  private totalPartyHp(): number {
+    return this.world.party.members.reduce((sum, member) => sum + member.hp, 0);
   }
 
   private refreshCombatUI(): void {
@@ -759,6 +808,15 @@ export class Game {
     this.input.clear(); // drop anything queued during combat -- see InputManager.clear()
     this.combatEngine = undefined;
     this.combatMonster = undefined;
+    // Clears the fight's own combat state above *before* this resync --
+    // syncMonsterMesh only animates `combatMonster`, so this always
+    // lands the mesh back at a clean base position/scale/no-flash,
+    // regardless of which frame mid-lunge/mid-punch the fight happened
+    // to end on. Matters most for "fled": the monster disengages and
+    // keeps walking its patrol below, and without this it would do so
+    // visibly frozen in whatever animation pose combat last left it in.
+    this.monsterAnimator.reset();
+    this.syncMonsterMesh(monster);
 
     if (result === "victory") {
       const levelUps = awardPartyXp(this.world.party, monster.xpReward);
@@ -767,7 +825,6 @@ export class Game {
       );
       this.hud.updateParty(this.world.party.members); // a level-up can change HP/Mana shown there
       this.audio.playVictoryStinger();
-      this.syncMonsterMesh(monster);
     } else if (result === "fled") {
       // Otherwise the still-alerted, still-adjacent monster would just
       // trigger combat again on the party's very next action.
@@ -823,11 +880,15 @@ const MONSTER_COLORS: Record<string, number> = {
   "Court Alchemist": 0x6a4a7a,
 };
 
-function buildMonsterMesh(monster: Monster): THREE.Object3D {
+function buildMonsterMesh(monster: Monster): THREE.Mesh {
   const color = MONSTER_COLORS[monster.name] ?? 0x5a6b4a; // sickly green default -- the Rot-thing's original look
   return new THREE.Mesh(
     new THREE.CapsuleGeometry(0.4, MONSTER_HEIGHT - 0.8, 4, 8),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.9 }),
+    // emissive starts black/0 -- MonsterAnimator's hit-reaction flash
+    // (docs/08-roadmap-phases.md Phase 7) is the only thing that ever
+    // moves it, via syncMonsterMesh, and only for whichever monster is
+    // actually in combat right now.
+    new THREE.MeshStandardMaterial({ color, roughness: 0.9, emissive: 0xffffff, emissiveIntensity: 0 }),
   );
 }
 

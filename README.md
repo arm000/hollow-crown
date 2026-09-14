@@ -147,7 +147,10 @@ Cinder-Wretch-shaped resistance profile (Physical-resistant, Holy-weak
 this time — Holy Water is the answer). Attack/Defend/Ability/Flee/Item,
 status effects (Bleed, Fear, and Stun — the Mage's Frost Lance, a Phase
 7 skill — are all live now; Poison/Silence are mechanically real but
-still await a source), victory/defeat/flee all handled. An initiative
+still await a source), victory/defeat/flee all handled. The monster
+itself animates now — a quick lunge toward the party on its own
+attack, a scale-punch-plus-flash when the party's hit lands — instead
+of sitting dead still through the whole fight. An initiative
 tracker above the monster's HP line shows the
 whole round's turn order at a glance — dimmed for who's already acted,
 highlighted for whoever's turn it is, struck through for anyone downed
