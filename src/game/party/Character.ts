@@ -6,6 +6,9 @@ import { defaultSkillId } from "./Skills";
 /** One of the four starting classes (see docs/03-party-and-characters.md). No hybrid/multiclass in v1. */
 export type ClassId = "warrior" | "rogue" | "mage" | "cleric";
 
+/** Every `ClassId`, for anything that needs to iterate all of them rather than hardcode the union — `PartyCreationUI`'s class picker, and `AssetManifest.test.ts`'s "every class has a linked portrait" check. */
+export const ALL_CLASS_IDS: ClassId[] = ["warrior", "rogue", "mage", "cleric"];
+
 /** Front rank can be targeted by melee and can melee; back rank is safe from melee bar reach. */
 export type Rank = "front" | "back";
 

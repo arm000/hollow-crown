@@ -10,6 +10,9 @@
  */
 export type StatusEffectType = "poison" | "stun" | "bleed" | "fear" | "silence";
 
+/** Every `StatusEffectType`, for anything that needs to iterate all five rather than hardcode the union — `AssetManifest.test.ts`'s "every status effect has a linked icon" check. */
+export const ALL_STATUS_EFFECT_TYPES: StatusEffectType[] = ["poison", "stun", "bleed", "fear", "silence"];
+
 export interface StatusEffectInstance {
   type: StatusEffectType;
   /** How many more of this combatant's own rounds this effect is active for. */

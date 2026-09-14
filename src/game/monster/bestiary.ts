@@ -184,6 +184,15 @@ export function createStewardMarrow(
 /** Every monster type a level's data can spawn — adding a new one here is one line, not a change to `Game.ts`. */
 export type MonsterTypeId = "rotThing" | "cinderWretch" | "screechingWraith" | "courtAlchemist" | "stewardMarrow";
 
+/** Every `MonsterTypeId`, for anything that needs to iterate all five rather than hardcode the union — `AssetManifest.test.ts`'s "every monster has a linked sprite" check. */
+export const ALL_MONSTER_TYPE_IDS: MonsterTypeId[] = [
+  "rotThing",
+  "cinderWretch",
+  "screechingWraith",
+  "courtAlchemist",
+  "stewardMarrow",
+];
+
 /** A level-data description of one monster placement, mirroring `EntitySpawn` for interactables (see `interactables/types.ts`) — plain data, not a constructed `Monster`, so level files stay pure data too. */
 export interface MonsterSpawn {
   type: MonsterTypeId;

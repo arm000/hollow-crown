@@ -113,6 +113,15 @@ a bug against this doc, not a style choice.
 | Monster/NPC sprite (per frame) | 64×64 px | Billboarded — always rotated to face the camera around the world Y-axis only (a "cylindrical" billboard, not a full sprite-always-faces-every-axis billboard), so creatures don't warp when viewed from above/below. |
 | Character/party portrait | 48×48 px | One per party member, referenced from [03-party-and-characters.md](03-party-and-characters.md#party-creation-vs-pre-generated). |
 | Inventory/interactable icon | 16×16 px | Displayed scaled up via CSS `image-rendering: pixelated` in the DOM UI layer ([07-technical-architecture.md](07-technical-architecture.md#ui-layer)), never shrunk below native size. |
+| Skill/combat VFX | No fixed canvas size | An animated effect (projectile, impact, status overlay), not a static texture — see [14-asset-inventory.md](14-asset-inventory.md) for the full list and what each one is for. |
+
+**The full, current, per-asset inventory** — exactly which of the above
+are still procedural placeholders vs. genuinely missing, and which
+skill/monster/item each one belongs to — lives in
+[14-asset-inventory.md](14-asset-inventory.md) and its underlying
+`AssetManifest.ts`, not in this table. This table is the *spec*
+(dimensions, technique); that manifest is the *inventory* (what,
+how many, status).
 
 ### Sprites: start with single-facing, not 8-directional
 

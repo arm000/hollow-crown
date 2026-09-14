@@ -1474,6 +1474,45 @@ true before shipping.
     monster the party just fled from) — `Monster.test.ts` covers the
     cooldown mechanism itself in isolation.
   - 360 tests passing.
+- ✅ Batch 7 — Asset manifest: a single source of truth for art/VFX
+  assets (player request: an inventory of the art assets still needed
+  once the game moves off procedural placeholders, an inventory of the
+  VFX needed for attack animations/skills, and "a framework such that
+  there is a single source of truth for game assets and actions/skills
+  that link to art assets so that we can deterministically find if any
+  are missing with tests").
+  - `assets/AssetManifest.ts` (new): every real art/VFX asset the game
+    will need — environment tiles, monster sprites, character
+    portraits, equipment/consumable icons, status-effect icons, and
+    skill/combat VFX (43 entries) — each with a `status`
+    (`"procedural"`: a code-generated placeholder already stands in;
+    `"needed"`: nothing does), a description of intent, and one or
+    more `links` pointing at the real game entity id it belongs to.
+    Deliberately self-contained rather than adding an `assetId` field
+    to `Skills.ts`/`Equipment.ts`/`Consumable.ts`/`bestiary.ts`/
+    `StatusEffect.ts` — none of those changed at all; only this one
+    file needs to change as art gets made or new content ships.
+  - `assets/AssetManifest.test.ts` (new): the actual "deterministically
+    find if any are missing" check, both directions — every `links`
+    entry resolves to something real (catches a stale/typo'd id in the
+    manifest), and every real skill/monster/class/equipment item/
+    consumable/status effect has at least one asset covering it
+    (catches new content shipping with no manifest entry for it).
+    Verified against a deliberately broken manifest mid-implementation
+    to confirm it actually fails, by name, before trusting it.
+  - `Character.ts`/`StatusEffect.ts`/`bestiary.ts` each gained a small
+    `ALL_*_IDS` export (`ALL_CLASS_IDS`, `ALL_STATUS_EFFECT_TYPES`,
+    `ALL_MONSTER_TYPE_IDS`) the completeness test needed to iterate
+    every real id rather than hardcode a union type — `PartyCreationUI.ts`
+    now reuses `ALL_CLASS_IDS` too, instead of its own local copy of
+    the same list.
+  - [14-asset-inventory.md](14-asset-inventory.md) (new): explains the
+    system and how to extend it; deliberately doesn't restate the
+    manifest's actual contents in prose (the code is the single source
+    of truth, not a second copy of it) — see
+    [10-visual-style-guide.md](10-visual-style-guide.md#asset-specs),
+    updated to point at it.
+  - 376 tests passing.
 
 ---
 

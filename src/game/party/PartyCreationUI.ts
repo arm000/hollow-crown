@@ -1,8 +1,6 @@
-import type { ClassId } from "./Character";
+import { ALL_CLASS_IDS, type ClassId } from "./Character";
 import { SKILLS } from "./Skills";
 import { DEFAULT_PARTY_SPEC, PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
-
-const CLASS_OPTIONS: ClassId[] = ["warrior", "rogue", "mage", "cleric"];
 
 /**
  * The Phase 3 "minimal creation/naming screen" from
@@ -93,7 +91,7 @@ export class PartyCreationUI {
     const classRow = document.createElement("div");
     classRow.className = "party-creation-row";
     const classButtons = new Map<ClassId, HTMLButtonElement>();
-    for (const classId of CLASS_OPTIONS) {
+    for (const classId of ALL_CLASS_IDS) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "party-creation-choice-btn";

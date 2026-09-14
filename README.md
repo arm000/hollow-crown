@@ -127,7 +127,14 @@ its first offensive spell vs. shielding an ally's next hit without
 spending their turn. Full breakdown in
 [13-skill-system.md](docs/13-skill-system.md); the general combat rules
 every skill plays inside of are in
-[12-combat-system.md](docs/12-combat-system.md). Playable now: a
+[12-combat-system.md](docs/12-combat-system.md). A new asset manifest
+(`src/game/assets/AssetManifest.ts`,
+[14-asset-inventory.md](docs/14-asset-inventory.md)) is the single
+source of truth for every real art/VFX asset the game will need once it
+moves off today's procedural placeholders — every skill, monster,
+class, and item is cross-checked against it by a test, so a new one
+shipping with no art entry fails loudly instead of quietly falling
+through the cracks. Playable now: a
 one-time party-creation screen (name each of the four slots, pick a
 class and a color-swatch portrait — placeholder art, real pixel art is
 still ahead — or accept the defaults to get the original
