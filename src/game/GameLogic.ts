@@ -227,12 +227,25 @@ export function spendStatPoint(world: WorldState, characterName: string, stat: k
   return { success: true, message: `${character.name}'s ${stat} increases.` };
 }
 
-/** Spends `characterName`'s skill points to learn `skillId`, looking up its real cost from `Skills.ts` rather than trusting a caller-supplied number — the one place besides `Character`'s own constructor that needs to know a `SkillDef`'s `unlockCost` at all. */
+/**
+ * Spends `characterName`'s skill points to learn `skillId`, looking up
+ * its real cost from `Skills.ts` rather than trusting a caller-supplied
+ * number — the one place besides `Character`'s own constructor that
+ * needs to know a `SkillDef`'s `unlockCost` at all. Also the one place
+ * `exclusiveWith` is enforced (docs/08-roadmap-phases.md Phase 7's
+ * "real build fork, not a checklist"): `Character` itself has no idea
+ * two skills can be mutually exclusive, so a character who's already
+ * chosen the other side of a fork is refused here, before ever calling
+ * `Character.unlockSkill`.
+ */
 export function unlockSkill(world: WorldState, characterName: string, skillId: string): EquipOutcome {
   const character = world.party.members.find((member) => member.name === characterName);
   if (!character) return { success: false };
   const skill = SKILLS[character.classId].find((candidate) => candidate.id === skillId);
   if (!skill) return { success: false };
+  if (skill.exclusiveWith && character.knowsSkill(skill.exclusiveWith)) {
+    return { success: false, message: `${character.name} has already chosen a different path and can't learn ${skill.name}.` };
+  }
   if (!character.unlockSkill(skill.id, skill.unlockCost)) return { success: false };
   return { success: true, message: `${character.name} learns ${skill.name}!` };
 }

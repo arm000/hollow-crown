@@ -140,6 +140,16 @@ export class LevelUpUI {
       return row;
     }
 
+    // A skill locked out by the other side of its own fork already
+    // being chosen (docs/08-roadmap-phases.md Phase 7's "real build
+    // fork, not a checklist") shows why, but offers no button — there's
+    // no respec, `GameLogic.unlockSkill` would just refuse it anyway.
+    if (skill.exclusiveWith && character.knowsSkill(skill.exclusiveWith)) {
+      const chosen = SKILLS[character.classId].find((candidate) => candidate.id === skill.exclusiveWith)!;
+      label.textContent = `${skill.name} — unavailable (chose ${chosen.name})`;
+      return row;
+    }
+
     label.textContent = `${skill.name} (${skill.unlockCost} points)`;
     const button = document.createElement("button");
     button.type = "button";

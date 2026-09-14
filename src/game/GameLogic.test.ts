@@ -184,6 +184,30 @@ describe("unlockSkill (docs/08-roadmap-phases.md Phase 7)", () => {
     const world = newWorld();
     expect(unlockSkill(world, "Nobody", "warrior-secondWind").success).toBe(false);
   });
+
+  describe("mutually exclusive skills (a real build fork, not a checklist)", () => {
+    it("refuses the other side of a fork once one side is already learned, spending nothing", () => {
+      const world = newWorld();
+      world.party.members[0].skillPoints = 99;
+      unlockSkill(world, "Bram", "warrior-secondWind");
+      const pointsAfterFirstUnlock = world.party.members[0].skillPoints;
+
+      const result = unlockSkill(world, "Bram", "warrior-rallyCry");
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("already chosen a different path");
+      expect(world.party.members[0].knowsSkill("warrior-rallyCry")).toBe(false);
+      expect(world.party.members[0].skillPoints).toBe(pointsAfterFirstUnlock); // the refused attempt spent nothing
+    });
+
+    it("the fork works the other way around too", () => {
+      const world = newWorld();
+      world.party.members[0].skillPoints = 99;
+      unlockSkill(world, "Bram", "warrior-rallyCry");
+
+      expect(unlockSkill(world, "Bram", "warrior-secondWind").success).toBe(false);
+    });
+  });
 });
 
 describe("resolveStartPosition", () => {

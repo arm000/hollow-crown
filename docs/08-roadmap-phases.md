@@ -1413,6 +1413,42 @@ true before shipping.
     mid-animation would keep walking its patrol visibly frozen
     mid-lunge until the next unrelated mesh resync.
   - 343 tests passing.
+- ✅ Batch 5 — Real build forks per class, plus as-built reference docs
+  (player request: "Make each class have a unique feel to it that can
+  be customized by skill selection that has a real impact on gameplay,"
+  alongside a request for dedicated combat/skill-system documents).
+  Directly follows from feedback on Batch 1: one optional second skill
+  per class was a checklist item, not a choice — nothing to actually
+  *select between*.
+  - `Skills.ts`: every class now has **two** mutually exclusive tier-2
+    skills instead of one, via a new `exclusiveWith` field on
+    `SkillDef` — unlocking either side permanently rules out the other
+    (no respec). Warrior: Second Wind (self-heal) vs. Rally Cry
+    (party-wide heal + clears Fear). Rogue: Smoke Bomb (guaranteed
+    escape) vs. Ambush (bonus damage only against a still-full-HP
+    target). Mage: Frost Lance (control, guaranteed Stun) vs. Cinder
+    Nova (bigger fire hit, no control). Cleric: Smite (Holy damage) vs.
+    Ward (shields an ally's next hit without spending their turn).
+  - `GameLogic.unlockSkill` enforces the exclusivity, refusing (and
+    spending nothing) the moment either side of a fork is already
+    known. `LevelUpUI.ts`'s skill rows show the locked-out option as
+    "unavailable (chose the other one)" rather than a dead button.
+  - Ward surfaced a real bug during implementation: it initially reused
+    the same `defending` set Defend/Guard write to, which clears the
+    instant *its owner's own next turn* starts — fine for a
+    self-cast Defend, wrong for a buff cast on someone else, since the
+    warded ally's own turn often comes up before the monster's does,
+    silently clearing the ward before it ever blocks anything. Fixed
+    with a separate `warded` set in `CombatEngine`, consumed only when
+    the monster's attack actually lands on that target.
+  - [12-combat-system.md](12-combat-system.md) and
+    [13-skill-system.md](13-skill-system.md) (new): as-built reference
+    docs with every real formula/number, explicitly distinct from
+    [05-combat.md](05-combat.md)'s design-rationale framing — cross-linked
+    from it, from
+    [03-party-and-characters.md](03-party-and-characters.md#leveling),
+    and from the docs index.
+  - 353 tests passing.
 
 ---
 

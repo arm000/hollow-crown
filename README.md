@@ -117,11 +117,17 @@ background instead of blocking the party-creation screen's first paint
 itch.io-ready zip alongside the primary GitHub Pages deploy. Since v1,
 Phase 7 turned the original design doc's always-deferred "stat points
 to allocate" into a real level-up screen: every level grants skill
-points spent by hand, either +1 to a stat or toward a class's second
-skill — one new skill per class, each answering a real gap in that
-class's kit (a self-heal for the Warrior, a guaranteed escape for the
-Rogue, a stun for the Mage, and the Cleric's first offensive spell).
-Playable now: a
+points spent by hand, either +1 to a stat or toward one of a class's
+**two mutually exclusive** second skills — a real build fork per class,
+not a single yes/no unlock (choosing either side permanently rules out
+the other). Warrior: a self-heal vs. a party-wide heal that clears
+Fear. Rogue: a guaranteed escape vs. a much harder hit while the target
+is still undamaged. Mage: a stun vs. a bigger raw-damage nuke. Cleric:
+its first offensive spell vs. shielding an ally's next hit without
+spending their turn. Full breakdown in
+[13-skill-system.md](docs/13-skill-system.md); the general combat rules
+every skill plays inside of are in
+[12-combat-system.md](docs/12-combat-system.md). Playable now: a
 one-time party-creation screen (name each of the four slots, pick a
 class and a color-swatch portrait — placeholder art, real pixel art is
 still ahead — or accept the defaults to get the original
@@ -185,8 +191,8 @@ is a single slot capturing the party,
 inventory, current level, and exact position; relaunching the game
 offers a "Continue" button on the party-creation screen when a save
 exists, skipping straight back into the run. Level Up is where those
-skill points actually get spent, on any of the five stats or toward a
-class's second skill. Bestiary
+skill points actually get spent, on any of the five stats or toward
+one side of a class's two-skill fork. Bestiary
 opens a codex of every monster type encountered so far (win, lose, or
 flee all count), listing its resistances/weaknesses, any status effect
 its heavy strike inflicts, and whether it heals instead of attacking —

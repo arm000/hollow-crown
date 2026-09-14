@@ -76,17 +76,20 @@ working before the full roster is built out.
   (rewards exploration, not just grinding fights).
 - Level-up grants a flat HP/Mana increase (per-class, automatic) plus
   skill points the player spends by hand — either +1 to a stat, or
-  toward unlocking a class's second skill. See
+  toward unlocking one of a class's two alternative second skills. See
   [08-roadmap-phases.md](08-roadmap-phases.md#phase-7--post-v1-enhancements)
   Phase 7 for how this actually shipped (`LevelUpUI.ts`,
   `party/Skills.ts`) — v1 itself shipped the simpler "grows
-  automatically" version this section originally asked for, before a
-  post-release player request built the real allocation screen.
-- Two skills per class, not a sprawling tree: each class's original
-  signature ability, known from level 1, plus one more bought with
-  skill points once enough are saved. See `party/Skills.ts` for what
-  each one does and which class-kit gap it answers, per this doc's own
-  "ability design principle" above.
+  automatically" version this section originally asked for, before two
+  rounds of post-release player feedback built the real allocation
+  screen and then turned its one optional skill into a real fork.
+- Three skills per class, not a sprawling tree: each class's original
+  signature ability, known from level 1, plus **two** mutually
+  exclusive alternatives bought with skill points — choosing one
+  permanently rules out the other, a real build decision rather than a
+  checklist. Full breakdown of every class's exact skills, and which
+  gap each one answers, in
+  [13-skill-system.md](13-skill-system.md).
 - No level cap defined yet; tune once Act 1 content exists to pace against.
 
 ## Party creation vs. pre-generated

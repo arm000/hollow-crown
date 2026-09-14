@@ -1,5 +1,11 @@
 # Combat
 
+> This doc is the *design* rationale, written phase-by-phase as combat
+> was still being built — exact numbers are deliberately left
+> "illustrative, not final" throughout. For the real, current formulas
+> and numbers, see [12-combat-system.md](12-combat-system.md) (combat)
+> and [13-skill-system.md](13-skill-system.md) (skills).
+
 Turn-based, initiative-order combat (Wizardry/Might & Magic lineage),
 resolved **in the same first-person viewport as exploration** — no
 separate battle scene or camera cut. The corridor you were just walking

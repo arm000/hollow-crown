@@ -15,6 +15,10 @@ const BLEED_DURATION = 2;
 const BLEED_TICK_DAMAGE = 3;
 /** Warrior's Second Wind: a third of max HP, rounded to the nearest whole point. */
 const SECOND_WIND_FRACTION = 1 / 3;
+/** Warrior's Rally Cry: a flat heal per living party member, deliberately smaller per-target than Second Wind's own since it lands on everyone at once. */
+const RALLY_CRY_HEAL = 6;
+/** Rogue's Ambush: bonus flat damage added only while the target hasn't taken any damage yet this fight. */
+const AMBUSH_BONUS = 8;
 
 /**
  * Resolves one encounter turn-by-turn: initiative order, Attack/Defend/
@@ -30,6 +34,21 @@ export class CombatEngine {
   private turnOrder: Combatant[] = [];
   private turnIndex = 0;
   private readonly defending = new Set<Character>();
+  /**
+   * Cleric's Ward: deliberately a *separate* set from `defending`, not
+   * just Ward adding to that one too. `defending` clears the instant
+   * its owner's own next turn starts (see `submitAction`'s
+   * `this.defending.delete(actor)`) — exactly right for self-Defend/
+   * Guard, since a character can never act again before facing the
+   * monster's next turn first. Ward is cast *on someone else*, though,
+   * and that ally's own turn often comes up before the monster's does
+   * — reusing `defending` would let it get silently cleared by the
+   * target's own action before ever blocking a hit. `warded` instead
+   * only ever clears when the monster's attack actually consumes it
+   * (`runMonsterTurn`) or a new round starts (`rollInitiative`), never
+   * on the target's own turn.
+   */
+  private readonly warded = new Set<Character>();
   /** Set by Warrior's Guard — the monster's next attack targets this character instead of the normal pick. */
   private tauntedBy: Character | undefined;
 
@@ -185,6 +204,17 @@ export class CombatEngine {
         this.log.push(`${actor.name} catches a second wind, recovering ${healed} HP.`);
         break;
       }
+      case "warrior-rallyCry": {
+        let totalHealed = 0;
+        for (const member of this.party.livingMembers()) {
+          const before = member.hp;
+          member.heal(RALLY_CRY_HEAL);
+          totalHealed += member.hp - before;
+          member.statusEffects.remove("fear");
+        }
+        this.log.push(`${actor.name} bellows a rally cry — the party steadies, healing ${totalHealed} HP total.`);
+        break;
+      }
       case "rogue-precisionStrike": {
         const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 4) + 2;
         this.monster.takeDamage(rawDamage); // ignores resistance entirely -- that's the point
@@ -195,6 +225,18 @@ export class CombatEngine {
       case "rogue-smokeBomb": {
         this.result = "fled";
         this.log.push(`${actor.name} cracks a smoke bomb underfoot — the party vanishes into the haze!`);
+        break;
+      }
+      case "rogue-ambush": {
+        const isFirstStrike = this.monster.hp === this.monster.maxHp;
+        const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 6) + (isFirstStrike ? AMBUSH_BONUS : 0);
+        const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
+        this.monster.takeDamage(damage);
+        this.log.push(
+          isFirstStrike
+            ? `${actor.name} ambushes ${this.monster.name} before it can react for ${damage} damage!`
+            : `${actor.name} strikes for ${damage} damage — the moment for an ambush has passed.`,
+        );
         break;
       }
       case "mage-firebolt": {
@@ -212,6 +254,13 @@ export class CombatEngine {
         this.log.push(`${actor.name}'s Frost Lance deals ${damage} damage and freezes ${this.monster.name} solid!`);
         break;
       }
+      case "mage-cinderNova": {
+        const rawDamage = Math.round(actor.effectiveStats.focus * 1.5) + rollInt(this.rng, 1, 8);
+        const damage = applyResistance(rawDamage, this.monster.resistances, "fire");
+        this.monster.takeDamage(damage);
+        this.log.push(`${actor.name} unleashes a Cinder Nova, scorching ${this.monster.name} for ${damage} fire damage!`);
+        break;
+      }
       case "cleric-cleanse": {
         const target = this.pickCleanseTarget(actor);
         const hadEffects = target.statusEffects.list().length > 0;
@@ -226,6 +275,12 @@ export class CombatEngine {
         const damage = applyResistance(rawDamage, this.monster.resistances, "holy");
         this.monster.takeDamage(damage);
         this.log.push(`${actor.name} smites ${this.monster.name} for ${damage} holy damage.`);
+        break;
+      }
+      case "cleric-ward": {
+        const target = this.pickWardTarget();
+        this.warded.add(target);
+        this.log.push(`${actor.name} wards ${target.name}, ready to blunt the next blow.`);
         break;
       }
     }
@@ -271,6 +326,21 @@ export class CombatEngine {
       if (count > bestCount) {
         best = candidate;
         bestCount = count;
+      }
+    }
+    return best;
+  }
+
+  /** Ward's target: whoever's proportionally lowest on HP, the living party member likeliest to actually need the protection — a different heuristic than `pickCleanseTarget`'s "most afflicted," since HP and status effects aren't the same kind of trouble. */
+  private pickWardTarget(): Character {
+    const living = this.party.livingMembers();
+    let best = living[0];
+    let bestRatio = best.hp / best.maxHp;
+    for (const candidate of living) {
+      const ratio = candidate.hp / candidate.maxHp;
+      if (ratio < bestRatio) {
+        best = candidate;
+        bestRatio = ratio;
       }
     }
     return best;
@@ -346,7 +416,11 @@ export class CombatEngine {
     if (action.damage <= 0) return;
 
     const target = this.pickTarget();
-    const defended = this.defending.has(target);
+    // Ward is consumed right here, by the hit it was cast to blunt --
+    // not by any turn boundary, unlike `defending` (see `warded`'s doc
+    // comment on the field).
+    const warded = this.warded.delete(target);
+    const defended = this.defending.has(target) || warded;
     const baseDamage = defended ? Math.ceil(action.damage / 2) : action.damage;
     const dealt = applyResistance(baseDamage, target.effectiveResistances, "physical");
     target.takeDamage(dealt);

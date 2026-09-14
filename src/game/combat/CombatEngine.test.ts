@@ -367,6 +367,111 @@ describe("CombatEngine", () => {
     });
   });
 
+  describe("each class's second tier-2 alternative (docs/08-roadmap-phases.md Phase 7's real build fork)", () => {
+    it("Warrior's Rally Cry heals the whole living party and clears Fear from everyone", () => {
+      const warrior = new Character("Bram", "warrior", "front", { might: 8, grace: 20, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const ally = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
+      warrior.takeDamage(15);
+      ally.takeDamage(10);
+      ally.statusEffects.apply({ type: "fear", turnsRemaining: 2 });
+      warrior.skillPoints = 8;
+      warrior.unlockSkill("warrior-rallyCry", 8);
+      const party = new Party([warrior, ally]);
+      const monster = newMonster({ maxHp: 9999 });
+      monster.statusEffects.apply({ type: "stun", turnsRemaining: 1 }); // keep the monster's own turn from muddying the HP totals
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "warrior-rallyCry");
+
+      expect(warrior.hp).toBeGreaterThan(15);
+      expect(ally.hp).toBeGreaterThan(12);
+      expect(ally.statusEffects.has("fear")).toBe(false);
+    });
+
+    it("Rogue's Ambush hits much harder while the target hasn't taken any damage yet", () => {
+      const rogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 20, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
+      rogue.skillPoints = 8;
+      rogue.unlockSkill("rogue-ambush", 8);
+      const freshMonster = newMonster({ maxHp: 9999 });
+      const alreadyHitMonster = newMonster({ maxHp: 9999 });
+      alreadyHitMonster.takeDamage(1); // no longer at full HP -- the ambush window has passed
+
+      const freshEngine = new CombatEngine(new Party([rogue]), freshMonster, new SeededRng(1));
+      if (freshEngine.isPartyTurn) freshEngine.submitAction("ability", undefined, "rogue-ambush");
+      const freshDealt = 9999 - freshMonster.hp;
+
+      const staleRogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 20, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
+      staleRogue.skillPoints = 8;
+      staleRogue.unlockSkill("rogue-ambush", 8);
+      const staleEngine = new CombatEngine(new Party([staleRogue]), alreadyHitMonster, new SeededRng(1));
+      if (staleEngine.isPartyTurn) staleEngine.submitAction("ability", undefined, "rogue-ambush");
+      const staleDealt = 9998 - alreadyHitMonster.hp; // it started this exchange 1 HP down already
+
+      expect(freshDealt).toBeGreaterThan(staleDealt);
+    });
+
+    it("Mage's Cinder Nova deals more fire damage than Firebolt, with no control effect", () => {
+      const mage = new Character("Corvin", "mage", "back", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 14, 20);
+      mage.skillPoints = 8;
+      mage.unlockSkill("mage-cinderNova", 8);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(new Party([mage]), monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "mage-cinderNova");
+
+      const dealt = 9999 - monster.hp;
+      expect(dealt).toBeGreaterThan(mage.stats.focus + 6); // clearly more than Firebolt's focus + 1d6 ceiling
+      expect(monster.statusEffects.has("stun")).toBe(false); // no control -- that's Frost Lance's job
+      expect(mage.mana).toBe(10); // 20 - Cinder Nova's 10-mana cost
+    });
+
+    it("Cleric's Ward halves the monster's next hit on the target, without costing the target their own turn", () => {
+      // Turn order is pinned down completely rather than left to the
+      // dice: monster.initiativeStat is low enough that neither
+      // party member's minimum possible roll can lose to its maximum
+      // possible one, so the round is always [cleric, frail, monster]
+      // -- letting frail act *normally* (a plain Attack, not Defend)
+      // in between is what actually proves Ward never touched their
+      // own turn, and it's also what isolates Ward's halving from the
+      // ordinary Defend mechanic that would otherwise contaminate it.
+      // might: 2 keeps even the heavy strike (might*3 + 1d4, see
+      // Monster.ts) well inside frail's HP pool both halved and not --
+      // a harder-hitting monster would floor frail at 0 HP either way
+      // once halved damage still exceeds what's left, masking the
+      // comparison this test actually needs to make.
+      function runFight(useWard: boolean): number {
+        const cleric = new Character("Maren", "cleric", "back", { might: 3, grace: 20, vitality: 6, focus: 8, resolve: 7 }, 18, 18);
+        cleric.skillPoints = 8;
+        cleric.unlockSkill("cleric-ward", 8);
+        const frail = new Character("Corvin", "mage", "front", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 30, 20);
+        frail.takeDamage(1); // strictly lower HP ratio than the (untouched, full-HP) cleric -- pickWardTarget breaks a full-HP tie by party order otherwise, which would ward the cleric instead
+        const party = new Party([cleric, frail]);
+        const monster = new Monster(
+          { name: "Rot-thing", x: 1, z: 1, patrolPoints: [{ x: 1, z: 1 }], detectionRadius: 0, maxHp: 9999, might: 2, initiativeStat: -10 },
+          OPEN_MAP,
+          new Player(1, 1, 1, 2, 1),
+        );
+        const engine = new CombatEngine(party, monster, new SeededRng(2));
+
+        if (engine.isPartyTurn && engine.currentActor === cleric) {
+          if (useWard) engine.submitAction("ability", undefined, "cleric-ward");
+          else engine.submitAction("defend"); // a harmless no-op turn for the baseline run -- doesn't touch frail at all
+        }
+        if (engine.isPartyTurn && engine.currentActor === frail) {
+          engine.submitAction("attack"); // frail acts completely normally, proving Ward never spent their turn
+        }
+
+        return 29 - frail.hp;
+      }
+
+      const unwardedDamage = runFight(false);
+      const wardedDamage = runFight(true);
+
+      expect(unwardedDamage).toBeGreaterThan(0); // sanity: the monster actually landed a hit in the baseline
+      expect(wardedDamage).toBe(Math.ceil(unwardedDamage / 2)); // the exact same halving Defend/Guard already use
+    });
+  });
+
   describe("items", () => {
     it("a damage item (Oil Flask) hits the monster and is consumed", () => {
       const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);

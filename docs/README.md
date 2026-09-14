@@ -17,6 +17,8 @@ independently as we build.
 | [09-deployment.md](09-deployment.md) | Where and how the game is hosted, and how a deploy happens |
 | [10-visual-style-guide.md](10-visual-style-guide.md) | Pixel art direction: rendering pipeline, asset specs, palette, typography |
 | [11-testing-strategy.md](11-testing-strategy.md) | How every feature is verified without a human — the automated counterpart to the roadmap's playability gates |
+| [12-combat-system.md](12-combat-system.md) | **As-built reference.** Every combat formula/number exactly as implemented — companion to 05, not a replacement for it |
+| [13-skill-system.md](13-skill-system.md) | **As-built reference.** Skill points, the two-alternative-per-class build fork, and every class's exact skills |
 
 ## Working rule
 
