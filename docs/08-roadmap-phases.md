@@ -1208,6 +1208,43 @@ independently):
     is in catching a regression the next time someone edits a level's
     entity list by hand.
   - 306 tests passing.
+- ✅ Batch 6 — Performance pass + packaging:
+  - **Performance:** reviewed the actual render/update loop before
+    changing anything — combat and monster AI run on `WorldClock`,
+    which only advances once per player action (a step, turn, or
+    combat action), never per rendered frame, and `Player.update()`
+    returns immediately the instant it isn't mid-animation, so a
+    typical frame does almost no work beyond one low-resolution
+    `WebGLRenderer.render()` call. Nothing there needed fixing. The
+    real cost was in what blocked the *first* paint: `main.ts` used a
+    top-level `import` of `Game.ts` (Three.js and everything under it,
+    ~570 KB), so every player waited on the whole game bundle before
+    the party-creation screen — which has zero Three.js in its own
+    import graph — could even appear. `Game.ts` is now a dynamic
+    `import()`, kicked off immediately in the background rather than
+    inside the "Start"/"Continue" callback, so `import()`'s built-in
+    request de-duplication means the callback's `await` almost always
+    resolves against an already-finished fetch. Confirmed via the
+    actual build output: the entry chunk dropped from 147 KB gzipped to
+    4 KB, with the ~144 KB Three.js/`Game` chunk now loading in
+    parallel while a player is still naming characters, not blocking
+    that screen at all. `vite.config.ts`'s `chunkSizeWarningLimit`
+    raised to fit that chunk deliberately, rather than suppressing the
+    warning outright.
+  - **Packaging:** the GitHub Pages static deploy already satisfies
+    this phase's "static web build at minimum" requirement and stays
+    the primary release. Added `npm run package:web` as the optional
+    itch.io channel the scope item names: builds, then zips `dist/`
+    with `index.html` at the zip's own root (not nested under `dist/`),
+    matching itch.io's HTML5 upload format exactly — verified by
+    actually unzipping the output and confirming that layout, and by
+    serving the built `dist/` through `vite preview` and confirming
+    every asset the page references resolves via its relative path (no
+    root-absolute URLs, which would 404 under itch.io's subpath
+    hosting). `hollow-crown-web.zip` is git-ignored, generated on
+    demand rather than committed.
+  - 306 tests passing (unchanged — this batch touched build tooling
+    and one bootstrap file, not game logic).
 
 ---
 

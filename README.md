@@ -96,18 +96,23 @@ playable build before the next one starts.
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
 E2E layer left), Phase 2 complete, Phase 3 complete, Phase 4 complete,
-Phase 5 complete, **Phase 6 in progress** (see the roadmap doc above).
-Phase 6's own scope explicitly deferred v1's exact content count to this
-phase; that call is now made — **v1 ships Act 1 only** (the 4-level
-descent below), with Acts 2–4 staying canon for a possible future
-expansion but not built, and the ending rewritten as a real,
-self-contained epilogue rather than a mid-campaign checkpoint. A
-full-campaign headless playthrough test now exercises the whole descent
-with real combat as a release smoke test, alongside balance sanity
-checks (XP curve, resistance math, level data integrity). An Options
-screen (volume, mute, and per-action key rebinding, all persisted
-independently of a save) is reachable from the inventory screen's
-header. Playable now: a one-time party-creation screen (name each of the four slots, pick a
+Phase 5 complete, **Phase 6 in progress, every scope item started** (see
+the roadmap doc above). Phase 6's own scope explicitly deferred v1's
+exact content count to this phase; that call is now made — **v1 ships
+Act 1 only** (the 4-level descent below), with Acts 2–4 staying canon
+for a possible future expansion but not built, and the ending rewritten
+as a real, self-contained epilogue rather than a mid-campaign
+checkpoint. A full-campaign headless playthrough test now exercises the
+whole descent with real combat as a release smoke test, alongside
+balance sanity checks (XP curve, resistance math, level data integrity,
+and — added after two real content bugs turned up via actual play — a
+reachability audit across all four levels). An Options screen (volume,
+mute, and per-action key rebinding, all persisted independently of a
+save) is reachable from the inventory screen's header. The game bundle
+is now split so Three.js loads in the background instead of blocking
+the party-creation screen's first paint (see "Performance" below), and
+`npm run package:web` produces an itch.io-ready zip alongside the
+primary GitHub Pages deploy. Playable now: a one-time party-creation screen (name each of the four slots, pick a
 class and a color-swatch portrait — placeholder art, real pixel art is
 still ahead — or accept the defaults to get the original
 Bram/Ysolde/Corvin/Maren party), then grid movement (keyboard or touch)
@@ -180,3 +185,32 @@ are all synthesized live via the Web Audio API (no sound files either)
 - `npm run build` — type-check and build a production bundle to `dist/`
 - `npm run preview` — preview the production build locally
 - `npm run typecheck` — run the TypeScript compiler without emitting
+- `npm test` — run the test suite once
+- `npm run test:watch` — run the test suite in watch mode
+- `npm run package:web` — build, then zip `dist/` into
+  `hollow-crown-web.zip` (git-ignored) with `index.html` at the zip's
+  own root — ready to upload as-is to itch.io's HTML5 embed (check "This
+  file will be played in the browser" on `index.html` there). The
+  GitHub Pages deploy is the primary release; this is an optional
+  second distribution channel per
+  [08-roadmap-phases.md](docs/08-roadmap-phases.md#phase-6--full-campaign--release-polish),
+  not a replacement for it.
+
+## Performance
+
+Phase 6's performance pass (docs/08-roadmap-phases.md) found the render/
+update loop itself has nothing to fix — combat and monster AI are
+turn-based (`WorldClock.advance()` only runs once per player action, not
+per frame) and `Player.update()` no-ops immediately once it isn't
+mid-animation, so a rendered frame does almost no work beyond one
+low-resolution `WebGLRenderer.render()` call. The real cost was in what
+blocked the very first paint: `main.ts` used to `import` `Game.ts` (Three.js
+and everything under it) at the top level, so every player — including
+on the slow mobile connections this project treats as first-class —
+waited on the whole ~570 KB bundle before the party-creation screen
+could even appear. `Game.ts` is now a dynamic `import()`, kicked off in
+the background the instant the page loads rather than inside the
+"Start"/"Continue" callback, so the party-creation screen's own chunk
+(~10 KB) paints immediately while the heavy chunk loads in parallel —
+by the time a player finishes naming their party, it's almost always
+already there.

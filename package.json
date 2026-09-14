@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "package:web": "npm run build && cd dist && zip -r ../hollow-crown-web.zip . -x '.*' && cd .."
   },
   "dependencies": {
     "three": "^0.169.0"
