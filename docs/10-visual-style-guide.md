@@ -119,7 +119,7 @@ a bug against this doc, not a style choice.
 are still procedural placeholders vs. genuinely missing, and which
 skill/monster/item each one belongs to — lives in
 [14-asset-inventory.md](14-asset-inventory.md) and its underlying
-`AssetManifest.ts`, not in this table. This table is the *spec*
+`asset-manifest.yaml`, not in this table. This table is the *spec*
 (dimensions, technique); that manifest is the *inventory* (what,
 how many, status).
 

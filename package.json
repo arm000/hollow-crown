@@ -13,9 +13,12 @@
     "package:web": "npm run build && cd dist && zip -r ../hollow-crown-web.zip . -x '.*' && cd .."
   },
   "dependencies": {
+    "js-yaml": "^5.4.2",
     "three": "^0.169.0"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^26.5.1",
     "@types/three": "^0.169.0",
     "typescript": "^5.6.3",
     "vite": "^8.3.0",

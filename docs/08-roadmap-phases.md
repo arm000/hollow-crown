@@ -1484,7 +1484,7 @@ true before shipping.
   - `assets/AssetManifest.ts` (new): every real art/VFX asset the game
     will need — environment tiles, monster sprites, character
     portraits, equipment/consumable icons, status-effect icons, and
-    skill/combat VFX (43 entries) — each with a `status`
+    skill/combat VFX (46 entries) — each with a `status`
     (`"procedural"`: a code-generated placeholder already stands in;
     `"needed"`: nothing does), a description of intent, and one or
     more `links` pointing at the real game entity id it belongs to.
@@ -1513,6 +1513,24 @@ true before shipping.
     [10-visual-style-guide.md](10-visual-style-guide.md#asset-specs),
     updated to point at it.
   - 376 tests passing.
+  - **Follow-up (player request):** "The manifest should be in some
+    language neutral structure like yaml so that external tools can use
+    it." The 46 entries moved out of `AssetManifest.ts`'s object
+    literal and into `assets/asset-manifest.yaml` — a plain YAML file
+    any external tool (an art tracker, an asset-pipeline script,
+    anything that isn't TypeScript) can read directly, without going
+    through this codebase's build at all. `AssetManifest.ts` is now
+    just a thin loader (`js-yaml` + `node:fs`, read once at import
+    time) handing back the exact same typed `ASSET_MANIFEST` shape as
+    before, so `AssetManifest.test.ts` needed zero changes. Verified
+    the round-trip two ways: the full test suite still passes
+    unchanged against the YAML-backed data, and the file was parsed
+    independently with Python's `pyyaml` (a completely different
+    language's YAML library, not just the `js-yaml` this project
+    happens to use) to actually confirm the "language neutral" claim
+    rather than assume it. `node:fs`-based loading never reaches the
+    browser bundle either way (nothing in `Game.ts` imports the
+    manifest), confirmed by grepping the built output.
 
 ---
 

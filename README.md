@@ -128,7 +128,8 @@ spending their turn. Full breakdown in
 [13-skill-system.md](docs/13-skill-system.md); the general combat rules
 every skill plays inside of are in
 [12-combat-system.md](docs/12-combat-system.md). A new asset manifest
-(`src/game/assets/AssetManifest.ts`,
+(`src/game/assets/asset-manifest.yaml` — plain YAML, readable by any
+external tool, not just this codebase; see
 [14-asset-inventory.md](docs/14-asset-inventory.md)) is the single
 source of truth for every real art/VFX asset the game will need once it
 moves off today's procedural placeholders — every skill, monster,

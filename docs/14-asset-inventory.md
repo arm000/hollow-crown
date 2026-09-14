@@ -6,8 +6,9 @@ stands in for a real art or VFX asset that hasn't been made yet. This
 doc explains the system that tracks exactly which ones, so that gap
 never has to be rediscovered by memory or by grepping the codebase.
 
-**The code is the actual inventory, not this doc.** The single source
-of truth is [`src/game/assets/AssetManifest.ts`](../src/game/assets/AssetManifest.ts) —
+**The YAML file is the actual inventory, not this doc.** The single
+source of truth is
+[`src/game/assets/asset-manifest.yaml`](../src/game/assets/asset-manifest.yaml) —
 read that file directly for the current, authoritative, up-to-date list
 of every asset, its status, and what it's for. This doc explains the
 *system* (why it's shaped this way, how to use it, how to extend it) —
@@ -15,6 +16,23 @@ restating the manifest's contents here in prose would just be a second
 copy that goes stale the first time someone updates one without the
 other, which is exactly the problem a "single source of truth" is
 supposed to prevent.
+
+## Why YAML, not a TypeScript data file
+
+The manifest started as a plain TypeScript object literal, but moved to
+YAML on request, specifically so tools outside this codebase — an art
+tracker, an asset-pipeline script, anything that isn't TypeScript — can
+read it without going through this project's build at all: a plain-text
+structure any standard YAML library in any language can parse. It's
+verified against a *second*, unrelated parser (Python's `pyyaml`, not
+just the `js-yaml` this project happens to use) precisely to keep that
+claim honest rather than assumed.
+[`AssetManifest.ts`](../src/game/assets/AssetManifest.ts) is now just a
+thin loader — it reads and parses the YAML once at import time and
+hands back a typed view of it for the rest of the TypeScript codebase
+(and `AssetManifest.test.ts`) to consume, but it owns none of the
+actual data. Edit the `.yaml` file, never the `.ts` one, to change an
+entry.
 
 ## What's in the manifest
 
@@ -40,7 +58,7 @@ Every entry (`AssetSpec`) has:
 `Skills.ts`, `Equipment.ts`, `Consumable.ts`, `bestiary.ts`, and
 `StatusEffect.ts` each stay exactly what they already were — pure
 gameplay-data tables, with zero art-pipeline concerns mixed in. None of
-them gained an `assetId` field. Instead, `AssetManifest.ts` points
+them gained an `assetId` field. Instead, `asset-manifest.yaml` points
 *at* their ids from the outside. Two things fall out of that choice:
 
 - **Only one file changes as art actually gets made.** Flipping a
@@ -74,8 +92,9 @@ remember to run.
 
 ## Adding a new asset
 
-1. Add an `AssetSpec` entry to `ASSET_MANIFEST` with a `links` entry
-   pointing at the real game entity id it belongs to.
+1. Add an entry to `asset-manifest.yaml` (matching the `AssetSpec`
+   shape in `AssetManifest.ts`) with a `links` entry pointing at the
+   real game entity id it belongs to.
 2. Run `npm test`. If the entity already existed and this is its first
    asset entry, `AssetManifest.test.ts`'s "every real game entity is
    covered" check should now pass where it didn't before (for a
@@ -84,9 +103,10 @@ remember to run.
 
 ## Adding a new game entity (a skill, monster, item, ...)
 
-Add the manifest entry in the same change. `AssetManifest.test.ts`'s
-"every real game entity is covered" checks will fail, by name, if you
-don't — that's the whole point of the system.
+Add the `asset-manifest.yaml` entry in the same change.
+`AssetManifest.test.ts`'s "every real game entity is covered" checks
+will fail, by name, if you don't — that's the whole point of the
+system.
 
 ## What "procedural" actually means per category
 
