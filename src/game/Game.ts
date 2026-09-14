@@ -26,6 +26,7 @@ import { createInteractableMesh } from "./interactables/InteractableMesh";
 import { Inventory } from "./Inventory";
 import { InventoryUI } from "./InventoryUI";
 import { LevelUpUI } from "./LevelUpUI";
+import type { MenuNavCallbacks } from "./MenuNav";
 import { buildMinimapGrid } from "./Minimap";
 import { MinimapUI } from "./MinimapUI";
 import { OptionsUI } from "./OptionsUI";
@@ -172,26 +173,37 @@ export class Game {
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
     this.combatUI = new CombatUI((choice, itemId, skillId) => this.handleCombatAction(choice, itemId, skillId));
+
+    // One shared set of cross-navigation callbacks, identical across
+    // all four menu screens (docs/08-roadmap-phases.md Phase 7, on a
+    // player report that Options/Level Up "required going through the
+    // inventory screen first" -- see MenuNav.ts). `onClose` reads
+    // `this.mode` at call time rather than being baked to one specific
+    // screen, since the exact same button appears on all four.
+    const menuNav: MenuNavCallbacks = {
+      onOpenInventory: () => this.openInventory(),
+      onOpenBestiary: () => this.openBestiary(),
+      onOpenLevelUp: () => this.openLevelUp(),
+      onOpenOptions: () => this.openOptions(),
+      onSave: () => this.handleSave(),
+      onClose: () => this.closeCurrentMenu(),
+    };
     this.inventoryUI = new InventoryUI(
       (characterName, itemId) => this.handleEquip(characterName, itemId),
       (characterName, slot) => this.handleUnequip(characterName, slot),
-      () => this.closeInventory(),
-      () => this.handleSave(),
-      () => this.openBestiary(),
-      () => this.openOptions(),
-      () => this.openLevelUp(),
+      menuNav,
     );
-    this.bestiaryUI = new BestiaryUI(() => this.closeBestiary());
+    this.bestiaryUI = new BestiaryUI(menuNav);
     this.optionsUI = new OptionsUI(
       (percent) => this.handleVolumeChange(percent),
       (muted) => this.handleMuteToggle(muted),
       (action, key) => this.handleRebind(action, key),
-      () => this.closeOptions(),
+      menuNav,
     );
     this.levelUpUI = new LevelUpUI(
       (characterName, stat) => this.handleSpendStat(characterName, stat),
       (characterName, skillId) => this.handleUnlockSkill(characterName, skillId),
-      () => this.closeLevelUp(),
+      menuNav,
     );
     this.hud.onInventoryToggle(() => this.toggleInventory());
     this.hud.onMuteToggle(() => this.toggleMute());
@@ -204,19 +216,15 @@ export class Game {
     // listen for orientationchange explicitly.
     window.addEventListener("orientationchange", () => this.onResize());
     window.addEventListener("keydown", (event) => {
-      if (event.code === "Escape" && this.mode === "bestiary") {
+      const inAnyMenu = this.mode === "bestiary" || this.mode === "options" || this.mode === "levelUp";
+      if (event.code === "Escape" && inAnyMenu) {
+        // Routed through the same shared close path the cross-navigation
+        // row's own Close button uses (`closeCurrentMenu`, see
+        // `MenuNav.ts`) rather than each mode's specific close method
+        // directly, so Escape and the on-screen button can't drift out
+        // of sync on what "closing" actually does.
         event.preventDefault();
-        this.closeBestiary();
-        return;
-      }
-      if (event.code === "Escape" && this.mode === "options") {
-        event.preventDefault();
-        this.closeOptions();
-        return;
-      }
-      if (event.code === "Escape" && this.mode === "levelUp") {
-        event.preventDefault();
-        this.closeLevelUp();
+        this.closeCurrentMenu();
         return;
       }
       if (event.code !== "KeyI" && !(event.code === "Escape" && this.mode === "inventory")) return;
@@ -500,15 +508,54 @@ export class Game {
     this.hud.updateInventory(this.world.inventory.list());
   }
 
-  /** The "I" key and the on-screen toggle button both flip between open/closed; the inventory screen's own Close button always closes (see `closeInventory`) rather than sharing this. */
+  /** The "I" key and the on-screen toggle button both flip between open/closed; the inventory screen's own Close button (and Escape) always closes via `closeCurrentMenu` rather than sharing this. */
   private toggleInventory(): void {
     if (this.mode === "inventory") {
-      this.closeInventory();
+      this.closeCurrentMenu();
       return;
     }
     if (this.mode !== "explore" || this.runEnded) return;
-    this.mode = "inventory";
     this.input.clear(); // see InputManager.clear() -- drop anything queued right as the menu opens
+    this.openInventory();
+  }
+
+  /** Hides whichever of the four menu screens happens to be showing — every `open*` method below calls this first, so any one of them can be reached directly from any other (docs/08-roadmap-phases.md Phase 7's cross-navigation, see `MenuNav.ts`) without assuming a specific predecessor screen. Hiding an already-hidden screen is a harmless no-op. */
+  private hideAllMenus(): void {
+    this.inventoryUI.hide();
+    this.bestiaryUI.hide();
+    this.optionsUI.hide();
+    this.levelUpUI.hide();
+  }
+
+  /** The shared "Close" button every menu screen shows (`MenuNav.ts`) routes here rather than baking in one specific screen, since the exact same button renders on all four — reads `this.mode` at call time to close whichever one is actually open. */
+  private closeCurrentMenu(): void {
+    switch (this.mode) {
+      case "inventory":
+        this.closeInventory();
+        break;
+      case "bestiary":
+        this.closeBestiary();
+        break;
+      case "options":
+        this.closeOptions();
+        break;
+      case "levelUp":
+        this.closeLevelUp();
+        break;
+    }
+    // A stat/skill spent in the Level Up screen (or gear (un)equipped in
+    // Inventory) can change HP/Mana or equipment the HUD's party display
+    // reads -- refreshed unconditionally here, on every close, rather
+    // than only from whichever specific screen happens to trigger it,
+    // since Phase 7's cross-navigation means a player can now leave from
+    // any of the four, not just the one they actually changed something in.
+    this.hud.updateParty(this.world.party.members);
+  }
+
+  /** Opened from exploration (the always-visible HUD button/`I` key, via `toggleInventory`) or directly from any other menu screen (`MenuNav.ts`'s cross-navigation row). */
+  private openInventory(): void {
+    this.mode = "inventory";
+    this.hideAllMenus();
     this.inventoryUI.show();
     this.refreshInventoryUI();
   }
@@ -520,17 +567,18 @@ export class Game {
   }
 
   /**
-   * Closes the inventory screen. Called from three places -- the "I"
-   * key, the toggle button (both via `toggleInventory`), and the
-   * screen's own Close button directly -- so this, not `hide()` on the
-   * UI class, is the one place that actually restores exploration:
-   * flips `mode` back and clears the input queue (`InputManager`
-   * captures keydowns unconditionally — see its `clear()` doc comment —
-   * so without this, movement keys pressed while the menu was open
-   * would sit queued until something else cleared them). The screen's
-   * Close button used to call the UI's `hide()` directly, which only
-   * did the DOM half and left `mode` stuck on "inventory" — movement
-   * looked frozen until Escape (which does go through here) fixed it.
+   * Closes the inventory screen. Reached via the "I" key/toggle button
+   * (`toggleInventory`) and via the screen's own shared Close button/
+   * Escape (both routed through `closeCurrentMenu`) -- so this, not
+   * `hide()` on the UI class, is the one place that actually restores
+   * exploration: flips `mode` back and clears the input queue
+   * (`InputManager` captures keydowns unconditionally — see its
+   * `clear()` doc comment — so without this, movement keys pressed
+   * while the menu was open would sit queued until something else
+   * cleared them). The screen's Close button used to call the UI's
+   * `hide()` directly, which only did the DOM half and left `mode`
+   * stuck on "inventory" — movement looked frozen until Escape (which
+   * does go through here) fixed it.
    */
   private closeInventory(): void {
     this.mode = "explore";
@@ -538,10 +586,10 @@ export class Game {
     this.input.clear();
   }
 
-  /** Opened from the inventory screen's "Bestiary" button — replaces that screen rather than layering on top of it, since `mode` is a single value. */
+  /** Reachable from any menu screen's cross-navigation row (`MenuNav.ts`) — replaces whichever one was showing rather than layering on top of it, since `mode` is a single value. */
   private openBestiary(): void {
     this.mode = "bestiary";
-    this.inventoryUI.hide();
+    this.hideAllMenus();
     this.bestiaryUI.show();
     this.refreshBestiaryUI();
   }
@@ -557,10 +605,10 @@ export class Game {
     this.bestiaryUI.render([...this.encounteredMonsters.values()].map(describeMonster));
   }
 
-  /** Opened from the inventory screen's "Options" button — same "replaces, doesn't layer on top of" convention as `openBestiary`. */
+  /** Reachable from any menu screen's cross-navigation row — same convention as `openBestiary`. */
   private openOptions(): void {
     this.mode = "options";
-    this.inventoryUI.hide();
+    this.hideAllMenus();
     this.optionsUI.show();
     this.refreshOptionsUI();
   }
@@ -614,10 +662,10 @@ export class Game {
     saveSettings({ volume: this.audio.volumePercent, muted: this.audio.isMuted, keyBindings });
   }
 
-  /** Opened from the inventory screen's "Level Up" button — same "replaces, doesn't layer on top of" convention as `openBestiary`/`openOptions`. */
+  /** Reachable from any menu screen's cross-navigation row — same convention as `openBestiary`/`openOptions`. */
   private openLevelUp(): void {
     this.mode = "levelUp";
-    this.inventoryUI.hide();
+    this.hideAllMenus();
     this.levelUpUI.show();
     this.refreshLevelUpUI();
   }
@@ -627,11 +675,6 @@ export class Game {
     this.mode = "explore";
     this.levelUpUI.hide();
     this.input.clear();
-    // A stat/skill spent here can change HP/Mana/gear-independent stats
-    // the HUD's party display reads, and the inventory screen's own
-    // "Level Up (N)" button label needs to drop its count -- both are
-    // otherwise only refreshed by actions this screen never triggers.
-    this.hud.updateParty(this.world.party.members);
   }
 
   private refreshLevelUpUI(): void {

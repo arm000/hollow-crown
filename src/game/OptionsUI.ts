@@ -1,4 +1,5 @@
 import type { Action } from "./InputManager";
+import { buildMenuNav, type MenuNavCallbacks } from "./MenuNav";
 
 /** A curated handful of reasonable alternatives per action, not every possible key — a dropdown, not a live "press any key" capture, so this needed no global keydown interception or event-ordering games with the rest of the input pipeline (docs/08-roadmap-phases.md Phase 6's options menu). */
 const KEY_CHOICES: Record<Action, string[]> = {
@@ -44,11 +45,11 @@ const KEY_LABELS: Record<string, string> = {
 /**
  * The options screen (docs/08-roadmap-phases.md Phase 6): volume, mute,
  * and key rebinding, in the same DOM-overlay family as `InventoryUI`/
- * `BestiaryUI`. Opened from the inventory screen's header, same as
- * those two, rather than its own always-visible corner button — one
- * more thing that doesn't need to be reachable mid-fight or mid-run.
- * Owns no persistence itself; every change calls back to `Game`, which
- * applies it to the live `AudioManager`/`InputManager` and writes it to
+ * `BestiaryUI`, reachable from any of them and back per `MenuNav.ts`
+ * (Phase 7) — no always-visible corner button of its own, one more
+ * thing that doesn't need to be reachable mid-fight or mid-run. Owns no
+ * persistence itself; every change calls back to `Game`, which applies
+ * it to the live `AudioManager`/`InputManager` and writes it to
  * `Settings.ts`.
  */
 export class OptionsUI {
@@ -60,7 +61,7 @@ export class OptionsUI {
     private readonly onVolumeChange: (percent: number) => void,
     private readonly onMuteToggle: (muted: boolean) => void,
     private readonly onRebind: (action: Action, key: string) => void,
-    private readonly onClose: () => void,
+    nav: MenuNavCallbacks,
   ) {
     this.root = document.createElement("div");
     this.root.id = "options-ui";
@@ -70,15 +71,7 @@ export class OptionsUI {
     header.id = "options-header";
     const title = document.createElement("span");
     title.textContent = "Options";
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.id = "options-close";
-    closeButton.textContent = "Close";
-    closeButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onClose();
-    });
-    header.append(title, closeButton);
+    header.append(title, buildMenuNav("options", "options", nav));
 
     const body = document.createElement("div");
     body.id = "options-body";

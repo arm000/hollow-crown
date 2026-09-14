@@ -365,7 +365,19 @@
       #inventory-ui:not([hidden]) {
         display: flex;
       }
-      #inventory-header {
+      /* Shared by all four menu screens' headers (Inventory/Bestiary/
+         Level Up/Options -- see MenuNav.ts's Phase 7 cross-navigation
+         row, built identically by all of them via buildMenuNav). Each
+         screen still keeps its own #foo-header id for its outer flex
+         row, but the actions row and buttons inside it are visually
+         identical everywhere, so those are classes, not per-screen ids
+         -- the one deliberate exception to this project's usual
+         per-screen-id CSS convention, since duplicating this block
+         four times over would be pure noise. */
+      #inventory-header,
+      #bestiary-header,
+      #options-header,
+      #levelup-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -374,17 +386,13 @@
         border-bottom: 1px solid rgba(216, 201, 163, 0.3);
         padding-bottom: 10px;
       }
-      #inventory-header-actions {
+      .menu-nav-actions {
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-end;
         gap: 8px;
       }
-      #inventory-save,
-      #inventory-bestiary,
-      #inventory-levelup,
-      #inventory-options,
-      #inventory-close {
+      .menu-nav-btn {
         font-size: 13px;
         padding: 6px 14px;
         border-radius: 8px;
@@ -393,11 +401,7 @@
         color: #d8c9a3;
         touch-action: none;
       }
-      #inventory-save:active,
-      #inventory-bestiary:active,
-      #inventory-levelup:active,
-      #inventory-options:active,
-      #inventory-close:active {
+      .menu-nav-btn:active {
         background: rgba(216, 201, 163, 0.35);
       }
       #inventory-body {
@@ -480,27 +484,6 @@
       #bestiary-ui:not([hidden]) {
         display: flex;
       }
-      #bestiary-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 20px;
-        letter-spacing: 0.08em;
-        border-bottom: 1px solid rgba(216, 201, 163, 0.3);
-        padding-bottom: 10px;
-      }
-      #bestiary-close {
-        font-size: 13px;
-        padding: 6px 14px;
-        border-radius: 8px;
-        border: 1px solid rgba(216, 201, 163, 0.5);
-        background: rgba(20, 17, 13, 0.75);
-        color: #d8c9a3;
-        touch-action: none;
-      }
-      #bestiary-close:active {
-        background: rgba(216, 201, 163, 0.35);
-      }
       #bestiary-body {
         display: flex;
         flex-direction: column;
@@ -549,27 +532,6 @@
       }
       #options-ui:not([hidden]) {
         display: flex;
-      }
-      #options-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 20px;
-        letter-spacing: 0.08em;
-        border-bottom: 1px solid rgba(216, 201, 163, 0.3);
-        padding-bottom: 10px;
-      }
-      #options-close {
-        font-size: 13px;
-        padding: 6px 14px;
-        border-radius: 8px;
-        border: 1px solid rgba(216, 201, 163, 0.5);
-        background: rgba(20, 17, 13, 0.75);
-        color: #d8c9a3;
-        touch-action: none;
-      }
-      #options-close:active {
-        background: rgba(216, 201, 163, 0.35);
       }
       #options-body {
         display: flex;
@@ -630,27 +592,6 @@
       }
       #levelup-ui:not([hidden]) {
         display: flex;
-      }
-      #levelup-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 20px;
-        letter-spacing: 0.08em;
-        border-bottom: 1px solid rgba(216, 201, 163, 0.3);
-        padding-bottom: 10px;
-      }
-      #levelup-close {
-        font-size: 13px;
-        padding: 6px 14px;
-        border-radius: 8px;
-        border: 1px solid rgba(216, 201, 163, 0.5);
-        background: rgba(20, 17, 13, 0.75);
-        color: #d8c9a3;
-        touch-action: none;
-      }
-      #levelup-close:active {
-        background: rgba(216, 201, 163, 0.35);
       }
       #levelup-body {
         display: flex;

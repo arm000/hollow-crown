@@ -2,6 +2,7 @@ import { EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
 import type { Character } from "./party/Character";
 import type { Party } from "./party/Party";
 import type { Inventory } from "./Inventory";
+import { buildMenuNav, type MenuNavCallbacks } from "./MenuNav";
 
 const SLOTS: Array<{ slot: EquipmentSlot; label: string }> = [
   { slot: "weapon", label: "Weapon" },
@@ -33,11 +34,7 @@ export class InventoryUI {
   constructor(
     private readonly onEquip: (characterName: string, itemId: string) => void,
     private readonly onUnequip: (characterName: string, slot: EquipmentSlot) => void,
-    private readonly onClose: () => void,
-    private readonly onSave: () => void,
-    private readonly onOpenBestiary: () => void,
-    private readonly onOpenOptions: () => void,
-    private readonly onOpenLevelUp: () => void,
+    nav: MenuNavCallbacks,
   ) {
     this.root = document.createElement("div");
     this.root.id = "inventory-ui";
@@ -48,65 +45,15 @@ export class InventoryUI {
     const title = document.createElement("span");
     title.textContent = "Inventory";
 
-    // A natural "pause menu" spot for Save (docs/08-roadmap-phases.md
-    // Phase 4) -- this screen is already the one place exploration
-    // fully stops, so saving here needs no separate always-visible
-    // corner button. Doesn't close the screen; Game shows a HUD
-    // confirmation instead.
-    const saveButton = document.createElement("button");
-    saveButton.type = "button";
-    saveButton.id = "inventory-save";
-    saveButton.textContent = "Save";
-    saveButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onSave();
-    });
-
-    const bestiaryButton = document.createElement("button");
-    bestiaryButton.type = "button";
-    bestiaryButton.id = "inventory-bestiary";
-    bestiaryButton.textContent = "Bestiary";
-    bestiaryButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onOpenBestiary();
-    });
-
-    this.levelUpButton = document.createElement("button");
-    this.levelUpButton.type = "button";
-    this.levelUpButton.id = "inventory-levelup";
-    this.levelUpButton.textContent = "Level Up";
-    this.levelUpButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onOpenLevelUp();
-    });
-
-    const optionsButton = document.createElement("button");
-    optionsButton.type = "button";
-    optionsButton.id = "inventory-options";
-    optionsButton.textContent = "Options";
-    optionsButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onOpenOptions();
-    });
-
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.id = "inventory-close";
-    closeButton.textContent = "Close";
-    // Notifies Game rather than calling this.hide() directly -- Game
-    // owns the mode transition (back to "explore") and the input-queue
-    // clear that goes with it (see InputManager.clear()); hide() here
-    // is just the DOM half of closing, which Game still calls itself
-    // once it's done its side, same as the Escape-key/toggle-button path.
-    closeButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onClose();
-    });
-
-    const actions = document.createElement("div");
-    actions.id = "inventory-header-actions";
-    actions.append(saveButton, bestiaryButton, this.levelUpButton, optionsButton, closeButton);
+    // Save/Bestiary/Level Up/Options/Close: the shared cross-navigation
+    // row every menu screen in this family shows now (docs/08-roadmap-phases.md
+    // Phase 7, on a player report that reaching those other screens
+    // "required going through the inventory screen first") — see
+    // MenuNav.ts. Save itself doesn't close the screen; Game shows a
+    // HUD confirmation instead.
+    const actions = buildMenuNav("inventory", "inventory", nav);
     header.append(title, actions);
+    this.levelUpButton = actions.querySelector<HTMLButtonElement>("#inventory-levelUp")!;
 
     this.bodyEl = document.createElement("div");
     this.bodyEl.id = "inventory-body";

@@ -1337,6 +1337,35 @@ true before shipping.
     always-known default, per the same "absent, not empty" convention
     `identifiedItemIds` already established.
   - 335 tests passing.
+- ✅ Batch 2 — Menu screens are siblings, not nested (player report:
+  "it's weird that all these screens like options and levelup require
+  going through the inventory screen first"): Options/Bestiary/Level Up
+  only ever had a lone Close button, so reaching one from another meant
+  closing all the way back to exploration and re-opening Inventory
+  first, even though Inventory's own header already had direct buttons
+  to all three.
+  - `MenuNav.ts` (new): a shared `buildMenuNav` builder used by all
+    four screens now (`InventoryUI`/`BestiaryUI`/`OptionsUI`/
+    `LevelUpUI`), replacing each one's own ad hoc header. Every screen
+    shows the same row — Save, then every other screen, then Close
+    (this screen's own destination left out) — so any one of the four
+    is one tap from any other. The one deliberate exception to this
+    project's usual per-screen-id CSS convention: the row and its
+    buttons are shared classes (`.menu-nav-actions`/`.menu-nav-btn`),
+    not duplicated per-screen ids, since the alternative was copying
+    the same block four times over.
+  - `Game.ts` gained `hideAllMenus`/`closeCurrentMenu`: every `open*`
+    method now hides whichever of the four was showing (not just
+    Inventory specifically) before showing its own screen, and the
+    shared Close button/Escape both close whichever one is actually
+    open by reading `this.mode` at the moment they're pressed, rather
+    than each screen assuming it was reached from Inventory. The
+    always-visible HUD button/`I` key still only opens Inventory
+    directly from exploration, unchanged — this only flattens
+    navigation *between* the four menu screens once already in one.
+  - 335 tests passing (unchanged — this batch is DOM wiring in the
+    untested UI layer, per docs/11-testing-strategy.md's non-goals;
+    `MenuNav.ts` itself has no logic beyond building DOM nodes).
 
 ---
 

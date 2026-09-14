@@ -1,4 +1,5 @@
 import type { BestiaryEntry } from "./monster/BestiaryEntry";
+import { buildMenuNav, type MenuNavCallbacks } from "./MenuNav";
 
 /**
  * The bestiary/codex screen (docs/05-combat.md#the-bestiary,
@@ -15,7 +16,7 @@ export class BestiaryUI {
   private readonly bodyEl: HTMLElement;
   private active = false;
 
-  constructor(private readonly onClose: () => void) {
+  constructor(nav: MenuNavCallbacks) {
     this.root = document.createElement("div");
     this.root.id = "bestiary-ui";
     this.root.hidden = true;
@@ -24,15 +25,10 @@ export class BestiaryUI {
     header.id = "bestiary-header";
     const title = document.createElement("span");
     title.textContent = "Bestiary";
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.id = "bestiary-close";
-    closeButton.textContent = "Close";
-    closeButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onClose();
-    });
-    header.append(title, closeButton);
+    // The shared cross-navigation row every menu screen in this family
+    // shows (see MenuNav.ts) -- Options/Level Up are one tap from here
+    // now, not a detour back through Inventory first.
+    header.append(title, buildMenuNav("bestiary", "bestiary", nav));
 
     this.bodyEl = document.createElement("div");
     this.bodyEl.id = "bestiary-body";

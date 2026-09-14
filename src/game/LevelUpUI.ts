@@ -1,3 +1,4 @@
+import { buildMenuNav, type MenuNavCallbacks } from "./MenuNav";
 import type { Character, CharacterStats } from "./party/Character";
 import type { Party } from "./party/Party";
 import { SKILLS } from "./party/Skills";
@@ -17,8 +18,8 @@ const STAT_LABELS: Record<keyof CharacterStats, string> = {
  * spent, on either a stat (+1 per point, via `spendStatPoint`) or a
  * class's second skill (a flat cost, via `unlockSkill`) — see
  * `GameLogic.ts` for both. Same DOM-overlay family as `InventoryUI`/
- * `BestiaryUI`/`OptionsUI`, opened from the inventory screen's header
- * alongside them, and purely a view over `Party` state: it owns no
+ * `BestiaryUI`/`OptionsUI`, reachable from any of them and back per
+ * `MenuNav.ts`, and purely a view over `Party` state: it owns no
  * spending rules itself, same division of labor as every other screen
  * in this family.
  */
@@ -30,7 +31,7 @@ export class LevelUpUI {
   constructor(
     private readonly onSpendStat: (characterName: string, stat: keyof CharacterStats) => void,
     private readonly onUnlockSkill: (characterName: string, skillId: string) => void,
-    private readonly onClose: () => void,
+    nav: MenuNavCallbacks,
   ) {
     this.root = document.createElement("div");
     this.root.id = "levelup-ui";
@@ -40,15 +41,7 @@ export class LevelUpUI {
     header.id = "levelup-header";
     const title = document.createElement("span");
     title.textContent = "Level Up";
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.id = "levelup-close";
-    closeButton.textContent = "Close";
-    closeButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.onClose();
-    });
-    header.append(title, closeButton);
+    header.append(title, buildMenuNav("levelup", "levelUp", nav));
 
     this.bodyEl = document.createElement("div");
     this.bodyEl.id = "levelup-body";

@@ -107,18 +107,20 @@ playthrough test exercises the whole descent with real combat as a
 release smoke test, alongside balance sanity checks (XP curve,
 resistance math, level data integrity, and a reachability audit across
 all four levels). An Options screen (volume, mute, and per-action key
-rebinding, all persisted independently of a save) is reachable from the
-inventory screen's header. The game bundle is split so Three.js loads
-in the background instead of blocking the party-creation screen's first
-paint (see "Performance" below), and `npm run package:web` produces an
+rebinding, all persisted independently of a save) sits alongside
+Inventory/Bestiary/Level Up as one of four cross-linked menu screens —
+any one reachable directly from any other, not nested behind Inventory
+specifically. The game bundle is split so Three.js loads in the
+background instead of blocking the party-creation screen's first paint
+(see "Performance" below), and `npm run package:web` produces an
 itch.io-ready zip alongside the primary GitHub Pages deploy. Since v1,
 Phase 7 turned the original design doc's always-deferred "stat points
-to allocate" into a real level-up screen (a new "Level Up" button on
-the inventory header): every level grants skill points spent by hand,
-either +1 to a stat or toward a class's second skill — one new skill
-per class, each answering a real gap in that class's kit (a self-heal
-for the Warrior, a guaranteed escape for the Rogue, a stun for the
-Mage, and the Cleric's first offensive spell). Playable now: a
+to allocate" into a real level-up screen: every level grants skill
+points spent by hand, either +1 to a stat or toward a class's second
+skill — one new skill per class, each answering a real gap in that
+class's kit (a self-heal for the Warrior, a guaranteed escape for the
+Rogue, a stun for the Mage, and the Cleric's first offensive spell).
+Playable now: a
 one-time party-creation screen (name each of the four slots, pick a
 class and a color-swatch portrait — placeholder art, real pixel art is
 still ahead — or accept the defaults to get the original
@@ -169,13 +171,16 @@ answer a Fire-weak monster by throwing the flask. Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
 character up (a class-flavored flat HP/Mana bump plus skill points to
 spend by hand, shown in the HUD and inventory screen as `Lv2`, etc.).
-The inventory screen's header also has
-a "Save" button — a single save slot capturing the party, inventory,
-current level, and exact position; relaunching the game offers a
-"Continue" button on the party-creation screen when a save exists,
-skipping straight back into the run. A "Level Up" button opens a screen
-to actually spend those points, on any of the five stats or toward a
-class's second skill. A "Bestiary" button there too
+Inventory, Bestiary, Level Up, and Options are four full-screen menus
+that all show the exact same navigation row in their header — Save,
+then every other one of the four, then Close — so any of them is one
+tap from any other rather than needing a detour back through
+Inventory specifically. Save is a single slot capturing the party,
+inventory, current level, and exact position; relaunching the game
+offers a "Continue" button on the party-creation screen when a save
+exists, skipping straight back into the run. Level Up is where those
+skill points actually get spent, on any of the five stats or toward a
+class's second skill. Bestiary
 opens a codex of every monster type encountered so far (win, lose, or
 flee all count), listing its resistances/weaknesses, any status effect
 its heavy strike inflicts, and whether it heals instead of attacking —
