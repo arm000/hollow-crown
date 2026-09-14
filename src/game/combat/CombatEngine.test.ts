@@ -46,6 +46,42 @@ describe("CombatEngine", () => {
     }
   });
 
+  describe("turnQueue / currentTurnIndex (the initiative tracker's data)", () => {
+    it("currentTurnIndex always points at currentActor within turnQueue", () => {
+      const engine = new CombatEngine(newParty(), newMonster(), new SeededRng(1));
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 20) {
+        expect(engine.turnQueue[engine.currentTurnIndex]).toBe(engine.currentActor);
+        if (engine.isPartyTurn) engine.submitAction("attack");
+        guard++;
+      }
+    });
+
+    it("turnQueue contains exactly the party's living members plus the monster, every round", () => {
+      const party = newParty();
+      const monster = newMonster({ maxHp: 100 }); // won't die mid-test
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+      // Every party member's turn interleaves with the monster's, but
+      // the monster's own turn always auto-resolves inside submitAction
+      // (see resolveAutomaticTurns) -- so exactly one round completes
+      // per `livingMembers().length` submitAction calls, regardless of
+      // where the monster's single slot falls in that round's order.
+      const partySize = party.livingMembers().length;
+      for (let round = 0; round < 3; round++) {
+        expect(new Set(engine.turnQueue)).toEqual(new Set([...party.livingMembers(), monster]));
+        for (let i = 0; i < partySize; i++) engine.submitAction("defend");
+      }
+    });
+
+    it("resets to 0 at the start of a new round", () => {
+      const party = newParty();
+      const engine = new CombatEngine(party, newMonster({ maxHp: 100 }), new SeededRng(1));
+      expect(engine.currentTurnIndex).toBe(0);
+      for (let i = 0; i < party.livingMembers().length; i++) engine.submitAction("defend");
+      expect(engine.currentTurnIndex).toBe(0); // a fresh round just rolled
+    });
+  });
+
   it("attacking reduces the monster's HP", () => {
     const monster = newMonster({ maxHp: 100 });
     const engine = new CombatEngine(newParty(), monster, new SeededRng(1));

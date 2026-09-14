@@ -1245,6 +1245,28 @@ independently):
     demand rather than committed.
   - 306 tests passing (unchanged — this batch touched build tooling
     and one bootstrap file, not game logic).
+- ✅ Batch 7 — Initiative order tracker (player request: "let me plan
+  ahead"): `CombatEngine` already tracked a real `turnQueue` internally
+  (rolled once per round, party members plus the monster, by
+  `initiativeStat + 1d6`) but never exposed where the party currently
+  stood in it beyond the single `currentActor`. Added a
+  `currentTurnIndex` getter alongside the existing `turnQueue` one, so
+  a UI can show the whole round at a glance rather than only "whose
+  turn is it right now."
+  - `CombatUI` gained a row of small pills above the monster's HP line,
+    one per `turnQueue` entry in order: dimmed for whoever already
+    acted this round, highlighted for the current turn, plain for
+    what's still to come, and struck through for anyone who's gone down
+    — read live off the combatant each render, not a snapshot, so a
+    mid-round knockout updates immediately rather than lagging behind.
+    Seeing the monster's slot coming up is what actually answers "plan
+    ahead": a party can now choose to Defend a turn early instead of
+    finding out reactively that the monster went first.
+  - `CombatEngine.test.ts` covers the new getters directly: `turnQueue[currentTurnIndex]`
+    always equals `currentActor`, the queue always matches exactly the
+    party's living members plus the monster, and the index resets to 0
+    on every fresh round.
+  - 309 tests passing.
 
 ---
 

@@ -54,6 +54,18 @@ export class CombatEngine {
     return this.turnOrder;
   }
 
+  /**
+   * `turnQueue`'s current position (docs/08-roadmap-phases.md Phase 6's
+   * initiative tracker, added on a player request to "plan ahead"): 0
+   * is whoever acted first this round. A combat UI zips this together
+   * with `turnQueue` to show the round as past/current/upcoming, so the
+   * party can see the monster's turn coming and decide whether to
+   * Defend now rather than after the fact.
+   */
+  get currentTurnIndex(): number {
+    return this.turnIndex;
+  }
+
   /** Applies `choice` for whoever's turn it currently is (must be a party member's turn). `itemId` is required for, and only used by, the "item" choice. */
   submitAction(choice: CombatActionChoice, itemId?: string): void {
     if (!this.isPartyTurn) return;

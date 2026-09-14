@@ -137,7 +137,11 @@ Cinder-Wretch-shaped resistance profile (Physical-resistant, Holy-weak
 this time — Holy Water is the answer). Attack/Defend/Ability/Flee/Item,
 status effects (Bleed and Fear are both live now; Poison/Silence are
 mechanically real but still await a source), victory/defeat/flee all
-handled. Six equipment pickups are spread across the descent (a sword,
+handled. An initiative tracker above the monster's HP line shows the
+whole round's turn order at a glance — dimmed for who's already acted,
+highlighted for whoever's turn it is, struck through for anyone downed
+— so the party can see the monster's turn coming and plan around it.
+Six equipment pickups are spread across the descent (a sword,
 a fire-resisting charm, a ring behind level 1's class-gated passage, and
 a Focus-boosting talisman in a one-tile pocket a pushable block sits on
 top of until it's shoved onto its pressure plate; a Grace-boosting

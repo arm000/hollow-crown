@@ -1,9 +1,14 @@
-import type { CombatActionChoice, CombatEngine } from "./CombatEngine";
+import type { Combatant, CombatActionChoice, CombatEngine } from "./CombatEngine";
 import { CONSUMABLE_ITEMS } from "./Consumable";
 import type { Monster } from "../monster/Monster";
 import type { Inventory } from "../Inventory";
 import { CLASS_ABILITIES } from "../party/classes";
 import type { Character } from "../party/Character";
+
+/** `Combatant` narrowed to whichever side has a `portrait` — only `Character` does; a monster's pill falls back to a plain icon instead. */
+function portraitOf(combatant: Combatant): string {
+  return combatant.side === "party" ? combatant.portrait : "💀";
+}
 
 const ACTIONS: Array<{ choice: CombatActionChoice; label: string; key: string }> = [
   { choice: "attack", label: "Attack", key: "Digit1" },
@@ -21,6 +26,7 @@ const ACTIONS: Array<{ choice: CombatActionChoice; label: string; key: string }>
  */
 export class CombatUI {
   private readonly root: HTMLElement;
+  private readonly initiativeEl: HTMLElement;
   private readonly statusEl: HTMLElement;
   private readonly logEl: HTMLElement;
   private readonly actionsEl: HTMLElement;
@@ -32,6 +38,17 @@ export class CombatUI {
     this.root = document.createElement("div");
     this.root.id = "combat-ui";
     this.root.hidden = true;
+
+    // The initiative tracker (docs/08-roadmap-phases.md Phase 6, added
+    // on a player request to "plan ahead"): one pill per combatant in
+    // this round's `turnQueue`, in order, so the party can see the
+    // monster's turn coming and choose to Defend ahead of it rather
+    // than reacting after the fact. Rebuilt every render (the same
+    // "cheap to just redraw" choice `renderItems` already makes below)
+    // since who's still alive, and where the current turn sits, can
+    // both change from one render to the next.
+    this.initiativeEl = document.createElement("div");
+    this.initiativeEl.id = "combat-initiative";
 
     this.statusEl = document.createElement("div");
     this.statusEl.id = "combat-status";
@@ -61,7 +78,7 @@ export class CombatUI {
     this.itemsEl = document.createElement("div");
     this.itemsEl.id = "combat-items";
 
-    this.root.append(this.statusEl, this.logEl, this.actionsEl, this.itemsEl);
+    this.root.append(this.initiativeEl, this.statusEl, this.logEl, this.actionsEl, this.itemsEl);
     document.body.appendChild(this.root);
 
     window.addEventListener("keydown", (event) => {
@@ -87,6 +104,7 @@ export class CombatUI {
 
   /** Refreshes the displayed state from the engine — call after every action. */
   render(engine: CombatEngine, monster: Monster, inventory: Inventory): void {
+    this.renderInitiative(engine);
     this.statusEl.textContent = `${monster.name}: ${monster.hp}/${monster.maxHp} HP`;
     this.logEl.textContent = engine.log.slice(-6).join("\n");
     this.actionsEl.hidden = !engine.isPartyTurn;
@@ -102,6 +120,41 @@ export class CombatUI {
       abilityButton.textContent = ability.manaCost > 0 ? `${ability.name} (${ability.manaCost} MP)` : ability.name;
       abilityButton.title = ability.description;
     }
+  }
+
+  /**
+   * One pill per entry in `engine.turnQueue`, in order: `"acted"` for
+   * anyone whose slot already passed this round (index before
+   * `currentTurnIndex`), `"current"` for whoever's turn it is right
+   * now, and plain/upcoming for everyone still to come. A combatant who
+   * went down mid-round (a monster's attack landing between their name
+   * being rolled into the order and their turn actually arriving) still
+   * reads live off the combatant itself, not a snapshot, so a downed
+   * ally's pill reflects that immediately rather than lagging a render.
+   */
+  private renderInitiative(engine: CombatEngine): void {
+    this.initiativeEl.replaceChildren();
+    const queue = engine.turnQueue;
+    const currentIndex = engine.currentTurnIndex;
+
+    queue.forEach((combatant, index) => {
+      const pill = document.createElement("div");
+      pill.className = "initiative-pill";
+      if (combatant.isDown) pill.classList.add("down");
+      else if (index === currentIndex) pill.classList.add("current");
+      else if (index < currentIndex) pill.classList.add("acted");
+
+      const icon = document.createElement("span");
+      icon.className = "initiative-icon";
+      icon.textContent = portraitOf(combatant);
+
+      const name = document.createElement("span");
+      name.className = "initiative-name";
+      name.textContent = combatant.name;
+
+      pill.append(icon, name);
+      this.initiativeEl.appendChild(pill);
+    });
   }
 
   private renderItems(isPartyTurn: boolean, inventory: Inventory): void {

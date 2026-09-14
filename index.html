@@ -243,6 +243,46 @@
       #combat-ui:not([hidden]) {
         display: flex;
       }
+      /* The initiative tracker (docs/08-roadmap-phases.md Phase 6,
+         added on a player request to "plan ahead"): one pill per
+         combatant in CombatEngine.turnQueue, in the order they'll
+         actually act this round. */
+      #combat-initiative {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+      }
+      .initiative-pill {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(216, 201, 163, 0.4);
+        background: rgba(20, 17, 13, 0.65);
+        color: #d8c9a3;
+        text-shadow: 0 1px 3px #000;
+        font-size: 12px;
+        opacity: 0.6; /* the "upcoming" default -- current/acted below override it */
+      }
+      .initiative-pill.current {
+        opacity: 1;
+        border-color: #e8d9a8;
+        background: rgba(216, 201, 163, 0.25);
+      }
+      .initiative-pill.acted {
+        opacity: 0.35;
+      }
+      .initiative-pill.down {
+        opacity: 0.35;
+        border-color: rgba(139, 30, 30, 0.6);
+        text-decoration: line-through;
+      }
+      .initiative-icon {
+        font-size: 14px;
+        line-height: 1;
+      }
       #combat-status {
         color: #d8c9a3;
         text-shadow: 0 1px 3px #000;
