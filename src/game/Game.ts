@@ -207,6 +207,9 @@ export class Game {
     );
     this.hud.onInventoryToggle(() => this.toggleInventory());
     this.hud.onMuteToggle(() => this.toggleMute());
+    this.hud.onBestiaryToggle(() => this.toggleBestiary());
+    this.hud.onLevelUpToggle(() => this.toggleLevelUp());
+    this.hud.onOptionsToggle(() => this.toggleOptions());
     // Scheduled immediately but stays silent until a real user gesture
     // lets the AudioContext resume -- see AudioManager's doc comment.
     this.audio.startAmbient();
@@ -510,13 +513,38 @@ export class Game {
 
   /** The "I" key and the on-screen toggle button both flip between open/closed; the inventory screen's own Close button (and Escape) always closes via `closeCurrentMenu` rather than sharing this. */
   private toggleInventory(): void {
-    if (this.mode === "inventory") {
+    this.toggleMenu("inventory", () => this.openInventory());
+  }
+
+  /**
+   * Shared by all four always-visible HUD buttons (`#quick-menu` in
+   * index.html, docs/08-roadmap-phases.md Phase 7 — a player report
+   * that Options/Level Up were only reachable by opening Inventory
+   * first): closes back to exploration if `targetMode` is already
+   * showing, opens it fresh if the party is currently exploring (and
+   * the run hasn't ended), and otherwise does nothing — mid-combat,
+   * none of these buttons should do anything at all.
+   */
+  private toggleMenu(targetMode: Mode, open: () => void): void {
+    if (this.mode === targetMode) {
       this.closeCurrentMenu();
       return;
     }
     if (this.mode !== "explore" || this.runEnded) return;
     this.input.clear(); // see InputManager.clear() -- drop anything queued right as the menu opens
-    this.openInventory();
+    open();
+  }
+
+  private toggleBestiary(): void {
+    this.toggleMenu("bestiary", () => this.openBestiary());
+  }
+
+  private toggleOptions(): void {
+    this.toggleMenu("options", () => this.openOptions());
+  }
+
+  private toggleLevelUp(): void {
+    this.toggleMenu("levelUp", () => this.openLevelUp());
   }
 
   /** Hides whichever of the four menu screens happens to be showing — every `open*` method below calls this first, so any one of them can be reached directly from any other (docs/08-roadmap-phases.md Phase 7's cross-navigation, see `MenuNav.ts`) without assuming a specific predecessor screen. Hiding an already-hidden screen is a harmless no-op. */

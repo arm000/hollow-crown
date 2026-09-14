@@ -109,8 +109,9 @@ resistance math, level data integrity, and a reachability audit across
 all four levels). An Options screen (volume, mute, and per-action key
 rebinding, all persisted independently of a save) sits alongside
 Inventory/Bestiary/Level Up as one of four cross-linked menu screens —
-any one reachable directly from any other, not nested behind Inventory
-specifically. The game bundle is split so Three.js loads in the
+any one reachable directly from any other, and each with its own
+always-visible HUD button so none of the four requires opening
+Inventory first. The game bundle is split so Three.js loads in the
 background instead of blocking the party-creation screen's first paint
 (see "Performance" below), and `npm run package:web` produces an
 itch.io-ready zip alongside the primary GitHub Pages deploy. Since v1,
@@ -171,11 +172,13 @@ answer a Fire-weak monster by throwing the flask. Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
 character up (a class-flavored flat HP/Mana bump plus skill points to
 spend by hand, shown in the HUD and inventory screen as `Lv2`, etc.).
-Inventory, Bestiary, Level Up, and Options are four full-screen menus
-that all show the exact same navigation row in their header — Save,
-then every other one of the four, then Close — so any of them is one
-tap from any other rather than needing a detour back through
-Inventory specifically. Save is a single slot capturing the party,
+Inventory, Bestiary, Level Up, and Options are four full-screen menus,
+each with its own always-visible HUD button (top-center: Bestiary/
+Level Up/Options, next to Inventory/Mute up in the corner) so none of
+them requires opening another first — and each also shows the same
+navigation row in its own header — Save, then every other one of the
+four, then Close — so any of them is one tap from any other too. Save
+is a single slot capturing the party,
 inventory, current level, and exact position; relaunching the game
 offers a "Continue" button on the party-creation screen when a save
 exists, skipping straight back into the run. Level Up is where those

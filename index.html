@@ -167,6 +167,45 @@
       #inventory-toggle:active {
         background: rgba(216, 201, 163, 0.35);
       }
+      /* Top-center, deliberately away from the crowded top-left corner
+         (Inventory/Mute/Minimap) and top-right (party status) -- player
+         report that Options/Level Up were only reachable by opening
+         Inventory first (docs/08-roadmap-phases.md Phase 7): the fix
+         that actually answers it is these three being reachable
+         straight from exploration too, not just from one another once
+         already in a menu (`MenuNav.ts` already covers that half).
+         Always visible on both desktop and mobile, same reasoning as
+         #inventory-toggle -- there's no keyboard-only path to any of
+         these three, same as Inventory itself has none either. Wraps
+         to a second centered line on a narrow phone rather than
+         overflowing off-screen. */
+      #quick-menu {
+        position: fixed;
+        top: max(12px, env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        max-width: min(70vw, 420px);
+        z-index: 6;
+      }
+      #quick-menu button {
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.65);
+        color: #d8c9a3;
+        text-shadow: 0 1px 3px #000;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+      #quick-menu button:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
       #win-screen {
         position: fixed;
         inset: 0;
@@ -834,6 +873,11 @@
     <div id="crosshair"></div>
     <button id="inventory-toggle" type="button">Inventory</button>
     <button id="mute-toggle" type="button" aria-label="Mute audio">🔊</button>
+    <div id="quick-menu">
+      <button id="bestiary-toggle" type="button">Bestiary</button>
+      <button id="levelup-toggle" type="button">Level Up</button>
+      <button id="options-toggle" type="button">Options</button>
+    </div>
     <div id="hud-party"></div>
     <div id="hud">
       <div class="title">THE HOLLOW CROWN</div>

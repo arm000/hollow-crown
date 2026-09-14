@@ -32,6 +32,9 @@ export class Hud {
   private readonly defeatScreenEl: HTMLElement;
   private readonly inventoryToggleEl: HTMLElement;
   private readonly muteToggleEl: HTMLElement;
+  private readonly bestiaryToggleEl: HTMLElement;
+  private readonly levelUpToggleEl: HTMLElement;
+  private readonly optionsToggleEl: HTMLElement;
 
   constructor(doc: Document = document) {
     this.messageEl = getRequiredElement(doc, "hud-message");
@@ -43,6 +46,9 @@ export class Hud {
     this.defeatScreenEl = getRequiredElement(doc, "defeat-screen");
     this.inventoryToggleEl = getRequiredElement(doc, "inventory-toggle");
     this.muteToggleEl = getRequiredElement(doc, "mute-toggle");
+    this.bestiaryToggleEl = getRequiredElement(doc, "bestiary-toggle");
+    this.levelUpToggleEl = getRequiredElement(doc, "levelup-toggle");
+    this.optionsToggleEl = getRequiredElement(doc, "options-toggle");
   }
 
   showMessage(text: string): void {
@@ -96,6 +102,34 @@ export class Hud {
 
   updateMuteButton(muted: boolean): void {
     this.muteToggleEl.textContent = muted ? "🔇" : "🔊";
+  }
+
+  /**
+   * Wires the always-visible Bestiary/Level Up/Options buttons
+   * (`#quick-menu` in index.html — docs/08-roadmap-phases.md Phase 7,
+   * on a player report that those screens were only reachable by
+   * opening Inventory first) — same click-or-tap pattern as
+   * `onInventoryToggle`/`onMuteToggle` above.
+   */
+  onBestiaryToggle(callback: () => void): void {
+    this.bestiaryToggleEl.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      callback();
+    });
+  }
+
+  onLevelUpToggle(callback: () => void): void {
+    this.levelUpToggleEl.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      callback();
+    });
+  }
+
+  onOptionsToggle(callback: () => void): void {
+    this.optionsToggleEl.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      callback();
+    });
   }
 }
 

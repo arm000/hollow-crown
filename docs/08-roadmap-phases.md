@@ -1366,6 +1366,25 @@ true before shipping.
   - 335 tests passing (unchanged — this batch is DOM wiring in the
     untested UI layer, per docs/11-testing-strategy.md's non-goals;
     `MenuNav.ts` itself has no logic beyond building DOM nodes).
+- ✅ Batch 3 — Options/Bestiary/Level Up reachable straight from
+  exploration (player follow-up: batch 2's cross-navigation still
+  meant opening Inventory was the *only* door in from actual gameplay
+  — "There's still no way to enter options or level up unless I go
+  through inventory first" was still true, just one tap shorter than
+  before). The real fix batch 2 was missing: three more always-visible
+  HUD buttons (`#quick-menu` in index.html — Bestiary/Level Up/Options,
+  top-center, deliberately away from the already-crowded top-left
+  corner Inventory/Mute/Minimap share and the top-right party status),
+  each wired the same way Inventory's own toggle button always has
+  been. `Game.ts`'s `toggleInventory` became a thin wrapper around a
+  new shared `toggleMenu(targetMode, open)` — closes back to
+  exploration if that screen's already open, opens it fresh from
+  exploring (refusing mid-combat/after the run ends, same guard
+  Inventory's toggle always had), reused for all four now. `Hud.ts`
+  gained `onBestiaryToggle`/`onLevelUpToggle`/`onOptionsToggle`,
+  mirroring `onInventoryToggle`/`onMuteToggle` exactly.
+  - 335 tests passing (unchanged — same untested-UI-layer reasoning as
+    batch 2).
 
 ---
 
