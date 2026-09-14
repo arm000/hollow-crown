@@ -28,11 +28,20 @@ export interface WorldState {
   monsters: Monster[];
 }
 
-/** Ticks the world-turn clock once (docs/04-exploration-and-world.md#world-turns) and reports which monster (if any) is now adjacent to (or on) the party's tile — combat starts with that one. */
+/**
+ * Ticks the world-turn clock once (docs/04-exploration-and-world.md#world-turns)
+ * and reports which monster (if any) is now adjacent to (or on) the
+ * party's tile — combat starts with that one. A monster mid-`isDisengaged`
+ * cooldown (a flee just ended combat with it) is skipped regardless of
+ * distance, even though it's typically still standing right next to the
+ * party the instant combat ends — without this, the very next action of
+ * any kind (even just turning in place) would immediately re-trigger
+ * combat against the monster the party just successfully fled from.
+ */
 function advanceWorldTurn(world: WorldState): Monster | undefined {
   world.worldClock.advance();
   return world.monsters.find((monster) => {
-    if (monster.isDown) return false;
+    if (monster.isDown || monster.isDisengaged) return false;
     const distance = Math.abs(monster.x - world.player.gridX) + Math.abs(monster.z - world.player.gridZ);
     return distance <= 1;
   });

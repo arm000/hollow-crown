@@ -10,6 +10,9 @@ export interface GridPoint {
   z: number;
 }
 
+/** World-turns a monster ignores the party's proximity for after `disengage()` — long enough to actually put distance between them (the largest current detection radius is 5), not just one token step. */
+const DISENGAGE_COOLDOWN_TURNS = 5;
+
 /** Combat-log flavor for the light/heavy halves of a turn — overridable so a spellcaster doesn't "claw" at anyone (docs/08-roadmap-phases.md Phase 4's Court Alchemist). Defaults match the original Rot-thing/Cinder Wretch text exactly, so neither needs to pass this. */
 export interface MonsterFlavor {
   /** Shown on the lighter hit, which also foreshadows the telegraphed turn to come — the "hard but fair" rule (docs/05-combat.md#telegraphing-the-hard-but-fair-rule) requires the warning to already be in this line. */
@@ -92,6 +95,21 @@ export class Monster implements Tickable {
   private patrolIndex = 0;
   private alerted = false;
   private telegraphed = false;
+  /**
+   * Counts down to 0 after `disengage()` (a successful Flee or Smoke
+   * Bomb) — while positive, `tick()` skips re-alerting entirely, even
+   * if the party is still standing right next to it, and
+   * `GameLogic.advanceWorldTurn` refuses to re-trigger combat against
+   * this monster no matter how close the party is (see `isDisengaged`).
+   * Without this, a monster left adjacent the instant combat ends (Flee
+   * doesn't relocate the party) would simply re-notice and close back
+   * to adjacent within the same world-turn its cooldown-free `tick()`
+   * ran in, making a successful flee functionally indistinguishable
+   * from just continuing the fight — the exact "the monster just
+   * re-engages into combat again" a player reported about Smoke Bomb,
+   * which is just the same underlying bug with a guaranteed trigger.
+   */
+  private disengageCooldown = 0;
 
   constructor(
     options: MonsterOptions,
@@ -122,12 +140,23 @@ export class Monster implements Tickable {
     return this.alerted;
   }
 
+  /** True for a few world-turns right after `disengage()` — `GameLogic.advanceWorldTurn` won't restart combat against this monster while it's true, no matter how close the party still is (see `disengageCooldown`'s doc comment). */
+  get isDisengaged(): boolean {
+    return this.disengageCooldown > 0;
+  }
+
   private distanceToPlayer(): number {
     return Math.abs(this.player.gridX - this.x) + Math.abs(this.player.gridZ - this.z);
   }
 
   tick(): void {
     if (this.isDown) return;
+
+    if (this.disengageCooldown > 0) {
+      this.disengageCooldown--;
+      this.patrol();
+      return;
+    }
 
     if (!this.alerted) {
       if (this.distanceToPlayer() <= this.detectionRadius) {
@@ -185,9 +214,20 @@ export class Monster implements Tickable {
     this.hp = Math.max(0, this.hp - amount);
   }
 
-  /** Resets alert state — used when the party successfully flees combat, so the monster doesn't immediately re-engage the moment exploration resumes (it's still adjacent). */
+  /**
+   * Used when the party successfully flees combat (an ordinary Flee,
+   * or a guaranteed-escape skill like the Rogue's Smoke Bomb). Resets
+   * alert state *and* starts the disengage cooldown (see its doc
+   * comment) — the alert reset alone used to be the whole thing, but
+   * since Flee never relocates the party, they're still standing right
+   * next to a monster that would otherwise re-notice them (it's within
+   * its own detection radius by definition) and close back to adjacent
+   * within the very same world-turn, making a successful flee
+   * indistinguishable from just continuing the fight.
+   */
   disengage(): void {
     this.alerted = false;
+    this.disengageCooldown = DISENGAGE_COOLDOWN_TURNS;
   }
 
   /**

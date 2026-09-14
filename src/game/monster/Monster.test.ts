@@ -97,15 +97,61 @@ describe("Monster", () => {
     expect([monster.x, monster.z]).toEqual([5, 2]); // unchanged
   });
 
-  it("disengage clears alert state, so it won't immediately re-chase after a fled encounter", () => {
-    const player = new Player(5, 1, 1, 2, 1);
-    const { monster } = newMonster({ x: 5, z: 2, detectionRadius: 5, player });
-    monster.tick(); // becomes alerted
-    expect(monster.isAlerted).toBe(true);
+  describe("disengage (docs/13-skill-system.md's guaranteed-escape skills, and ordinary Flee)", () => {
+    it("clears alert state immediately", () => {
+      const player = new Player(5, 1, 1, 2, 1);
+      const { monster } = newMonster({ x: 5, z: 2, detectionRadius: 5, player });
+      monster.tick(); // becomes alerted
+      expect(monster.isAlerted).toBe(true);
 
-    monster.disengage();
+      monster.disengage();
 
-    expect(monster.isAlerted).toBe(false);
+      expect(monster.isAlerted).toBe(false);
+    });
+
+    it("starts a cooldown that suppresses re-alerting even while the party is still adjacent -- the actual fix for a monster instantly re-engaging after a successful flee", () => {
+      const player = new Player(5, 1, 1, 2, 1); // still adjacent to (5,2), same as right when a fled fight would have ended
+      const { monster } = newMonster({ x: 5, z: 2, detectionRadius: 5, player });
+      monster.tick(); // becomes alerted (simulating the encounter that led to the flee)
+      monster.disengage();
+
+      expect(monster.isDisengaged).toBe(true);
+      monster.tick(); // still standing right next to the party
+      expect(monster.isAlerted).toBe(false); // did NOT immediately re-notice them
+      expect([monster.x, monster.z]).toEqual([5, 2]); // and did not close in (it never left "adjacent" to begin with)
+    });
+
+    it("resumes normal alerting once the cooldown actually runs out", () => {
+      const player = new Player(5, 1, 1, 2, 1);
+      const { monster } = newMonster({ x: 5, z: 2, detectionRadius: 5, player });
+      monster.tick();
+      monster.disengage();
+
+      let guard = 0;
+      while (monster.isDisengaged && guard < 20) {
+        monster.tick();
+        guard++;
+      }
+      expect(monster.isDisengaged).toBe(false);
+
+      monster.tick(); // the cooldown's over -- normal alerting behavior applies again
+      expect(monster.isAlerted).toBe(true);
+    });
+
+    it("patrols during the cooldown instead of standing frozen", () => {
+      const player = new Player(1, 1, 1, 2, 1); // far away -- irrelevant during the cooldown either way
+      const { monster } = newMonster({ x: 5, z: 2, detectionRadius: 5, player });
+      monster.disengage();
+
+      monster.tick();
+      monster.tick();
+      monster.tick();
+
+      // Same patrol behavior the very first test in this file already
+      // proves for an ordinary unaware monster -- disengaging doesn't
+      // freeze it in place for the whole cooldown.
+      expect([monster.x, monster.z]).not.toEqual([5, 2]);
+    });
   });
 
   it("takeDamage never drops HP below zero", () => {

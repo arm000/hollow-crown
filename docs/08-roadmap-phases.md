@@ -1449,6 +1449,31 @@ true before shipping.
     [03-party-and-characters.md](03-party-and-characters.md#leveling),
     and from the docs index.
   - 353 tests passing.
+- ✅ Batch 6 — Fix: fleeing didn't actually get you away (player report:
+  "smoke bomb doesn't really work well because the monster just
+  re-engages into combat again"). True of any successful flee, not just
+  Smoke Bomb — `Monster.disengage()` only ever cleared alert state, but
+  fleeing never relocates the party, so they're left standing exactly
+  adjacent to a monster that's trivially still within its own detection
+  radius (adjacent is distance 1 by definition). The very next
+  world-turn — even just turning in place — let it re-notice and, per
+  `GameLogic.advanceWorldTurn`'s plain adjacency check (no alert-state
+  condition at all), re-trigger combat immediately: a successful flee
+  was functionally indistinguishable from just continuing the fight.
+  Smoke Bomb's 100% reliability is just what made the underlying bug
+  impossible to miss.
+  - `Monster` gained a `disengageCooldown` (5 world-turns): `disengage()`
+    now starts it, and while it's counting down `tick()` skips
+    re-alerting entirely and just patrols, regardless of proximity.
+    `advanceWorldTurn` skips a monster whose new `isDisengaged` getter
+    is true, no matter how close the party still is.
+  - `FleeReengagement.test.ts` (new): drives the real
+    `attemptMove`/`attemptTurn` functions `Game.ts` calls, proving the
+    actual end-to-end symptom is gone (turning in place, standing still
+    for several turns, and actually walking away all stay clear of the
+    monster the party just fled from) — `Monster.test.ts` covers the
+    cooldown mechanism itself in isolation.
+  - 360 tests passing.
 
 ---
 

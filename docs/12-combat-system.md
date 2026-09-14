@@ -204,5 +204,16 @@ skips its turn entirely instead of acting.
 - **Defeat**: every party member is downed. Freezes input and shows the
   defeat screen — there's no revive/retry system in v1.
 - **Fled**: an ordinary Flee roll succeeds, or a skill (Rogue's Smoke
-  Bomb) guarantees it outright. The monster disengages and resumes its
-  patrol rather than immediately re-triggering combat.
+  Bomb) guarantees it outright. The monster disengages — clears its
+  alert state and starts a 5-world-turn cooldown
+  (`Monster.disengageCooldown`) during which it ignores the party's
+  proximity entirely and just resumes patrolling, even standing right
+  next to them. That cooldown is what actually makes a flee work: a
+  flee never relocates the party, so without it the monster (still
+  trivially within its own detection radius at distance 1) would
+  re-notice and `GameLogic.advanceWorldTurn`'s plain adjacency check
+  would re-trigger combat on literally the very next action, of any
+  kind — a real bug a player found ("the monster just re-engages into
+  combat again"), fixed in
+  [08-roadmap-phases.md](08-roadmap-phases.md#phase-7--post-v1-enhancements)
+  Phase 7.
