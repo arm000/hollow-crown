@@ -1181,6 +1181,33 @@ independently):
   the pocket is unreachable before the push and holds the talisman
   after.
   - 303 tests passing.
+- ✅ Batch 5 — Level 2-4 audit for the same bug class: with the level 1
+  block puzzle fixed, the natural next question was whether the same
+  "content placed, nothing can reach it" mistake existed anywhere else.
+  Levels 2-4 turned out to use none of level 1's gating mechanisms
+  (lever, plate, block, secret wall, class gate) at all — by design,
+  per their own doc comments, they're deliberately simpler levels
+  testing the descent mechanic and difficulty curve rather than puzzle
+  variety — so there was nothing equivalent to find by hand. Instead of
+  leaving it at a one-time manual check, `BalanceSanity.test.ts` gained
+  three permanent, general checks covering all four levels at once:
+  - Every floor tile and every entity spawn is reachable from the
+    level's own start tile (a raw wall/floor BFS, generalized from
+    `DungeonMap.test.ts`'s existing level 1-only version) — the general
+    form of the exact bug a player found by hand in batch 4. Secret
+    walls are the one deliberate exception, accounted for the same way
+    that existing test already does.
+  - Every lever/plate spawn's target actually resolves to a real door
+    (`InteractableManager.fromSpawns` doesn't throw) — the existing
+    bounds check only proved a doorX/doorZ was in range, not that a
+    door was actually spawned there.
+  - Every locked door's `keyId` has a matching `keyItem` spawn
+    somewhere in the same level — an orphaned key requirement would be
+    a mandatory-path dead end, not just a missed optional pickup.
+  - All four levels pass every one of these on the first run; the value
+    is in catching a regression the next time someone edits a level's
+    entity list by hand.
+  - 306 tests passing.
 
 ---
 
