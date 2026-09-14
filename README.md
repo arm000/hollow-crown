@@ -96,23 +96,30 @@ playable build before the next one starts.
 
 Phase 0 complete, Phase 1 nearly complete (only a deferred Playwright
 E2E layer left), Phase 2 complete, Phase 3 complete, Phase 4 complete,
-Phase 5 complete, **Phase 6 in progress, every scope item started** (see
-the roadmap doc above). Phase 6's own scope explicitly deferred v1's
-exact content count to this phase; that call is now made — **v1 ships
-Act 1 only** (the 4-level descent below), with Acts 2–4 staying canon
-for a possible future expansion but not built, and the ending rewritten
-as a real, self-contained epilogue rather than a mid-campaign
-checkpoint. A full-campaign headless playthrough test now exercises the
-whole descent with real combat as a release smoke test, alongside
-balance sanity checks (XP curve, resistance math, level data integrity,
-and — added after two real content bugs turned up via actual play — a
-reachability audit across all four levels). An Options screen (volume,
-mute, and per-action key rebinding, all persisted independently of a
-save) is reachable from the inventory screen's header. The game bundle
-is now split so Three.js loads in the background instead of blocking
-the party-creation screen's first paint (see "Performance" below), and
-`npm run package:web` produces an itch.io-ready zip alongside the
-primary GitHub Pages deploy. Playable now: a one-time party-creation screen (name each of the four slots, pick a
+Phase 5 complete, **Phase 6 complete — v1 shipped**, **Phase 7 (post-v1
+enhancements) in progress** (see the roadmap doc above). Phase 6's own
+scope explicitly deferred v1's exact content count to that phase; the
+call made there: **v1 ships Act 1 only** (the 4-level descent below),
+with Acts 2–4 staying canon for a possible future expansion but not
+built, and the ending rewritten as a real, self-contained epilogue
+rather than a mid-campaign checkpoint. A full-campaign headless
+playthrough test exercises the whole descent with real combat as a
+release smoke test, alongside balance sanity checks (XP curve,
+resistance math, level data integrity, and a reachability audit across
+all four levels). An Options screen (volume, mute, and per-action key
+rebinding, all persisted independently of a save) is reachable from the
+inventory screen's header. The game bundle is split so Three.js loads
+in the background instead of blocking the party-creation screen's first
+paint (see "Performance" below), and `npm run package:web` produces an
+itch.io-ready zip alongside the primary GitHub Pages deploy. Since v1,
+Phase 7 turned the original design doc's always-deferred "stat points
+to allocate" into a real level-up screen (a new "Level Up" button on
+the inventory header): every level grants skill points spent by hand,
+either +1 to a stat or toward a class's second skill — one new skill
+per class, each answering a real gap in that class's kit (a self-heal
+for the Warrior, a guaranteed escape for the Rogue, a stun for the
+Mage, and the Cleric's first offensive spell). Playable now: a
+one-time party-creation screen (name each of the four slots, pick a
 class and a color-swatch portrait — placeholder art, real pixel art is
 still ahead — or accept the defaults to get the original
 Bram/Ysolde/Corvin/Maren party), then grid movement (keyboard or touch)
@@ -135,9 +142,10 @@ undo your work), and Steward Marrow, Act 1's boss — a "final exam"
 combining the Rot-thing's telegraph, the Wraith's Fear, and a
 Cinder-Wretch-shaped resistance profile (Physical-resistant, Holy-weak
 this time — Holy Water is the answer). Attack/Defend/Ability/Flee/Item,
-status effects (Bleed and Fear are both live now; Poison/Silence are
-mechanically real but still await a source), victory/defeat/flee all
-handled. An initiative tracker above the monster's HP line shows the
+status effects (Bleed, Fear, and Stun — the Mage's Frost Lance, a Phase
+7 skill — are all live now; Poison/Silence are mechanically real but
+still await a source), victory/defeat/flee all handled. An initiative
+tracker above the monster's HP line shows the
 whole round's turn order at a glance — dimmed for who's already acted,
 highlighted for whoever's turn it is, struck through for anyone downed
 — so the party can see the monster's turn coming and plan around it.
@@ -159,12 +167,15 @@ Consumables are usable mid-fight via the Item action, curing a status or
 dealing resistance-adjusted damage — a party without a Mage can still
 answer a Fire-weak monster by throwing the flask. Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
-character up (a class-flavored stat/HP/Mana bump, shown in the HUD and
-inventory screen as `Lv2`, etc.). The inventory screen's header also has
+character up (a class-flavored flat HP/Mana bump plus skill points to
+spend by hand, shown in the HUD and inventory screen as `Lv2`, etc.).
+The inventory screen's header also has
 a "Save" button — a single save slot capturing the party, inventory,
 current level, and exact position; relaunching the game offers a
 "Continue" button on the party-creation screen when a save exists,
-skipping straight back into the run. A "Bestiary" button there too
+skipping straight back into the run. A "Level Up" button opens a screen
+to actually spend those points, on any of the five stats or toward a
+class's second skill. A "Bestiary" button there too
 opens a codex of every monster type encountered so far (win, lose, or
 flee all count), listing its resistances/weaknesses, any status effect
 its heavy strike inflicts, and whether it heals instead of attacking —

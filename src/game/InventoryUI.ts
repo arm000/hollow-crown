@@ -23,6 +23,7 @@ const SLOTS: Array<{ slot: EquipmentSlot; label: string }> = [
 export class InventoryUI {
   private readonly root: HTMLElement;
   private readonly bodyEl: HTMLElement;
+  private readonly levelUpButton: HTMLButtonElement;
   private selectedItemId: string | undefined;
   private active = false;
   /** The state from the last `render()` call, so a tap that only changes UI-local selection (not game state) can re-render without the caller passing them again. */
@@ -36,6 +37,7 @@ export class InventoryUI {
     private readonly onSave: () => void,
     private readonly onOpenBestiary: () => void,
     private readonly onOpenOptions: () => void,
+    private readonly onOpenLevelUp: () => void,
   ) {
     this.root = document.createElement("div");
     this.root.id = "inventory-ui";
@@ -69,6 +71,15 @@ export class InventoryUI {
       this.onOpenBestiary();
     });
 
+    this.levelUpButton = document.createElement("button");
+    this.levelUpButton.type = "button";
+    this.levelUpButton.id = "inventory-levelup";
+    this.levelUpButton.textContent = "Level Up";
+    this.levelUpButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      this.onOpenLevelUp();
+    });
+
     const optionsButton = document.createElement("button");
     optionsButton.type = "button";
     optionsButton.id = "inventory-options";
@@ -94,7 +105,7 @@ export class InventoryUI {
 
     const actions = document.createElement("div");
     actions.id = "inventory-header-actions";
-    actions.append(saveButton, bestiaryButton, optionsButton, closeButton);
+    actions.append(saveButton, bestiaryButton, this.levelUpButton, optionsButton, closeButton);
     header.append(title, actions);
 
     this.bodyEl = document.createElement("div");
@@ -124,6 +135,12 @@ export class InventoryUI {
     this.lastParty = party;
     this.lastInventory = inventory;
     this.bodyEl.replaceChildren(this.buildCarriedSection(inventory), this.buildPartySection(party));
+
+    // A visible reason to actually open the screen -- otherwise a
+    // level-up's points would sit unspent indefinitely with nothing
+    // drawing attention to them (docs/08-roadmap-phases.md Phase 7).
+    const totalPoints = party.members.reduce((sum, member) => sum + member.skillPoints, 0);
+    this.levelUpButton.textContent = totalPoints > 0 ? `Level Up (${totalPoints})` : "Level Up";
   }
 
   private rerender(): void {

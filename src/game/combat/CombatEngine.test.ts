@@ -275,6 +275,96 @@ describe("CombatEngine", () => {
       expect(mage.mana).toBe(5);
       expect(monster.hp).toBe(9999);
     });
+
+    it("submitAction refuses a skillId the actor hasn't unlocked, without dealing any damage", () => {
+      const warrior = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const party = new Party([warrior]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "warrior-secondWind");
+
+      expect(monster.hp).toBe(9999); // nothing happened -- Second Wind isn't known yet, so it never even ran
+      expect(engine.log.some((line) => line.includes("hasn't learned"))).toBe(true);
+    });
+  });
+
+  describe("the four new skill-point-unlockable skills (docs/08-roadmap-phases.md Phase 7)", () => {
+    it("Warrior's Second Wind heals a third of max HP", () => {
+      // Grace 20 guarantees Bram acts first, and the monster is
+      // pre-stunned so *its* guaranteed follow-up turn this round (a
+      // 2-combatant fight always alternates, regardless of who's
+      // faster) doesn't chip HP back off and make the expected total
+      // depend on a damage roll.
+      const warrior = new Character("Bram", "warrior", "front", { might: 8, grace: 20, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      warrior.skillPoints = 8;
+      warrior.unlockSkill("warrior-secondWind", 8);
+      warrior.takeDamage(20);
+      const party = new Party([warrior]);
+      const monster = newMonster({ maxHp: 9999 });
+      monster.statusEffects.apply({ type: "stun", turnsRemaining: 1 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "warrior-secondWind");
+
+      expect(warrior.hp).toBe(10 + Math.round(30 / 3));
+    });
+
+    it("Rogue's Smoke Bomb guarantees the party flees, unlike ordinary Flee's resolve-scaled chance", () => {
+      const rogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 0 }, 22, 0); // 0 Resolve -- ordinary Flee would be a coin flip at best
+      rogue.skillPoints = 8;
+      rogue.unlockSkill("rogue-smokeBomb", 8);
+      const party = new Party([rogue]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "rogue-smokeBomb");
+
+      expect(engine.result).toBe("fled");
+    });
+
+    it("Mage's Frost Lance deals modest damage and stuns the monster, skipping its very next turn", () => {
+      // A second party member (Bram) is what makes the stun's effect
+      // observable at all: with only one party member, this exact
+      // round's monster turn -- stunned and skipped -- is also this
+      // round's *last* slot, so the round-end tick immediately removes
+      // the stun again before a test could ever inspect it. With Bram
+      // acting right after the skipped monster turn, his HP staying
+      // full *is* the proof the skip actually happened.
+      const mage = new Character("Corvin", "mage", "back", { might: 2, grace: 20, vitality: 5, focus: 9, resolve: 4 }, 14, 20); // high Grace -- always acts first
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      mage.skillPoints = 8;
+      mage.unlockSkill("mage-frostLance", 8);
+      const party = new Party([mage, bram]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "mage-frostLance");
+      // currentActor is now Bram -- the monster's turn, right after the
+      // mage's, was already auto-resolved (and skipped) within that
+      // same submitAction call.
+      if (engine.isPartyTurn) engine.submitAction("defend");
+
+      expect(monster.hp).toBeLessThan(9999);
+      expect(bram.hp).toBe(30); // never hit -- the monster's one turn this round was skipped
+      expect(engine.log.some((line) => line.includes("stunned"))).toBe(true);
+      expect(mage.mana).toBe(12); // 20 - Frost Lance's 8-mana cost
+    });
+
+    it("Cleric's Smite deals Holy damage, amplified by a Holy weakness", () => {
+      const cleric = new Character("Maren", "cleric", "back", { might: 3, grace: 5, vitality: 6, focus: 8, resolve: 7 }, 18, 18);
+      cleric.skillPoints = 8;
+      cleric.unlockSkill("cleric-smite", 8);
+      const party = new Party([cleric]);
+      const monster = newMonster({ maxHp: 9999, resistances: { holy: 2 } });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "cleric-smite");
+
+      const dealt = 9999 - monster.hp;
+      expect(dealt).toBeGreaterThan(cleric.stats.focus); // amplified by the weakness
+      expect(cleric.mana).toBe(12); // 18 - Smite's 6-mana cost
+    });
   });
 
   describe("items", () => {

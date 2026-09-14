@@ -1270,6 +1270,76 @@ independently):
 
 ---
 
+## Phase 7 — Post-v1 Enhancements
+
+Phase 6 shipped v1 as a complete, self-contained release. This phase is
+where player-requested improvements land afterward — each entry below
+is its own self-contained addition, not a coordinated scope like
+Phases 0-6 were, so there's no single "playable when" gate for the
+phase as a whole; each batch's own scope note says what it needed to be
+true before shipping.
+
+**Status:**
+
+- ✅ Batch 1 — Stats and skills to allocate on level-up (player
+  request: "character should have stats and skills and get skill
+  points that have to be assigned on level up"): the original design
+  doc ([03-party-and-characters.md](03-party-and-characters.md#leveling))
+  always asked for "a flat HP/Mana increase plus stat points to
+  allocate," but `Leveling.ts` shipped a simplification instead — every
+  stat grew automatically on a fixed per-class table, flagged in its own
+  doc comment as "revisit once a level-up screen is worth building."
+  That screen now exists, and the scope grew further on request to
+  cover skills too, not just stats:
+  - `Character` gains `skillPoints` (spent, never auto-applied) and a
+    `knownSkillIds` set, seeded with the class's original signature
+    skill from construction — every class's first skill has always
+    been unconditionally available since Phase 3, so nothing about
+    existing behavior changes for a character who never opens the new
+    screen. `spendPointOnStat`/`unlockSkill` are the only ways either
+    field changes; a point on Vitality or Focus also nudges max
+    HP/Mana (topping up current HP/Mana by the same amount) since
+    those two stats' whole documented job is driving those maximums —
+    otherwise the level-up screen would offer a choice that's secretly
+    a trap for two of five options.
+  - `party/Skills.ts` (replaces `party/classes.ts`): two skills per
+    class now, not one — each class's original ability unchanged
+    (`unlockCost: 0`, known from level 1) plus a new skill bought with
+    skill points (`unlockCost: 8`, `SKILL_POINTS_PER_LEVEL = 3` granted
+    per level). Each new skill answers something the class's kit
+    genuinely lacked, the same "every ability answers something
+    specific" principle the original four already followed: Warrior's
+    **Second Wind** (self-heal, answering attrition Guard alone can't);
+    Rogue's **Smoke Bomb** (a guaranteed escape, unlike ordinary Flee's
+    resolve-scaled coin flip); Mage's **Frost Lance** (modest damage
+    plus a guaranteed Stun — the first actual source for a status
+    effect the engine has fully implemented since Phase 4 but nothing
+    had ever inflicted); Cleric's **Smite** (Holy damage — Cleric's
+    first offense of any kind, and a second, repeatable source of the
+    exact damage type Steward Marrow is weak to, alongside the
+    single-use Holy Water pickup).
+  - `CombatEngine.resolveAbility` now dispatches by skill id (falling
+    back to a class's default skill when the caller omits one, so
+    every existing `submitAction("ability")` call across the whole test
+    suite kept working unmodified) rather than a hardcoded switch on
+    `classId` — enforced against `actor.knownSkillIds` so a stale id
+    can never run a skill that isn't actually unlocked.
+  - `CombatUI`'s single "Ability" button became a row of one-or-two
+    skill buttons (same pattern `renderItems` already used for
+    consumables), since a character can now know more than one.
+  - `LevelUpUI.ts` (new): reachable from the inventory screen's header
+    (now five buttons: Save/Bestiary/**Level Up**/Options/Close, the
+    last showing an unspent-point count once there is one) — one card
+    per party member, a `+1` button per stat, and an `Unlock` button
+    for the class's second skill once enough points are saved.
+  - `SaveGame.ts` round-trips `skillPoints`/`knownSkillIds`; a save
+    written before this batch existed just falls back to the class's
+    always-known default, per the same "absent, not empty" convention
+    `identifiedItemIds` already established.
+  - 335 tests passing.
+
+---
+
 ## Notes on sequencing
 
 - Phases are ordered so each new system has the smallest possible

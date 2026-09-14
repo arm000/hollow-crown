@@ -39,6 +39,10 @@ export interface SerializedCharacter {
   xp: number;
   /** Item id per slot -- only slots actually worn are present. */
   equipment: Partial<Record<EquipmentSlot, string>>;
+  /** Unspent skill points (docs/08-roadmap-phases.md Phase 7) -- absent on a save written before this field existed, same fallback convention `identifiedItemIds` already set below. */
+  skillPoints?: number;
+  /** Every skill id this character has unlocked, tier-1 default included -- absent (or, defensively, empty) on an old save falls back to just the class default via `Character`'s own constructor, not to nothing. */
+  knownSkillIds?: string[];
 }
 
 export interface SerializedInventoryEntry {
@@ -79,6 +83,8 @@ function serializeCharacter(character: Character): SerializedCharacter {
     level: character.level,
     xp: character.xp,
     equipment,
+    skillPoints: character.skillPoints,
+    knownSkillIds: character.listKnownSkillIds(),
   };
 }
 
@@ -96,6 +102,13 @@ function deserializeCharacter(data: SerializedCharacter): Character {
   character.mana = data.mana;
   character.level = data.level;
   character.xp = data.xp;
+  character.skillPoints = data.skillPoints ?? 0;
+  // Absent/empty on a save written before skills existed -- leave the
+  // constructor's own default (just the class's tier-1 skill) alone
+  // rather than restoring to nothing.
+  if (data.knownSkillIds && data.knownSkillIds.length > 0) {
+    character.restoreKnownSkillIds(data.knownSkillIds);
+  }
   for (const slot of EQUIPMENT_SLOTS) {
     const itemId = data.equipment[slot];
     const item = itemId ? EQUIPMENT_ITEMS[itemId] : undefined;

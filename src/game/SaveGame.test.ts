@@ -122,6 +122,36 @@ describe("serialize / deserializeParty", () => {
     const restored = deserializeParty(serialize(world, "level-1"));
     expect(restored.members.map((m) => m.name)).toEqual(["Bram", "Ysolde"]);
   });
+
+  describe("skill points and unlocked skills (docs/08-roadmap-phases.md Phase 7)", () => {
+    it("round-trips unspent skill points and every unlocked skill", () => {
+      const bram = newCharacter();
+      bram.skillPoints = 5;
+      bram.unlockSkill("warrior-secondWind", 0); // cost irrelevant to the round-trip itself
+      const world = newWorld(new Party([bram]));
+
+      const restored = deserializeParty(serialize(world, "level-1")).members[0];
+
+      expect(restored.skillPoints).toBe(5);
+      expect(restored.knowsSkill("warrior-guard")).toBe(true);
+      expect(restored.knowsSkill("warrior-secondWind")).toBe(true);
+    });
+
+    it("a save written before skills existed still knows the class default, not nothing", () => {
+      const bram = newCharacter();
+      const world = newWorld(new Party([bram]));
+      const data = serialize(world, "level-1");
+      // Simulates an old save blob: the fields this batch added were
+      // never written at all, not just empty.
+      delete (data.party[0] as { skillPoints?: number }).skillPoints;
+      delete (data.party[0] as { knownSkillIds?: string[] }).knownSkillIds;
+
+      const restored = deserializeParty(data).members[0];
+
+      expect(restored.skillPoints).toBe(0);
+      expect(restored.knowsSkill("warrior-guard")).toBe(true);
+    });
+  });
 });
 
 describe("serialize / deserializeInventory", () => {

@@ -2,19 +2,26 @@ import type { Combatant, CombatActionChoice, CombatEngine } from "./CombatEngine
 import { CONSUMABLE_ITEMS } from "./Consumable";
 import type { Monster } from "../monster/Monster";
 import type { Inventory } from "../Inventory";
-import { CLASS_ABILITIES } from "../party/classes";
 import type { Character } from "../party/Character";
+import { SKILLS } from "../party/Skills";
 
 /** `Combatant` narrowed to whichever side has a `portrait` — only `Character` does; a monster's pill falls back to a plain icon instead. */
 function portraitOf(combatant: Combatant): string {
   return combatant.side === "party" ? combatant.portrait : "💀";
 }
 
+/**
+ * Attack/Defend/Flee keep their fixed hotkeys; a class's skills (one or
+ * two, once a second is unlocked — docs/08-roadmap-phases.md Phase 7)
+ * no longer fit one static "Ability" slot, so they get their own row
+ * below, built fresh every render the same way `renderItems` already
+ * builds the consumables row — tap/click only, no hotkey, matching that
+ * row's existing precedent rather than inventing a new one.
+ */
 const ACTIONS: Array<{ choice: CombatActionChoice; label: string; key: string }> = [
   { choice: "attack", label: "Attack", key: "Digit1" },
   { choice: "defend", label: "Defend", key: "Digit2" },
-  { choice: "ability", label: "Ability", key: "Digit3" },
-  { choice: "flee", label: "Flee", key: "Digit4" },
+  { choice: "flee", label: "Flee", key: "Digit3" },
 ];
 
 /**
@@ -30,11 +37,12 @@ export class CombatUI {
   private readonly statusEl: HTMLElement;
   private readonly logEl: HTMLElement;
   private readonly actionsEl: HTMLElement;
+  private readonly skillsEl: HTMLElement;
   private readonly itemsEl: HTMLElement;
   private readonly buttons: Map<CombatActionChoice, HTMLButtonElement> = new Map();
   private active = false;
 
-  constructor(private readonly onAction: (choice: CombatActionChoice, itemId?: string) => void) {
+  constructor(private readonly onAction: (choice: CombatActionChoice, itemId?: string, skillId?: string) => void) {
     this.root = document.createElement("div");
     this.root.id = "combat-ui";
     this.root.hidden = true;
@@ -72,13 +80,19 @@ export class CombatUI {
       this.buttons.set(choice, button);
     }
 
+    // The current actor's known skills -- rebuilt every render, same
+    // reasoning as itemsEl below: who's acting, and what they know,
+    // both change turn to turn.
+    this.skillsEl = document.createElement("div");
+    this.skillsEl.id = "combat-skills";
+
     // A separate row, rebuilt every render: which items are offered
-    // changes turn to turn (something gets used up), unlike the four
-    // fixed actions above.
+    // changes turn to turn (something gets used up), unlike the fixed
+    // actions above.
     this.itemsEl = document.createElement("div");
     this.itemsEl.id = "combat-items";
 
-    this.root.append(this.initiativeEl, this.statusEl, this.logEl, this.actionsEl, this.itemsEl);
+    this.root.append(this.initiativeEl, this.statusEl, this.logEl, this.actionsEl, this.skillsEl, this.itemsEl);
     document.body.appendChild(this.root);
 
     window.addEventListener("keydown", (event) => {
@@ -108,17 +122,40 @@ export class CombatUI {
     this.statusEl.textContent = `${monster.name}: ${monster.hp}/${monster.maxHp} HP`;
     this.logEl.textContent = engine.log.slice(-6).join("\n");
     this.actionsEl.hidden = !engine.isPartyTurn;
+    this.renderSkills(engine.isPartyTurn ? (engine.currentActor as Character) : undefined);
     this.renderItems(engine.isPartyTurn, inventory);
-    if (!engine.isPartyTurn) return;
+  }
 
-    const actor = engine.currentActor as Character;
-    const ability = CLASS_ABILITIES[actor.classId];
-    const abilityButton = this.buttons.get("ability");
-    if (abilityButton) {
-      const canAfford = actor.mana >= ability.manaCost;
-      abilityButton.disabled = !canAfford;
-      abilityButton.textContent = ability.manaCost > 0 ? `${ability.name} (${ability.manaCost} MP)` : ability.name;
-      abilityButton.title = ability.description;
+  /**
+   * One button per skill the current actor actually knows (docs/08-roadmap-phases.md
+   * Phase 7) — one for most of the game, two once a character's second
+   * skill is unlocked. `undefined` (not this actor's turn, or combat
+   * over) just clears the row, same as `renderItems` does for its own
+   * "nothing to show right now" case.
+   */
+  private renderSkills(actor: Character | undefined): void {
+    this.skillsEl.replaceChildren();
+    if (!actor) {
+      this.skillsEl.hidden = true;
+      return;
+    }
+    this.skillsEl.hidden = false;
+
+    const known = new Set(actor.listKnownSkillIds());
+    for (const skill of SKILLS[actor.classId]) {
+      if (!known.has(skill.id)) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "combat-action-btn combat-skill-btn";
+      button.textContent = skill.manaCost > 0 ? `${skill.name} (${skill.manaCost} MP)` : skill.name;
+      button.title = skill.description;
+      button.disabled = actor.mana < skill.manaCost;
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        if (button.disabled) return;
+        this.onAction("ability", undefined, skill.id);
+      });
+      this.skillsEl.appendChild(button);
     }
   }
 

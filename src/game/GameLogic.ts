@@ -2,8 +2,10 @@ import type { DungeonMap } from "./DungeonMap";
 import type { InteractableManager } from "./interactables/InteractableManager";
 import type { Inventory } from "./Inventory";
 import type { Monster } from "./monster/Monster";
+import type { CharacterStats } from "./party/Character";
 import { EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
 import type { Party } from "./party/Party";
+import { SKILLS } from "./party/Skills";
 import type { Facing, Player } from "./Player";
 import type { WorldClock } from "./WorldClock";
 
@@ -215,6 +217,24 @@ export function unequipItem(world: WorldState, characterName: string, slot: Equi
 
   world.inventory.add(item.id, item.name);
   return { success: true, message: `${character.name} stows ${item.name}.` };
+}
+
+/** Spends one of `characterName`'s unspent skill points (docs/08-roadmap-phases.md Phase 7) to raise `stat` by 1. `success: false` for an unknown character or no points to spend — `LevelUpUI` only offers this when `skillPoints > 0`, so the latter is a defensive guard, not an expected path. */
+export function spendStatPoint(world: WorldState, characterName: string, stat: keyof CharacterStats): EquipOutcome {
+  const character = world.party.members.find((member) => member.name === characterName);
+  if (!character) return { success: false };
+  if (!character.spendPointOnStat(stat)) return { success: false };
+  return { success: true, message: `${character.name}'s ${stat} increases.` };
+}
+
+/** Spends `characterName`'s skill points to learn `skillId`, looking up its real cost from `Skills.ts` rather than trusting a caller-supplied number — the one place besides `Character`'s own constructor that needs to know a `SkillDef`'s `unlockCost` at all. */
+export function unlockSkill(world: WorldState, characterName: string, skillId: string): EquipOutcome {
+  const character = world.party.members.find((member) => member.name === characterName);
+  if (!character) return { success: false };
+  const skill = SKILLS[character.classId].find((candidate) => candidate.id === skillId);
+  if (!skill) return { success: false };
+  if (!character.unlockSkill(skill.id, skill.unlockCost)) return { success: false };
+  return { success: true, message: `${character.name} learns ${skill.name}!` };
 }
 
 export interface StartPosition {

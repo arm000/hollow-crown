@@ -302,20 +302,24 @@
         text-align: center;
       }
       #combat-actions,
+      #combat-skills,
       #combat-items {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 12px;
       }
+      #combat-skills,
       #combat-items {
         margin-top: 8px;
       }
       #combat-actions[hidden],
+      #combat-skills[hidden],
       #combat-items[hidden] {
         display: none;
       }
-      .combat-item-btn {
+      .combat-item-btn,
+      .combat-skill-btn {
         font-size: 13px;
         padding: 8px 14px;
       }
@@ -378,6 +382,7 @@
       }
       #inventory-save,
       #inventory-bestiary,
+      #inventory-levelup,
       #inventory-options,
       #inventory-close {
         font-size: 13px;
@@ -390,6 +395,7 @@
       }
       #inventory-save:active,
       #inventory-bestiary:active,
+      #inventory-levelup:active,
       #inventory-options:active,
       #inventory-close:active {
         background: rgba(216, 201, 163, 0.35);
@@ -602,6 +608,102 @@
       .options-row input[type="checkbox"] {
         width: 22px;
         height: 22px;
+      }
+
+      /* Level-up overlay: mounted by LevelUpUI.ts. Same family/pattern
+         as #options-ui immediately above -- opened from the inventory
+         screen, same "exploration already fully stopped" precondition. */
+      #levelup-ui {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        gap: 16px;
+        background: rgba(5, 4, 2, 0.92);
+        color: #d8c9a3;
+        pointer-events: auto;
+        overflow-y: auto;
+        z-index: 13;
+      }
+      #levelup-ui:not([hidden]) {
+        display: flex;
+      }
+      #levelup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 20px;
+        letter-spacing: 0.08em;
+        border-bottom: 1px solid rgba(216, 201, 163, 0.3);
+        padding-bottom: 10px;
+      }
+      #levelup-close {
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.75);
+        color: #d8c9a3;
+        touch-action: none;
+      }
+      #levelup-close:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
+      #levelup-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 420px;
+      }
+      .levelup-character {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(216, 201, 163, 0.2);
+      }
+      .levelup-character-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .levelup-points {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .levelup-heading {
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        opacity: 0.7;
+        margin-top: 8px;
+      }
+      .levelup-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 0;
+        font-size: 13px;
+      }
+      .levelup-btn {
+        font-size: 12px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.75);
+        color: #d8c9a3;
+        touch-action: none;
+      }
+      .levelup-btn:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
+      .levelup-btn:disabled {
+        opacity: 0.4;
       }
 
       /* Party-creation screen: mounted by PartyCreationUI.ts, shown once

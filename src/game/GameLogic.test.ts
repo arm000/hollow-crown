@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DungeonMap, STARTING_LEVEL } from "./DungeonMap";
-import { equipItem, facingToward, resolveStartPosition, unequipItem, type WorldState } from "./GameLogic";
+import { equipItem, facingToward, resolveStartPosition, spendStatPoint, unequipItem, unlockSkill, type WorldState } from "./GameLogic";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { Inventory } from "./Inventory";
 import { LEVELS } from "./levels";
@@ -122,6 +122,67 @@ describe("unequipItem", () => {
     expect(result.success).toBe(false);
     expect(result.message).toContain("won't come off");
     expect(world.party.members[0].equippedIn("accessory")?.id).toBe("ambition-ring"); // still worn
+  });
+});
+
+describe("spendStatPoint (docs/08-roadmap-phases.md Phase 7)", () => {
+  it("raises the named character's stat by 1 and consumes one point", () => {
+    const world = newWorld();
+    world.party.members[0].skillPoints = 2;
+
+    const result = spendStatPoint(world, "Bram", "might");
+
+    expect(result.success).toBe(true);
+    expect(world.party.members[0].stats.might).toBe(9);
+    expect(world.party.members[0].skillPoints).toBe(1);
+  });
+
+  it("fails without a point to spend", () => {
+    const world = newWorld();
+    const result = spendStatPoint(world, "Bram", "might");
+    expect(result.success).toBe(false);
+    expect(world.party.members[0].stats.might).toBe(8);
+  });
+
+  it("fails if the named character isn't in the party", () => {
+    const world = newWorld();
+    world.party.members[0].skillPoints = 2;
+    expect(spendStatPoint(world, "Nobody", "might").success).toBe(false);
+  });
+});
+
+describe("unlockSkill (docs/08-roadmap-phases.md Phase 7)", () => {
+  it("learns the class's second skill and spends the real cost looked up from Skills.ts", () => {
+    const world = newWorld();
+    world.party.members[0].skillPoints = 8;
+
+    const result = unlockSkill(world, "Bram", "warrior-secondWind");
+
+    expect(result.success).toBe(true);
+    expect(world.party.members[0].knowsSkill("warrior-secondWind")).toBe(true);
+    expect(world.party.members[0].skillPoints).toBe(0); // Second Wind costs 8
+  });
+
+  it("fails without enough points, spending nothing", () => {
+    const world = newWorld();
+    world.party.members[0].skillPoints = 3;
+
+    const result = unlockSkill(world, "Bram", "warrior-secondWind");
+
+    expect(result.success).toBe(false);
+    expect(world.party.members[0].knowsSkill("warrior-secondWind")).toBe(false);
+    expect(world.party.members[0].skillPoints).toBe(3);
+  });
+
+  it("fails for a skill id that doesn't belong to the character's class", () => {
+    const world = newWorld();
+    world.party.members[0].skillPoints = 99;
+    expect(unlockSkill(world, "Bram", "mage-frostLance").success).toBe(false);
+  });
+
+  it("fails if the named character isn't in the party", () => {
+    const world = newWorld();
+    expect(unlockSkill(world, "Nobody", "warrior-secondWind").success).toBe(false);
   });
 });
 

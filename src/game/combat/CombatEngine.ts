@@ -1,8 +1,8 @@
 import type { Inventory } from "../Inventory";
 import type { Monster } from "../monster/Monster";
-import { CLASS_ABILITIES } from "../party/classes";
 import type { Character } from "../party/Character";
 import type { Party } from "../party/Party";
+import { defaultSkillId, SKILLS } from "../party/Skills";
 import { rollInt, type Rng } from "../Rng";
 import { CONSUMABLE_ITEMS } from "./Consumable";
 import { applyResistance } from "./DamageType";
@@ -13,6 +13,8 @@ export type Combatant = Character | Monster;
 
 const BLEED_DURATION = 2;
 const BLEED_TICK_DAMAGE = 3;
+/** Warrior's Second Wind: a third of max HP, rounded to the nearest whole point. */
+const SECOND_WIND_FRACTION = 1 / 3;
 
 /**
  * Resolves one encounter turn-by-turn: initiative order, Attack/Defend/
@@ -66,8 +68,17 @@ export class CombatEngine {
     return this.turnIndex;
   }
 
-  /** Applies `choice` for whoever's turn it currently is (must be a party member's turn). `itemId` is required for, and only used by, the "item" choice. */
-  submitAction(choice: CombatActionChoice, itemId?: string): void {
+  /**
+   * Applies `choice` for whoever's turn it currently is (must be a
+   * party member's turn). `itemId` is required for, and only used by,
+   * the "item" choice. `skillId` is only used by "ability" — omitted,
+   * it falls back to the actor's class's original default skill (see
+   * `resolveAbility`), which is what every existing single-skill-per-class
+   * caller (this engine's own tests included) still means by a bare
+   * "ability" choice; `CombatUI` always passes one explicitly once a
+   * character can know more than one.
+   */
+  submitAction(choice: CombatActionChoice, itemId?: string, skillId?: string): void {
     if (!this.isPartyTurn) return;
     const actor = this.currentActor as Character;
     this.defending.delete(actor); // Defend/Guard last until this character's next action, which is now.
@@ -93,7 +104,7 @@ export class CombatEngine {
         break;
       }
       case "ability": {
-        this.resolveAbility(actor);
+        this.resolveAbility(actor, skillId);
         break;
       }
       case "item": {
@@ -117,6 +128,12 @@ export class CombatEngine {
       this.log.push(`${this.monster.name} is defeated!`);
       return;
     }
+    // A skill can end the fight outright without a kill -- Rogue's
+    // Smoke Bomb sets "fled" directly from inside resolveAbility, the
+    // same as a successful ordinary Flee already does. Either way,
+    // nothing past this point (advancing the turn order, ticking
+    // status effects for a round that no longer matters) should run.
+    if (this.result !== "ongoing") return;
 
     this.finishPartyTurn();
   }
@@ -126,47 +143,89 @@ export class CombatEngine {
     this.resolveAutomaticTurns();
   }
 
-  private resolveAbility(actor: Character): void {
-    const ability = CLASS_ABILITIES[actor.classId];
-
+  /**
+   * Resolves whichever skill `skillId` names, defaulting to the actor's
+   * class's original signature skill when omitted (see `submitAction`'s
+   * doc comment). Looked up against `SKILLS[actor.classId]` rather than
+   * trusting `skillId` blindly, so a stale id from a UI bug can't ask
+   * this engine to run another class's skill — the class boundary is
+   * enforced here, not just by which buttons `CombatUI` happens to draw.
+   */
+  private resolveAbility(actor: Character, skillId: string | undefined): void {
+    const resolvedId = skillId ?? defaultSkillId(actor.classId);
+    const skill = SKILLS[actor.classId].find((candidate) => candidate.id === resolvedId);
+    if (!skill) {
+      this.log.push(`${actor.name} doesn't know that.`);
+      return;
+    }
+    if (!actor.knowsSkill(skill.id)) {
+      this.log.push(`${actor.name} hasn't learned ${skill.name} yet.`);
+      return;
+    }
     if (actor.statusEffects.has("silence")) {
-      this.log.push(`${actor.name} tries to use ${ability.name}, but the silence swallows it!`);
+      this.log.push(`${actor.name} tries to use ${skill.name}, but the silence swallows it!`);
       return;
     }
-    if (actor.mana < ability.manaCost) {
-      this.log.push(`${actor.name} doesn't have enough mana for ${ability.name}.`);
+    if (actor.mana < skill.manaCost) {
+      this.log.push(`${actor.name} doesn't have enough mana for ${skill.name}.`);
       return;
     }
-    actor.mana -= ability.manaCost;
+    actor.mana -= skill.manaCost;
 
-    switch (actor.classId) {
-      case "warrior": {
+    switch (skill.id) {
+      case "warrior-guard": {
         this.tauntedBy = actor;
         this.defending.add(actor);
         this.log.push(`${actor.name} bellows a challenge, daring ${this.monster.name} to strike!`);
         break;
       }
-      case "rogue": {
+      case "warrior-secondWind": {
+        const healed = Math.round(actor.maxHp * SECOND_WIND_FRACTION);
+        actor.heal(healed);
+        this.log.push(`${actor.name} catches a second wind, recovering ${healed} HP.`);
+        break;
+      }
+      case "rogue-precisionStrike": {
         const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 4) + 2;
         this.monster.takeDamage(rawDamage); // ignores resistance entirely -- that's the point
         this.monster.statusEffects.apply({ type: "bleed", turnsRemaining: BLEED_DURATION, tickDamage: BLEED_TICK_DAMAGE });
         this.log.push(`${actor.name}'s Precision Strike finds a weak point for ${rawDamage} damage and draws blood!`);
         break;
       }
-      case "mage": {
+      case "rogue-smokeBomb": {
+        this.result = "fled";
+        this.log.push(`${actor.name} cracks a smoke bomb underfoot — the party vanishes into the haze!`);
+        break;
+      }
+      case "mage-firebolt": {
         const rawDamage = actor.effectiveStats.focus + rollInt(this.rng, 1, 6);
         const damage = applyResistance(rawDamage, this.monster.resistances, "fire");
         this.monster.takeDamage(damage);
         this.log.push(`${actor.name} hurls a Firebolt for ${damage} fire damage.`);
         break;
       }
-      case "cleric": {
+      case "mage-frostLance": {
+        const rawDamage = Math.ceil(actor.effectiveStats.focus / 2) + rollInt(this.rng, 1, 3);
+        const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
+        this.monster.takeDamage(damage);
+        this.monster.statusEffects.apply({ type: "stun", turnsRemaining: 1 });
+        this.log.push(`${actor.name}'s Frost Lance deals ${damage} damage and freezes ${this.monster.name} solid!`);
+        break;
+      }
+      case "cleric-cleanse": {
         const target = this.pickCleanseTarget(actor);
         const hadEffects = target.statusEffects.list().length > 0;
         target.statusEffects.clearAll();
         this.log.push(
           hadEffects ? `${actor.name} cleanses ${target.name}.` : `${actor.name} finds nothing to cleanse.`,
         );
+        break;
+      }
+      case "cleric-smite": {
+        const rawDamage = actor.effectiveStats.focus + rollInt(this.rng, 1, 4);
+        const damage = applyResistance(rawDamage, this.monster.resistances, "holy");
+        this.monster.takeDamage(damage);
+        this.log.push(`${actor.name} smites ${this.monster.name} for ${damage} holy damage.`);
         break;
       }
     }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Character } from "./Character";
 import { awardPartyXp, gainXp, xpToNextLevel } from "./Leveling";
 import { Party } from "./Party";
+import { SKILL_POINTS_PER_LEVEL } from "./Skills";
 
 function newWarrior(): Character {
   return new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
@@ -33,16 +34,18 @@ describe("gainXp", () => {
     expect(levels).toEqual([2]);
   });
 
-  it("applies class-flavored stat/HP/Mana growth on level-up", () => {
+  it("grants class-flavored HP/Mana growth on level-up, plus skill points -- stats no longer grow automatically", () => {
     const warrior = newWarrior();
     const baseMight = warrior.stats.might;
     const baseMaxHp = warrior.maxHp;
+    const baseSkillPoints = warrior.skillPoints;
 
     gainXp(warrior, xpToNextLevel(1));
 
-    expect(warrior.stats.might).toBeGreaterThan(baseMight); // Warriors grow tougher/harder-hitting
+    expect(warrior.stats.might).toBe(baseMight); // stat growth is now the player's choice, not automatic
     expect(warrior.maxHp).toBeGreaterThan(baseMaxHp);
     expect(warrior.hp).toBe(warrior.maxHp); // the HP gain also topped up current HP, not just the max
+    expect(warrior.skillPoints).toBe(baseSkillPoints + SKILL_POINTS_PER_LEVEL);
   });
 
   it("a Mage's growth includes Mana, unlike a Warrior's", () => {
@@ -72,7 +75,10 @@ describe("awardPartyXp", () => {
 
     expect(bram.level).toBe(2);
     expect(corvin.level).toBe(2);
-    expect(messages).toEqual(["Bram reaches level 2!", "Corvin reaches level 2!"]);
+    expect(messages).toEqual([
+      `Bram reaches level 2! (+${SKILL_POINTS_PER_LEVEL} skill points)`,
+      `Corvin reaches level 2! (+${SKILL_POINTS_PER_LEVEL} skill points)`,
+    ]);
   });
 
   it("skips downed members entirely", () => {

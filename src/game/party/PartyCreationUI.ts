@@ -1,5 +1,5 @@
 import type { ClassId } from "./Character";
-import { CLASS_ABILITIES } from "./classes";
+import { SKILLS } from "./Skills";
 import { DEFAULT_PARTY_SPEC, PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
 
 const CLASS_OPTIONS: ClassId[] = ["warrior", "rogue", "mage", "cleric"];
@@ -98,12 +98,14 @@ export class PartyCreationUI {
       button.type = "button";
       button.className = "party-creation-choice-btn";
       button.textContent = classLabel(classId);
-      // The class's signature ability, same description CombatUI already
-      // shows as a tooltip mid-fight -- a class's role is public
-      // information, unlike an item's mechanical effect (see
+      // The class's default signature skill, same description CombatUI
+      // already shows as a tooltip mid-fight -- a class's role is
+      // public information, unlike an item's mechanical effect (see
       // docs/06-items-and-equipment.md#discovery-not-explanation, which
-      // only ever applies to items).
-      button.title = CLASS_ABILITIES[classId].description;
+      // only ever applies to items). A second skill exists to unlock
+      // via leveling (Skills.ts) but isn't spoiled here -- this is
+      // about knowing a class's role up front, not its whole kit.
+      button.title = SKILLS[classId][0].description;
       if (classId === spec.classId) button.classList.add("selected");
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();

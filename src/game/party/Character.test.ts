@@ -45,4 +45,105 @@ describe("Character", () => {
     character.heal(999);
     expect(character.hp).toBe(10);
   });
+
+  describe("skills (docs/08-roadmap-phases.md Phase 7)", () => {
+    it("knows its class's default skill from construction, with no unlock step", () => {
+      const character = newCharacter(); // a warrior
+      expect(character.knowsSkill("warrior-guard")).toBe(true);
+      expect(character.listKnownSkillIds()).toEqual(["warrior-guard"]);
+    });
+
+    it("doesn't know a class's second skill until it's unlocked", () => {
+      expect(newCharacter().knowsSkill("warrior-secondWind")).toBe(false);
+    });
+
+    it("starts with zero skill points", () => {
+      expect(newCharacter().skillPoints).toBe(0);
+    });
+  });
+
+  describe("spendPointOnStat", () => {
+    it("raises the stat by 1 and consumes one point when a point is available", () => {
+      const character = newCharacter();
+      character.skillPoints = 1;
+      expect(character.spendPointOnStat("might")).toBe(true);
+      expect(character.stats.might).toBe(6);
+      expect(character.skillPoints).toBe(0);
+    });
+
+    it("refuses, changing nothing, when there are no points left", () => {
+      const character = newCharacter();
+      expect(character.spendPointOnStat("might")).toBe(false);
+      expect(character.stats.might).toBe(5);
+    });
+
+    it("a point spent on Vitality also raises max HP and tops up current HP by the same amount", () => {
+      const character = newCharacter({ maxHp: 20 });
+      character.skillPoints = 1;
+      const baseMaxHp = character.maxHp;
+
+      character.spendPointOnStat("vitality");
+
+      expect(character.maxHp).toBeGreaterThan(baseMaxHp);
+      expect(character.hp).toBe(character.maxHp); // topped up, not left behind at the old max
+    });
+
+    it("a point spent on Focus also raises max Mana and tops up current Mana by the same amount", () => {
+      const character = newCharacter();
+      character.skillPoints = 1;
+      const baseMaxMana = character.maxMana;
+
+      character.spendPointOnStat("focus");
+
+      expect(character.maxMana).toBeGreaterThan(baseMaxMana);
+      expect(character.mana).toBe(character.maxMana);
+    });
+
+    it("a point spent on Might/Grace/Resolve leaves max HP and max Mana untouched", () => {
+      const character = newCharacter();
+      character.skillPoints = 3;
+      const { maxHp, maxMana } = character;
+
+      character.spendPointOnStat("might");
+      character.spendPointOnStat("grace");
+      character.spendPointOnStat("resolve");
+
+      expect(character.maxHp).toBe(maxHp);
+      expect(character.maxMana).toBe(maxMana);
+    });
+  });
+
+  describe("unlockSkill", () => {
+    it("learns the skill and spends the points when enough are available", () => {
+      const character = newCharacter();
+      character.skillPoints = 8;
+      expect(character.unlockSkill("warrior-secondWind", 8)).toBe(true);
+      expect(character.knowsSkill("warrior-secondWind")).toBe(true);
+      expect(character.skillPoints).toBe(0);
+    });
+
+    it("refuses, changing nothing, without enough points", () => {
+      const character = newCharacter();
+      character.skillPoints = 7;
+      expect(character.unlockSkill("warrior-secondWind", 8)).toBe(false);
+      expect(character.knowsSkill("warrior-secondWind")).toBe(false);
+      expect(character.skillPoints).toBe(7);
+    });
+
+    it("refuses a skill already known, without spending anything", () => {
+      const character = newCharacter();
+      character.skillPoints = 99;
+      expect(character.unlockSkill("warrior-guard", 0)).toBe(false);
+      expect(character.skillPoints).toBe(99);
+    });
+  });
+
+  describe("restoreKnownSkillIds", () => {
+    it("replaces the known-skill set wholesale, with no cost check", () => {
+      const character = newCharacter();
+      character.restoreKnownSkillIds(["warrior-guard", "warrior-secondWind"]);
+      expect(character.knowsSkill("warrior-secondWind")).toBe(true);
+      expect(character.skillPoints).toBe(0); // unaffected -- restoring isn't spending
+    });
+  });
 });

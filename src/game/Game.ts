@@ -13,7 +13,9 @@ import {
   equipItem,
   facingToward,
   resolveStartPosition,
+  spendStatPoint,
   unequipItem,
+  unlockSkill,
   type WorldState,
 } from "./GameLogic";
 import { Hud } from "./Hud";
@@ -23,6 +25,7 @@ import { InteractableManager } from "./interactables/InteractableManager";
 import { createInteractableMesh } from "./interactables/InteractableMesh";
 import { Inventory } from "./Inventory";
 import { InventoryUI } from "./InventoryUI";
+import { LevelUpUI } from "./LevelUpUI";
 import { buildMinimapGrid } from "./Minimap";
 import { MinimapUI } from "./MinimapUI";
 import { OptionsUI } from "./OptionsUI";
@@ -40,6 +43,7 @@ import type { LevelDef } from "./levels/LevelDef";
 import { describeMonster } from "./monster/BestiaryEntry";
 import { buildMonsters } from "./monster/bestiary";
 import type { Monster } from "./monster/Monster";
+import type { CharacterStats } from "./party/Character";
 import type { EquipmentSlot } from "./party/Equipment";
 import { awardPartyXp } from "./party/Leveling";
 import { createParty, DEFAULT_PARTY_SPEC, type PartyMemberSpec } from "./party/roster";
@@ -52,7 +56,7 @@ import { WorldClock } from "./WorldClock";
 const TILE_SIZE = 2;
 const MONSTER_HEIGHT = 1.4;
 
-type Mode = "explore" | "combat" | "inventory" | "bestiary" | "options";
+type Mode = "explore" | "combat" | "inventory" | "bestiary" | "options" | "levelUp";
 
 export class Game {
   private readonly renderer: THREE.WebGLRenderer;
@@ -66,6 +70,7 @@ export class Game {
   private readonly inventoryUI: InventoryUI;
   private readonly bestiaryUI: BestiaryUI;
   private readonly optionsUI: OptionsUI;
+  private readonly levelUpUI: LevelUpUI;
   /** One representative `Monster` per encountered type name, for the bestiary screen (docs/05-combat.md#the-bestiary) to describe — recorded the moment combat starts, per "win, lose, or flee" all counting as an encounter. Not persisted across save/load, same simplification as per-level interactable/monster state (see `SaveGame.ts`). */
   private readonly encounteredMonsters = new Map<string, Monster>();
   private readonly minimapUI = new MinimapUI();
@@ -166,7 +171,7 @@ export class Game {
 
     // Mounts on-screen touch buttons as a side effect; no reference needed.
     new TouchControls(this.input);
-    this.combatUI = new CombatUI((choice, itemId) => this.handleCombatAction(choice, itemId));
+    this.combatUI = new CombatUI((choice, itemId, skillId) => this.handleCombatAction(choice, itemId, skillId));
     this.inventoryUI = new InventoryUI(
       (characterName, itemId) => this.handleEquip(characterName, itemId),
       (characterName, slot) => this.handleUnequip(characterName, slot),
@@ -174,6 +179,7 @@ export class Game {
       () => this.handleSave(),
       () => this.openBestiary(),
       () => this.openOptions(),
+      () => this.openLevelUp(),
     );
     this.bestiaryUI = new BestiaryUI(() => this.closeBestiary());
     this.optionsUI = new OptionsUI(
@@ -181,6 +187,11 @@ export class Game {
       (muted) => this.handleMuteToggle(muted),
       (action, key) => this.handleRebind(action, key),
       () => this.closeOptions(),
+    );
+    this.levelUpUI = new LevelUpUI(
+      (characterName, stat) => this.handleSpendStat(characterName, stat),
+      (characterName, skillId) => this.handleUnlockSkill(characterName, skillId),
+      () => this.closeLevelUp(),
     );
     this.hud.onInventoryToggle(() => this.toggleInventory());
     this.hud.onMuteToggle(() => this.toggleMute());
@@ -201,6 +212,11 @@ export class Game {
       if (event.code === "Escape" && this.mode === "options") {
         event.preventDefault();
         this.closeOptions();
+        return;
+      }
+      if (event.code === "Escape" && this.mode === "levelUp") {
+        event.preventDefault();
+        this.closeLevelUp();
         return;
       }
       if (event.code !== "KeyI" && !(event.code === "Escape" && this.mode === "inventory")) return;
@@ -469,9 +485,9 @@ export class Game {
     this.checkCombatEnd();
   }
 
-  private handleCombatAction(choice: CombatActionChoice, itemId?: string): void {
+  private handleCombatAction(choice: CombatActionChoice, itemId?: string, skillId?: string): void {
     if (!this.combatEngine) return;
-    this.combatEngine.submitAction(choice, itemId);
+    this.combatEngine.submitAction(choice, itemId, skillId);
     this.audio.playHit(); // one generic impact sound for any resolved action -- not yet differentiated by action or damage type
     this.refreshCombatUI();
     this.checkCombatEnd();
@@ -596,6 +612,41 @@ export class Game {
       if (key) keyBindings[action] = key;
     }
     saveSettings({ volume: this.audio.volumePercent, muted: this.audio.isMuted, keyBindings });
+  }
+
+  /** Opened from the inventory screen's "Level Up" button — same "replaces, doesn't layer on top of" convention as `openBestiary`/`openOptions`. */
+  private openLevelUp(): void {
+    this.mode = "levelUp";
+    this.inventoryUI.hide();
+    this.levelUpUI.show();
+    this.refreshLevelUpUI();
+  }
+
+  /** Closes straight back to exploration, not back to the inventory screen — same convention as `closeBestiary`/`closeOptions`. */
+  private closeLevelUp(): void {
+    this.mode = "explore";
+    this.levelUpUI.hide();
+    this.input.clear();
+    // A stat/skill spent here can change HP/Mana/gear-independent stats
+    // the HUD's party display reads, and the inventory screen's own
+    // "Level Up (N)" button label needs to drop its count -- both are
+    // otherwise only refreshed by actions this screen never triggers.
+    this.hud.updateParty(this.world.party.members);
+  }
+
+  private refreshLevelUpUI(): void {
+    this.levelUpUI.render(this.world.party);
+  }
+
+  private handleSpendStat(characterName: string, stat: keyof CharacterStats): void {
+    spendStatPoint(this.world, characterName, stat);
+    this.refreshLevelUpUI();
+  }
+
+  private handleUnlockSkill(characterName: string, skillId: string): void {
+    const result = unlockSkill(this.world, characterName, skillId);
+    if (result.message) this.hud.showMessage(result.message);
+    this.refreshLevelUpUI();
   }
 
   private handleEquip(characterName: string, itemId: string): void {
