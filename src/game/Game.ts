@@ -31,6 +31,8 @@ import { buildMinimapGrid } from "./Minimap";
 import { MinimapUI } from "./MinimapUI";
 import { MonsterAnimator } from "./MonsterAnimator";
 import { OptionsUI } from "./OptionsUI";
+import { Projectile } from "./Projectile";
+import { ScreenFlash } from "./ScreenFlash";
 import { loadSettings, saveSettings } from "./Settings";
 import {
   AMBIENT_LIGHT_COLOR,
@@ -90,6 +92,11 @@ export class Game {
   private combatMonster: Monster | undefined;
   /** Drives the current combat monster's attack-lunge/hit-reaction animation (docs/08-roadmap-phases.md Phase 7, on a player request for attack animations) — see `MonsterAnimator.ts` and `tick()`. Only ever animates `combatMonster`; every other monster on the level (patrolling, not yet engaged) stays at rest. */
   private readonly monsterAnimator = new MonsterAnimator();
+  /** A skill's placeholder ranged VFX (docs/14-asset-inventory.md) — see `Projectile.ts`, `SKILL_VFX`, and `tick()`'s sync onto `projectileMesh`. */
+  private readonly projectile = new Projectile();
+  private projectileMesh: THREE.Mesh | undefined;
+  /** A skill's placeholder self/party-targeted VFX (docs/14-asset-inventory.md) — see `ScreenFlash.ts` and `tick()`'s sync onto `Hud.setScreenFlash`. */
+  private readonly screenFlash = new ScreenFlash();
   /** True once the run is over (win or defeat) — freezes input, per the win/defeat screens. */
   private runEnded = false;
 
@@ -160,6 +167,21 @@ export class Game {
     torch.position.set(0, 0.1, 0);
     this.player.camera.add(torch);
     this.scene.add(this.player.camera);
+
+    // A skill's placeholder ranged VFX (docs/14-asset-inventory.md) --
+    // one mesh, built once and reused for every projectile fired over
+    // the whole run (never more than one in flight at a time, see
+    // Projectile.ts), hidden until handleCombatAction's fireProjectile
+    // actually launches one. MeshBasicMaterial (unlit) rather than
+    // MeshStandardMaterial: a magic bolt should read as glowing
+    // regardless of the torch's own light falling on it, the same
+    // reasoning the monster hit-flash's emissive channel already uses.
+    this.projectileMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff }),
+    );
+    this.projectileMesh.visible = false;
+    this.scene.add(this.projectileMesh);
 
     const firstLevel = saveData ? getLevel(saveData.levelId) : LEVELS[0];
     const loaded = this.enterLevel(firstLevel, worldClock);
@@ -346,6 +368,22 @@ export class Game {
       this.syncMonsterMesh(this.combatMonster);
     }
 
+    // Both run unconditionally, every frame, mode or combat state
+    // aside -- same reasoning as `player.update()` above: a no-op sync
+    // (invisible mesh, zero screen-flash opacity) whenever nothing's
+    // actually mid-animation, exactly like `MonsterAnimator` already
+    // does for the monster itself.
+    this.projectile.update(delta);
+    if (this.projectileMesh) {
+      this.projectileMesh.visible = this.projectile.isActive;
+      if (this.projectile.isActive) {
+        this.projectileMesh.position.copy(this.projectile.position());
+        (this.projectileMesh.material as THREE.MeshBasicMaterial).color.setHex(this.projectile.color);
+      }
+    }
+    this.screenFlash.update(delta);
+    this.hud.setScreenFlash(this.screenFlash.color, this.screenFlash.intensity);
+
     this.renderer.render(this.scene, this.player.camera);
   }
 
@@ -517,6 +555,8 @@ export class Game {
     // -- simply surviving the fight to any conclusion is enough.
     this.encounteredMonsters.set(monster.name, monster);
     this.monsterAnimator.reset(); // a clean start regardless of how the last fight (if any) ended
+    this.projectile.cancel();
+    this.screenFlash.cancel();
     this.combatMonster = monster;
     this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng(), this.world.inventory);
     this.hud.showMessage(`${monster.name} attacks!`);
@@ -541,7 +581,19 @@ export class Game {
     // row, not one cutting the other off.
     this.combatEngine.submitAction(choice, itemId, skillId);
 
-    if (monster.hp < monsterHpBefore) this.monsterAnimator.play("hit");
+    // A skill's placeholder VFX (docs/14-asset-inventory.md) is looked
+    // up by `skillId` directly rather than inferred from what changed
+    // -- unlike the HP-delta checks below, which only decide *whether*
+    // to animate, this decides *which color/kind* to, and the engine
+    // already told us exactly which skill ran.
+    const vfx = choice === "ability" && skillId ? SKILL_VFX[skillId] : undefined;
+
+    if (monster.hp < monsterHpBefore) {
+      const color = vfx?.color ?? 0xffffff;
+      this.monsterAnimator.play("hit", color);
+      if (vfx?.kind === "projectile") this.fireProjectile(color);
+    }
+    if (vfx?.kind === "screen") this.screenFlash.play(vfx.color);
     if (this.totalPartyHp() < partyHpBefore) this.monsterAnimator.play("attack");
 
     this.audio.playHit(); // one generic impact sound for any resolved action -- not yet differentiated by action or damage type
@@ -551,6 +603,14 @@ export class Game {
 
   private totalPartyHp(): number {
     return this.world.party.members.reduce((sum, member) => sum + member.hp, 0);
+  }
+
+  /** Launches a skill's placeholder VFX bolt (docs/14-asset-inventory.md) from the camera's current world position to the combat monster's — `tick()` carries it the rest of the way via `Projectile.update()`. */
+  private fireProjectile(color: number): void {
+    if (!this.combatMonster) return;
+    const from = this.player.camera.position;
+    const to = new THREE.Vector3(this.combatMonster.x * TILE_SIZE, MONSTER_HEIGHT / 2, this.combatMonster.z * TILE_SIZE);
+    this.projectile.fire(from, to, color);
   }
 
   private refreshCombatUI(): void {
@@ -816,6 +876,7 @@ export class Game {
     // keeps walking its patrol below, and without this it would do so
     // visibly frozen in whatever animation pose combat last left it in.
     this.monsterAnimator.reset();
+    this.projectile.cancel();
     this.syncMonsterMesh(monster);
 
     if (result === "victory") {
@@ -878,6 +939,41 @@ const MONSTER_COLORS: Record<string, number> = {
   "Cinder Wretch": 0x8a3f2a,
   "Screeching Wraith": 0xd8d8e8,
   "Court Alchemist": 0x6a4a7a,
+};
+
+/**
+ * Placeholder VFX per skill (docs/14-asset-inventory.md, on a player
+ * request for spell-effect animations — the `"needed"` entries the
+ * asset manifest's `skill-vfx` category flagged). Every skill id here
+ * is a real `SkillDef.id` from `party/Skills.ts`; a skill missing from
+ * this table (there are none — every skill has an entry) would just
+ * fall back to the same plain white hit-flash a basic Attack already
+ * gets, per `handleCombatAction`.
+ *
+ * - `"projectile"`: a small colored bolt (`Projectile.ts`) travels from
+ *   the camera to the monster, which then flashes this same color —
+ *   the ranged/magic-feeling skills.
+ * - `"melee"`: no bolt, just the monster's hit-flash in this color —
+ *   an instant, close-range skill.
+ * - `"screen"`: a brief colored tint across the whole view
+ *   (`ScreenFlash.ts`, via `Hud.setScreenFlash`) instead of anything on
+ *   the monster — for a skill that targets the caster or the party,
+ *   which have no mesh of their own to show an effect on in this
+ *   first-person view.
+ */
+const SKILL_VFX: Record<string, { kind: "projectile" | "melee" | "screen"; color: number }> = {
+  "warrior-guard": { kind: "screen", color: 0xd8a24a }, // bronze -- a raised-shield cue
+  "warrior-secondWind": { kind: "screen", color: 0x6adf7a }, // green heal
+  "warrior-rallyCry": { kind: "screen", color: 0xf0c860 }, // warm gold, brighter than Guard's bronze -- a party-wide beat, not a solo one
+  "rogue-precisionStrike": { kind: "melee", color: 0xd83a3a }, // blood red -- Bleed
+  "rogue-smokeBomb": { kind: "screen", color: 0x888888 }, // gray smoke
+  "rogue-ambush": { kind: "melee", color: 0xfff0a0 }, // pale flash -- a fleeting opening struck fast
+  "mage-firebolt": { kind: "projectile", color: 0xff6a2a }, // fire orange
+  "mage-frostLance": { kind: "projectile", color: 0x8ad8ff }, // ice blue
+  "mage-cinderNova": { kind: "projectile", color: 0xff3a1a }, // deeper red-orange -- reads as more intense than Firebolt
+  "cleric-cleanse": { kind: "screen", color: 0xa0f0ff }, // cyan-white
+  "cleric-smite": { kind: "projectile", color: 0xfff2b8 }, // holy gold-white
+  "cleric-ward": { kind: "screen", color: 0x4a90d8 }, // shield blue
 };
 
 function buildMonsterMesh(monster: Monster): THREE.Mesh {

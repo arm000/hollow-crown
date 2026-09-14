@@ -6,6 +6,14 @@ const ATTACK_DURATION = 0.35;
 const HIT_DURATION = 0.25;
 /** World units the monster lunges toward the party on its own attack — small on purpose, the corridor is narrow and this is a capsule placeholder, not a rigged character (docs/10-visual-style-guide.md's art pass is still ahead). */
 const ATTACK_LUNGE_DISTANCE = 0.5;
+/** The "hit" flash's color when nothing more specific is given — a plain Attack landing, say. */
+const DEFAULT_HIT_COLOR = 0xffffff;
+
+interface QueuedAnim {
+  kind: MonsterAnimKind;
+  /** Only meaningful for `"hit"` — see `play()`'s doc comment. */
+  color: number;
+}
 
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
@@ -22,11 +30,11 @@ function outAndBack(t: number): number {
  * animations): lunging toward the party on its own attack, or a quick
  * punch-and-flash when the party's attack lands. No Three.js
  * scene/material access of its own — `Game.ts` reads `positionOffset`/
- * `scale`/`flashIntensity` every frame and applies them to the real
- * mesh itself, the same "pure state, dumb renderer applies it" split
- * `Player.ts`'s own move/turn animation already uses, which is also
- * why this is a real, unit-tested class rather than inline state in
- * the untested `Game.ts` glue layer.
+ * `scale`/`flashIntensity`/`flashColor` every frame and applies them to
+ * the real mesh itself, the same "pure state, dumb renderer applies it"
+ * split `Player.ts`'s own move/turn animation already uses, which is
+ * also why this is a real, unit-tested class rather than inline state
+ * in the untested `Game.ts` glue layer.
  *
  * `play()` queues rather than instantly overwriting: a party hit and
  * the monster's own automatic counter-attack can both land within the
@@ -36,17 +44,24 @@ function outAndBack(t: number): number {
  * better than the second instantly cutting off the first.
  */
 export class MonsterAnimator {
-  private queue: MonsterAnimKind[] = [];
-  private current: MonsterAnimKind | undefined;
+  private queue: QueuedAnim[] = [];
+  private current: QueuedAnim | undefined;
   private t = 1;
 
   get isAnimating(): boolean {
     return this.current !== undefined || this.queue.length > 0;
   }
 
-  /** Queues an animation to play once whatever's currently running (if anything) finishes. */
-  play(kind: MonsterAnimKind): void {
-    this.queue.push(kind);
+  /**
+   * Queues an animation to play once whatever's currently running (if
+   * anything) finishes. `color` (a hex `0xrrggbb`, only meaningful for
+   * `"hit"`) is how a skill's own damage-type placeholder VFX
+   * (docs/14-asset-inventory.md) reaches the monster's reaction — a
+   * Firebolt lands orange, Smite lands gold, a plain Attack (the
+   * default) lands white — see `Game.ts`'s `SKILL_VFX` table.
+   */
+  play(kind: MonsterAnimKind, color: number = DEFAULT_HIT_COLOR): void {
+    this.queue.push({ kind, color });
   }
 
   /** Drops anything queued or in progress — a fresh encounter starting shouldn't carry over a stale animation from the last one. */
@@ -63,7 +78,7 @@ export class MonsterAnimator {
     }
     if (this.current === undefined) return;
 
-    const duration = this.current === "attack" ? ATTACK_DURATION : HIT_DURATION;
+    const duration = this.current.kind === "attack" ? ATTACK_DURATION : HIT_DURATION;
     this.t = Math.min(1, this.t + deltaSeconds / duration);
     if (this.t >= 1) this.current = undefined; // finished -- the next update() call picks up the queue, if anything
   }
@@ -74,7 +89,7 @@ export class MonsterAnimator {
    * `(towardX, towardZ)` — zero outside an "attack" animation.
    */
   positionOffset(fromX: number, fromZ: number, towardX: number, towardZ: number): THREE.Vector3 {
-    if (this.current !== "attack") return new THREE.Vector3();
+    if (this.current?.kind !== "attack") return new THREE.Vector3();
     const dx = towardX - fromX;
     const dz = towardZ - fromZ;
     const length = Math.hypot(dx, dz) || 1;
@@ -84,13 +99,18 @@ export class MonsterAnimator {
 
   /** Scale multiplier for the "hit" reaction's punch — 1 (no change) outside it. */
   get scale(): number {
-    if (this.current !== "hit") return 1;
+    if (this.current?.kind !== "hit") return 1;
     return 1 + outAndBack(this.t) * 0.25;
   }
 
   /** 0-1 flash brightness for the "hit" reaction, fading out linearly — 0 outside it. */
   get flashIntensity(): number {
-    if (this.current !== "hit") return 0;
+    if (this.current?.kind !== "hit") return 0;
     return 1 - this.t;
+  }
+
+  /** The "hit" reaction's flash color, hex `0xrrggbb` — meaningless (but harmless) to read outside a "hit" animation, since `flashIntensity` is already 0 there. */
+  get flashColor(): number {
+    return this.current?.kind === "hit" ? this.current.color : DEFAULT_HIT_COLOR;
   }
 }

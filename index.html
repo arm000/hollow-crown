@@ -50,6 +50,25 @@
         background: rgba(255, 255, 255, 0.6);
         pointer-events: none;
       }
+      /* Self/party-targeted skill VFX placeholder (docs/14-asset-inventory.md,
+         on a player request for spell-effect placeholders) -- driven
+         every frame by Game.ts's ScreenFlash via Hud.ts's
+         setScreenFlash, not CSS transitions/animations, since its
+         fade-out needs to stay in lockstep with the same clock every
+         other combat animation already runs on. Sits above the 3D
+         canvas/crosshair but below every DOM overlay (menus, combat
+         UI) so a flash never obscures anything the player actually
+         needs to read. opacity starts at 0 -- Hud.ts always sets both
+         together, but this is the honest default before the first
+         frame ever runs. */
+      #combat-flash {
+        position: fixed;
+        inset: 0;
+        opacity: 0;
+        background: #ffffff;
+        pointer-events: none;
+        z-index: 5;
+      }
       #hud {
         position: fixed;
         left: 12px;
@@ -871,6 +890,7 @@
   <body>
     <div id="app"></div>
     <div id="crosshair"></div>
+    <div id="combat-flash"></div>
     <button id="inventory-toggle" type="button">Inventory</button>
     <button id="mute-toggle" type="button" aria-label="Mute audio">🔊</button>
     <div id="quick-menu">

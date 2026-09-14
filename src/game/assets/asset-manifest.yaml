@@ -389,7 +389,11 @@ vfx-warrior-guard:
   description: >-
     Warrior draws the monster's next attack and halves it — a raised-shield flash, or a
     challenge/taunt shockwave from the Warrior.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + ScreenFlash.ts: a brief bronze (0xd8a24a) tint across the whole
+    view, since the party has no mesh of its own for an effect to land on in this first-person
+    game.
   links:
     - kind: skill
       id: warrior-guard
@@ -398,7 +402,8 @@ vfx-warrior-secondwind:
   category: skill-vfx
   name: Second Wind VFX
   description: Self-heal — a warm/green sparkle rising off the Warrior.
-  status: needed
+  status: procedural
+  placeholderNotes: "Game.ts's SKILL_VFX + ScreenFlash.ts: a brief green (0x6adf7a) screen-wide tint."
   links:
     - kind: skill
       id: warrior-secondWind
@@ -409,7 +414,10 @@ vfx-warrior-rallycry:
   description: >-
     Heals the whole party and clears Fear — a radiating shockwave/pulse from the Warrior outward,
     distinct from Second Wind's self-only sparkle.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + ScreenFlash.ts: a brief warm gold (0xf0c860) screen-wide tint, brighter
+    than Guard's bronze -- distinguishable by color, not yet by shape/motion.
   links:
     - kind: skill
       id: warrior-rallyCry
@@ -420,7 +428,10 @@ vfx-rogue-precisionstrike:
   description: >-
     Ignores resistance, applies Bleed — a quick red slash/flash on the monster, distinct from a
     plain attack's impact.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + MonsterAnimator.ts: the existing hit-punch/flash reaction, colored blood
+    red (0xd83a3a) instead of the plain Attack's default white.
   links:
     - kind: skill
       id: rogue-precisionStrike
@@ -429,7 +440,8 @@ vfx-rogue-smokebomb:
   category: skill-vfx
   name: Smoke Bomb VFX
   description: Guarantees the party escapes — a smoke cloud filling the screen/corridor as combat ends.
-  status: needed
+  status: procedural
+  placeholderNotes: "Game.ts's SKILL_VFX + ScreenFlash.ts: a brief gray (0x888888) screen-wide tint."
   links:
     - kind: skill
       id: rogue-smokeBomb
@@ -440,7 +452,10 @@ vfx-rogue-ambush:
   description: >-
     Bonus damage only while the target is still undamaged — a quick dash/blur into the strike,
     reading as "a fleeting opening," distinct from Precision Strike's more measured slash.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + MonsterAnimator.ts: the existing hit-punch/flash reaction, colored a pale
+    yellow-white (0xfff0a0), distinct from Precision Strike's red.
   links:
     - kind: skill
       id: rogue-ambush
@@ -449,7 +464,10 @@ vfx-mage-firebolt:
   category: skill-vfx
   name: Firebolt VFX
   description: Fire damage — a small fire projectile from the Mage to the monster, with an impact burst.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + Projectile.ts: a small unlit orange (0xff6a2a) sphere travels from the
+    camera to the monster, which then flashes the same color (MonsterAnimator.ts).
   links:
     - kind: skill
       id: mage-firebolt
@@ -460,7 +478,11 @@ vfx-mage-frostlance:
   description: >-
     Modest damage plus a guaranteed Stun — an ice-shard projectile, and a frost/ice overlay on the
     monster while stunned (ties into the status-icon-stun gap above).
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + Projectile.ts: a small unlit ice-blue (0x8ad8ff) sphere travels from the
+    camera to the monster, which then flashes the same color -- no separate stun overlay yet
+    (status-icon-stun is still "needed").
   links:
     - kind: skill
       id: mage-frostLance
@@ -471,7 +493,11 @@ vfx-mage-cindernova:
   description: >-
     A much bigger fire hit than Firebolt, no control effect — a larger fire explosion/nova, should
     read as clearly more intense than Firebolt's projectile.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + Projectile.ts: a small unlit sphere colored a deeper red-orange
+    (0xff3a1a) than Firebolt's, same travel/flash mechanism -- distinguished by color only so far,
+    not yet by size/intensity.
   links:
     - kind: skill
       id: mage-cinderNova
@@ -482,7 +508,8 @@ vfx-cleric-cleanse:
   description: >-
     Removes every negative status effect from an ally — a cleansing light/sparkle wash over the
     target.
-  status: needed
+  status: procedural
+  placeholderNotes: "Game.ts's SKILL_VFX + ScreenFlash.ts: a brief cyan-white (0xa0f0ff) screen-wide tint."
   links:
     - kind: skill
       id: cleric-cleanse
@@ -491,7 +518,10 @@ vfx-cleric-smite:
   category: skill-vfx
   name: Smite VFX
   description: Holy damage, Cleric's first offensive skill — a beam of light striking down onto the monster.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + Projectile.ts: a small unlit gold-white (0xfff2b8) sphere travels from
+    the camera to the monster, which then flashes the same color -- not yet an actual beam.
   links:
     - kind: skill
       id: cleric-smite
@@ -503,7 +533,11 @@ vfx-cleric-ward:
     Shields an ally's next hit without spending their turn — a translucent shield/bubble glimmer on
     the warded ally, persisting (per CombatEngine's `warded` set) until it's actually consumed by a
     hit.
-  status: needed
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + ScreenFlash.ts: a brief blue (0x4a90d8) screen-wide tint at the moment
+    Ward is cast -- doesn't yet persist visually while the ward is actually active, unlike the real
+    game-state effect it represents.
   links:
     - kind: skill
       id: cleric-ward

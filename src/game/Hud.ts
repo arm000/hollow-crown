@@ -35,6 +35,7 @@ export class Hud {
   private readonly bestiaryToggleEl: HTMLElement;
   private readonly levelUpToggleEl: HTMLElement;
   private readonly optionsToggleEl: HTMLElement;
+  private readonly combatFlashEl: HTMLElement;
 
   constructor(doc: Document = document) {
     this.messageEl = getRequiredElement(doc, "hud-message");
@@ -49,6 +50,7 @@ export class Hud {
     this.bestiaryToggleEl = getRequiredElement(doc, "bestiary-toggle");
     this.levelUpToggleEl = getRequiredElement(doc, "levelup-toggle");
     this.optionsToggleEl = getRequiredElement(doc, "options-toggle");
+    this.combatFlashEl = getRequiredElement(doc, "combat-flash");
   }
 
   showMessage(text: string): void {
@@ -130,6 +132,22 @@ export class Hud {
       event.preventDefault();
       callback();
     });
+  }
+
+  /**
+   * Drives `#combat-flash` (docs/14-asset-inventory.md, on a player
+   * request for spell-effect placeholders): a self/party-targeted
+   * skill's placeholder VFX, since there's no character mesh in this
+   * first-person view to show an effect on the way a monster-targeted
+   * skill's hit flash does. Called every frame from `Game.tick()`
+   * regardless of `intensity` — 0 is a harmless, invisible no-op, same
+   * as every other per-frame animation sync in this project.
+   */
+  setScreenFlash(color: number, intensity: number): void {
+    this.combatFlashEl.style.backgroundColor = `#${color.toString(16).padStart(6, "0")}`;
+    // Never fully opaque even at intensity 1 -- this is a tint the
+    // player reads combat through, not a whiteout that hides it.
+    this.combatFlashEl.style.opacity = String(intensity * 0.35);
   }
 }
 

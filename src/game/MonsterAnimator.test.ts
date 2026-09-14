@@ -74,6 +74,28 @@ describe("MonsterAnimator", () => {
       animator.update(0.1);
       expect(animator.positionOffset(0, 0, 1, 0)).toEqual({ x: 0, y: 0, z: 0 });
     });
+
+    it("defaults to a white flash when no color is given", () => {
+      const animator = new MonsterAnimator();
+      animator.play("hit");
+      animator.update(0.1);
+      expect(animator.flashColor).toBe(0xffffff);
+    });
+
+    it("carries whatever color play() was given -- a skill's own placeholder VFX color (docs/14-asset-inventory.md)", () => {
+      const animator = new MonsterAnimator();
+      animator.play("hit", 0xff6a2a); // Firebolt's orange
+      animator.update(0.1);
+      expect(animator.flashColor).toBe(0xff6a2a);
+    });
+
+    it("flashColor reverts to the default once the hit finishes, even after a colored one", () => {
+      const animator = new MonsterAnimator();
+      animator.play("hit", 0xff6a2a);
+      animator.update(10);
+      expect(animator.isAnimating).toBe(false);
+      expect(animator.flashColor).toBe(0xffffff);
+    });
   });
 
   it("queues a second animation rather than cutting the first one off, so both play in sequence", () => {

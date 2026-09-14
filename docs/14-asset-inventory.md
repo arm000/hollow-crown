@@ -121,12 +121,28 @@ system.
   a straightforward "swap the fill color for a texture."
 - **Character portraits** — `roster.ts`'s `PORTRAIT_OPTIONS`, a
   player-chosen color-swatch emoji, not class-specific art at all.
-- **The two generic combat VFX that exist** (`vfx-monster-attack`,
+- **The two generic combat VFX** (`vfx-monster-attack`,
   `vfx-monster-hit-reaction`) — `MonsterAnimator.ts`'s lunge/punch-flash,
   pure mesh transform + material property, no particles or sprites.
-  Every skill-specific VFX entry is `"needed"`: nothing currently
-  distinguishes a Firebolt landing from a plain Attack landing, visually.
+- **Every one of the twelve skill-specific VFX entries** — `Game.ts`'s
+  `SKILL_VFX` table picks, per skill, one of three placeholder kinds:
+  a small colored bolt traveling from the camera to the monster
+  (`Projectile.ts`, for the ranged/magic-feeling skills), the same
+  hit-punch/flash `vfx-monster-hit-reaction` already used but recolored
+  per skill (for close-range skills), or a brief colored tint across
+  the whole view (`ScreenFlash.ts`, via `Hud.setScreenFlash`) for a
+  skill that targets the caster or the party rather than the monster —
+  there's no character mesh to show an effect on in this first-person
+  game, so a screen tint stands in. Each skill gets its own color (see
+  `SKILL_VFX` for the exact hex values) so two different skills never
+  read as visually identical, even sharing a placeholder mechanism.
+  Still real gaps versus the actual described intent per entry — a
+  "small fire projectile with an impact burst" is, today, a plain
+  unlit sphere and a flash, not a burst — the manifest's own
+  `placeholderNotes` on each entry say exactly what stands in and what
+  doesn't yet.
 
-Everything else — every item icon, every status-effect icon, every
-skill-specific VFX — is `"needed"`: there's no placeholder standing in
-for any of them today, procedural or otherwise.
+Everything else — every item icon, every status-effect icon, the base
+Attack/Defend/Flee actions' own VFX (distinct from a skill's) — is
+still `"needed"`: there's no placeholder standing in for any of them
+today, procedural or otherwise.

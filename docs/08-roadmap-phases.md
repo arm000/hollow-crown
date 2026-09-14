@@ -1531,6 +1531,33 @@ true before shipping.
     rather than assume it. `node:fs`-based loading never reaches the
     browser bundle either way (nothing in `Game.ts` imports the
     manifest), confirmed by grepping the built output.
+  - **Follow-up (player request): "Add placeholder animations for spell
+    effects."** Directly filled twelve of the manifest's own `"needed"`
+    `skill-vfx` entries — every skill now has a real, if placeholder,
+    visual, flipped to `"procedural"` in `asset-manifest.yaml` with a
+    `placeholderNotes` entry describing exactly what stands in (and
+    what still doesn't, versus the entry's own described intent).
+    - `Projectile.ts`/`ScreenFlash.ts` (new): two more pure animation
+      classes alongside `MonsterAnimator.ts`, same "pure state, dumb
+      renderer applies it" split and same reason each is real,
+      unit-tested code rather than inline state in `Game.ts`. A
+      projectile is a straight-line position lerp from wherever it's
+      fired to wherever it's aimed; a screen flash is a color plus a
+      linear fade-out, applied to a new `#combat-flash` full-screen DOM
+      overlay via `Hud.setScreenFlash` — the placeholder for a
+      self/party-targeted skill, since the party has no mesh of its own
+      in this first-person view for an effect to land on.
+    - `Game.ts` gained a `SKILL_VFX` table (every real `SkillDef.id` ->
+      a kind — `"projectile"`, `"melee"`, or `"screen"` — plus a color)
+      and looks it up by the `skillId` `handleCombatAction` already
+      receives directly, rather than inferring which skill ran from
+      HP deltas the way the hit/attack animation *triggers* already do
+      — those two concerns are separate: HP deltas decide *whether* to
+      animate, `SKILL_VFX` decides *which color/kind*.
+      `MonsterAnimator.play("hit", color)` gained an optional color
+      parameter for exactly this — a Firebolt hit flashes orange, Smite
+      flashes gold, a plain Attack still defaults to white.
+    - 390 tests passing.
 
 ---
 
