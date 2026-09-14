@@ -130,7 +130,7 @@ describe("Starting level playthrough (headless)", () => {
     expect(readLore.message).toContain("wards held");
   });
 
-  it("pushing the block onto the plate unlocks the same bonus door as the lever", () => {
+  it("pushing the block reveals its own hidden pocket, and still arms the shared bonus door via the plate", () => {
     const world = newWorld();
 
     expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
@@ -140,6 +140,16 @@ describe("Starting level playthrough (headless)", () => {
     const push = move(world, 0, 1); // (2,3) -> (2,4): pushes the block ahead of it onto the plate
     expect(push.moved).toBe(true);
     expect(push.pushedBlock).toEqual({ from: { x: 2, z: 4 }, to: { x: 2, z: 5 } });
+
+    // (1, 4) was never reachable before -- the block itself sat on the
+    // only tile leading to it. Regression coverage for a player report
+    // that the original version of this puzzle gave nothing back for
+    // the trouble beyond a door the lever already opened.
+    expect(world.inventory.has("tarnished-talisman")).toBe(false);
+    const findPocket = move(world, -1, 0); // (2,4) -> (1,4): the hidden pocket, only standable now
+    expect(findPocket.moved).toBe(true);
+    expect(world.inventory.has("tarnished-talisman")).toBe(true);
+    expect(move(world, 1, 0).moved).toBe(true); // (1,4) -> (2,4)
 
     // The spur is a dead end now that the block sits on the plate at its far tile — back out
     // and around via the lever branch's room to reach the bonus door from the other side.

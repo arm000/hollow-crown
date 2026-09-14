@@ -65,4 +65,10 @@ export const EQUIPMENT_ITEMS: Record<string, EquipmentItem> = {
     statBonus: { might: 3 },
     cursed: true, // a strong bonus with a real cost -- fitting for the one piece of gear found in Steward Marrow's own hall
   },
+  "tarnished-talisman": {
+    id: "tarnished-talisman",
+    name: "a Tarnished Talisman",
+    slot: "accessory",
+    statBonus: { focus: 2 }, // the level 1 pushable-block pocket's reward -- see Level.ts
+  },
 };

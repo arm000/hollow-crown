@@ -22,16 +22,22 @@ import type { MonsterSpawn } from "./monster/bestiary";
  *   unlock the *same* bonus door (a deliberate simplification for this
  *   placeholder level — either mechanism alone is enough; using both
  *   can leave them fighting over one door's lock state, which is a
- *   known, accepted wrinkle here, not a bug to chase down).
+ *   known, accepted wrinkle here, not a bug to chase down). The block
+ *   itself has its own separate payoff, not just a second way to the
+ *   lever's door: it starts out sitting on the only tile that leads to
+ *   a one-tile pocket at (1, 4), so pushing it onto the plate is what
+ *   makes that tile — and the talisman waiting on it — reachable at
+ *   all, per a player report that the original version gave nothing
+ *   back for the trouble beyond a door the lever already opened.
  * - Beyond that bonus alcove's lore item, a secret wall hides one more
  *   hidden pocket with a second lore item.
- * - Three equipment pickups (docs/08-roadmap-phases.md Phase 3): a
- *   sword in the plate/block spur, a fire-resisting charm in the room
- *   the Cinder Wretch patrols — finding it means passing through the
- *   exact monster its resistance answers — and a ring behind the
- *   class-gated passage described below. All land in the shared
- *   inventory unequipped; who wears what is chosen via the inventory
- *   screen.
+ * - Four equipment pickups (docs/08-roadmap-phases.md Phase 3): a sword
+ *   in the plate/block spur, a fire-resisting charm in the room the
+ *   Cinder Wretch patrols — finding it means passing through the exact
+ *   monster its resistance answers — a ring behind the class-gated
+ *   passage described below, and a talisman in the block's own pocket
+ *   above. All land in the shared inventory unequipped; who wears what
+ *   is chosen via the inventory screen.
  * - Two consumables (docs/06-items-and-equipment.md combat-countering
  *   items): an Oil Flask in the entry corridor, everyone's first pickup,
  *   and an Antidote along the spur toward the lever room. Both reuse the
@@ -86,6 +92,11 @@ export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
 
   { type: "pushableBlock", x: 2, z: 4 },
   { type: "pressurePlate", x: 2, z: 5, params: { doorX: 6, doorZ: 5 } },
+  // The block's own reward -- only reachable once it's been pushed off
+  // (1, 4)'s one and only approach tile. See this file's doc comment
+  // and `DungeonMap.ts`'s note on why (1, 4) needs no secret-wall-style
+  // accounting in the connectivity test.
+  { type: "equipmentItem", x: 1, z: 4, params: { itemId: "tarnished-talisman" } },
 
   { type: "secretWall", x: 6, z: 7 },
   {

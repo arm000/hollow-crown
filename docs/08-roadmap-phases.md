@@ -1165,6 +1165,22 @@ independently):
     the live systems immediately and re-persists the whole settings
     blob.
   - 299 tests passing.
+- ✅ Batch 4 — Level 1's block puzzle actually pays off (found via user
+  report): after the minimap's "obstacle" fix (Phase 5 batch 2's fourth
+  follow-up) made the pushable block visible as a real obstacle, the
+  next question was the obvious one — solving it only unlocked a door
+  the lever already opens for free, so it gave nothing back for the
+  trouble. The block itself now sits on the *only* tile leading to a
+  one-tile pocket at `(1, 4)`, carrying a new equipment reward (a
+  Focus-boosting talisman) — pushing the block onto the plate still
+  arms the shared bonus door as before, but standing where the block
+  used to be also opens up ground that was physically unreachable until
+  then, not just a second route to existing content.
+  `DungeonMap.ts`/`Level.ts` doc comments updated to match, and
+  `StartingLevel.playthrough.test.ts`'s block/plate test now asserts
+  the pocket is unreachable before the push and holds the talisman
+  after.
+  - 303 tests passing.
 
 ---
 

@@ -132,10 +132,12 @@ Cinder-Wretch-shaped resistance profile (Physical-resistant, Holy-weak
 this time — Holy Water is the answer). Attack/Defend/Ability/Flee/Item,
 status effects (Bleed and Fear are both live now; Poison/Silence are
 mechanically real but still await a source), victory/defeat/flee all
-handled. Five equipment pickups are spread across the descent (a sword,
-a fire-resisting charm, and a ring behind level 1's class-gated passage;
-a Grace-boosting buckler right at level 2's entrance; Physical-resisting
-armor in a breather alcove between level 3's two finale fights) and two
+handled. Six equipment pickups are spread across the descent (a sword,
+a fire-resisting charm, a ring behind level 1's class-gated passage, and
+a Focus-boosting talisman in a one-tile pocket a pushable block sits on
+top of until it's shoved onto its pressure plate; a Grace-boosting
+buckler right at level 2's entrance; Physical-resisting armor in a
+breather alcove between level 3's two finale fights) and two
 consumables (an Oil Flask, an Antidote) are findable in level 1 — shown
 under a mystery name (e.g. "a bubbling amber vial") until actually used
 once in combat, per the "discovery, not explanation" principle taken to
