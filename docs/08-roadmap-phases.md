@@ -1558,6 +1558,69 @@ true before shipping.
       parameter for exactly this — a Firebolt hit flashes orange, Smite
       flashes gold, a plain Attack still defaults to white.
     - 390 tests passing.
+- ✅ Batch 8 — Character creation shrinks to one, recruit the rest
+  (player request: "Add character creation at the start of the game.
+  We start the game with only a single character and as you rescue
+  NPCs sometimes you get the offer to have them join your party up to
+  the 4 party slots"). Scoped by two follow-up answers: the three
+  recruitable companions are the other three classic roster members
+  (whichever the player didn't build), and pacing is one guaranteed
+  rescue per level, on levels 1-3.
+  - `PartyCreationUI.ts`: four slots became one. The player still picks
+    a class/name/portrait, same as before, just for the single
+    character the run now starts with — `onConfirm` still hands back a
+    `PartyMemberSpec[]` (length 1), so `Game`'s constructor and
+    `roster.createParty` needed no change, both already generic over
+    party size. A one-line hint under the slot ("You descend alone.
+    Others wait to be found — and freed — below.") replaces the old
+    "Assemble your party" framing so a returning player isn't left
+    wondering where the other three slots went.
+  - `roster.ts` gained `createCharacterFromSpec` (pulled out of
+    `createParty`'s map body so `RescueEncounter` can build one
+    character the same way) and `recruitableCompanions(startingClassId)`
+    — the other three `DEFAULT_PARTY_SPEC` entries, in fixed roster
+    order (warrior, rogue, mage, cleric), skipping whichever class the
+    player started as.
+  - `interactables/RescueEncounter.ts` (new): one placed on each of
+    levels 1-3, unmissable in the main corridor like `NpcEncounter`.
+    Deliberately no accept/decline choice — every recruit is a strict
+    upgrade (another class's kit, more HP, no cost), so interacting
+    *is* the offer, matching this game's existing "sparse encounter,
+    not a dialogue tree" shape rather than adding new branching-choice
+    UI for a decision with only one sane answer. Which companion
+    actually shows up isn't baked into level data at all: `interact`
+    resolves it live against `party.members[0]`'s class (the starting
+    character never moves in the array — only `addMember` ever
+    appends) via `recruitableCompanions`, filtered to whoever isn't
+    already recruited, and takes the first one left. That's what lets
+    the same three static level spawns correctly offer the right three
+    companions regardless of which class was picked at creation, with
+    zero coordination between the three level files. Idempotent on a
+    repeat interact, and degrades to a plain message instead of
+    crashing if the party's already full or (shouldn't happen given
+    the pacing) already has every companion.
+  - `Party.ts` gained `addMember` (a `MAX_PARTY_SIZE = 4` no-op past
+    the cap) and a doc-comment update — every existing method already
+    iterated `members` rather than assuming length 4, so growing the
+    array mid-run needed no other change here.
+  - One rescue spawn added to each of `Level.ts` (level 1, at (2,2) —
+    reachable straight from the entrance, before the level's first
+    fight), `levels/level2.ts` (level 2, also pre-fight), and
+    `levels/level3.ts` (level 3, at (8,1) — the only free tile in that
+    level's single-corridor layout, which places it after that level's
+    two mandatory fights rather than before; consistent with level 3
+    already being the hardest pre-boss content, and the party having
+    had two recruitment chances by the time it's reached). No monster
+    stats changed: level 1's fights were already the game's gentlest
+    (Phase 2's teaching-ladder baseline), placing its rescue before
+    either fight is what actually addresses a solo start rather than
+    re-tuning numbers tuned for a very different concern.
+  - `docs/02-setting-and-story.md` and
+    [Party creation vs. pre-generated](03-party-and-characters.md#party-creation-vs-pre-generated)
+    above updated for the new solo-start-then-recruit structure; the
+    old "exact number/identity of starting party members" open
+    question is resolved, not open anymore.
+  - 401 tests passing.
 
 ---
 

@@ -1,20 +1,28 @@
 import { ALL_CLASS_IDS, type ClassId } from "./Character";
 import { SKILLS } from "./Skills";
-import { DEFAULT_PARTY_SPEC, PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
+import { PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
+
+/** The single starting character's defaults — accepting every default without touching anything still needs a valid spec to prefill. */
+const DEFAULT_STARTER_SPEC: PartyMemberSpec = { name: "Wren", classId: "warrior", portrait: PORTRAIT_OPTIONS[0] };
 
 /**
  * The Phase 3 "minimal creation/naming screen" from
  * docs/03-party-and-characters.md#party-creation-vs-pre-generated: pick
- * a class and a portrait per slot, assign a name. Shown once, before
- * `Game` exists at all (see `main.ts`) — full point-buy attribute
- * creation is an explicit stretch goal, not built here. Every slot
- * starts prefilled with `DEFAULT_PARTY_SPEC`, so accepting every
- * default without touching anything reproduces the exact party earlier
- * phases hardcoded.
+ * a class, a portrait, and a name for the *one* character the run
+ * starts with. Shown once, before `Game` exists at all (see
+ * `main.ts`) — full point-buy attribute creation is an explicit
+ * stretch goal, not built here.
+ *
+ * Phase 7's recruitment feature is what shrank this from four slots to
+ * one: the party now starts solo and grows via `RescueEncounter`s found
+ * on levels 1-3, rather than being fully assembled up front. `onConfirm`
+ * still hands back a `PartyMemberSpec[]` (of length 1) rather than a
+ * single spec, so `Game`'s constructor and `roster.createParty` — both
+ * already generic over party size — need no change to accept it.
  */
 export class PartyCreationUI {
   private readonly root: HTMLElement;
-  private readonly specs: PartyMemberSpec[];
+  private readonly spec: PartyMemberSpec;
 
   /**
    * `onContinue`, when given, means a save exists (see
@@ -27,7 +35,7 @@ export class PartyCreationUI {
     private readonly onConfirm: (specs: PartyMemberSpec[]) => void,
     private readonly onContinue?: () => void,
   ) {
-    this.specs = DEFAULT_PARTY_SPEC.map((spec) => ({ ...spec }));
+    this.spec = { ...DEFAULT_STARTER_SPEC };
 
     this.root = document.createElement("div");
     this.root.id = "party-creation";
@@ -38,11 +46,11 @@ export class PartyCreationUI {
 
     const subtitle = document.createElement("div");
     subtitle.id = "party-creation-subtitle";
-    subtitle.textContent = "Assemble your party";
+    subtitle.textContent = "Who descends?";
 
     const slotsEl = document.createElement("div");
     slotsEl.id = "party-creation-slots";
-    this.specs.forEach((spec, index) => slotsEl.appendChild(this.buildSlot(spec, index)));
+    slotsEl.appendChild(this.buildSlot(this.spec));
 
     const confirmButton = document.createElement("button");
     confirmButton.type = "button";
@@ -66,16 +74,24 @@ export class PartyCreationUI {
 
       const newGameLabel = document.createElement("div");
       newGameLabel.id = "party-creation-new-game-label";
-      newGameLabel.textContent = "— or start a new party —";
+      newGameLabel.textContent = "— or start over —";
 
-      this.root.append(title, continueButton, newGameLabel, subtitle, slotsEl, confirmButton);
+      this.root.append(title, continueButton, newGameLabel, subtitle, slotsEl, this.buildHint(), confirmButton);
     } else {
-      this.root.append(title, subtitle, slotsEl, confirmButton);
+      this.root.append(title, subtitle, slotsEl, this.buildHint(), confirmButton);
     }
     document.body.appendChild(this.root);
   }
 
-  private buildSlot(spec: PartyMemberSpec, index: number): HTMLElement {
+  /** A one-line reminder that this isn't the whole party — the other three classic roster members wait to be found on the way down (docs/03-party-and-characters.md#party-creation-vs-pre-generated), so a player expecting the old four-slot screen isn't left wondering where everyone went. */
+  private buildHint(): HTMLElement {
+    const hint = document.createElement("div");
+    hint.id = "party-creation-hint";
+    hint.textContent = "You descend alone. Others wait to be found — and freed — below.";
+    return hint;
+  }
+
+  private buildSlot(spec: PartyMemberSpec): HTMLElement {
     const card = document.createElement("div");
     card.className = "party-creation-slot";
 
@@ -85,7 +101,7 @@ export class PartyCreationUI {
     nameInput.value = spec.name;
     nameInput.maxLength = 16;
     nameInput.addEventListener("input", () => {
-      this.specs[index].name = nameInput.value;
+      this.spec.name = nameInput.value;
     });
 
     const classRow = document.createElement("div");
@@ -107,7 +123,7 @@ export class PartyCreationUI {
       if (classId === spec.classId) button.classList.add("selected");
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
-        this.specs[index].classId = classId;
+        this.spec.classId = classId;
         for (const [id, btn] of classButtons) btn.classList.toggle("selected", id === classId);
       });
       classButtons.set(classId, button);
@@ -125,7 +141,7 @@ export class PartyCreationUI {
       if (portrait === spec.portrait) button.classList.add("selected");
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
-        this.specs[index].portrait = portrait;
+        this.spec.portrait = portrait;
         for (const [p, btn] of portraitButtons) btn.classList.toggle("selected", p === portrait);
       });
       portraitButtons.set(portrait, button);
@@ -137,15 +153,11 @@ export class PartyCreationUI {
   }
 
   private confirm(): void {
-    // A blank name falls back to that slot's default rather than
-    // blocking the player with a validation error over something this
-    // minor.
-    const finalSpecs = this.specs.map((spec, index) => ({
-      ...spec,
-      name: spec.name.trim() || DEFAULT_PARTY_SPEC[index].name,
-    }));
+    // A blank name falls back to the default rather than blocking the
+    // player with a validation error over something this minor.
+    const finalSpec = { ...this.spec, name: this.spec.name.trim() || DEFAULT_STARTER_SPEC.name };
     document.body.removeChild(this.root);
-    this.onConfirm(finalSpecs);
+    this.onConfirm([finalSpec]);
   }
 }
 

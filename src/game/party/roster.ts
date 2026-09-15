@@ -9,7 +9,7 @@ import { Party } from "./Party";
  * Not balanced against real content yet — Phase 3 is where these get
  * tuned against actual fights and gear.
  */
-const CLASS_BASE_STATS: Record<ClassId, { rank: Rank; stats: CharacterStats; maxHp: number; maxMana: number }> = {
+export const CLASS_BASE_STATS: Record<ClassId, { rank: Rank; stats: CharacterStats; maxHp: number; maxMana: number }> = {
   warrior: { rank: "front", stats: { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, maxHp: 30, maxMana: 0 },
   rogue: { rank: "front", stats: { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, maxHp: 22, maxMana: 0 },
   mage: { rank: "back", stats: { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, maxHp: 14, maxMana: 20 },
@@ -43,23 +43,41 @@ export const DEFAULT_PARTY_SPEC: PartyMemberSpec[] = [
 ];
 
 /**
- * Builds a party from a player's choices — any class in any slot, per
- * docs/03-party-and-characters.md#party-creation-vs-pre-generated's
- * "pick a class and a portrait per slot, assign a name." Each character
- * gets its own copy of the class's base stats block: two characters
- * sharing a class must never share one mutable `stats` object, or
- * equipping gear or leveling one would silently affect the other.
+ * Builds one `Character` from a spec — any class, any slot. Its own
+ * copy of the class's base stats block: two characters sharing a class
+ * must never share one mutable `stats` object, or equipping gear or
+ * leveling one would silently affect the other. Shared by `createParty`
+ * (party creation) and `RescueEncounter` (mid-run recruitment), so
+ * there's exactly one place that turns a `PartyMemberSpec` into a real
+ * `Character`.
  */
-export function createParty(specs: PartyMemberSpec[]): Party {
-  return new Party(
-    specs.map(({ name, classId, portrait }) => {
-      const base = CLASS_BASE_STATS[classId];
-      return new Character(name, classId, base.rank, { ...base.stats }, base.maxHp, base.maxMana, portrait);
-    }),
-  );
+export function createCharacterFromSpec({ name, classId, portrait }: PartyMemberSpec): Character {
+  const base = CLASS_BASE_STATS[classId];
+  return new Character(name, classId, base.rank, { ...base.stats }, base.maxHp, base.maxMana, portrait);
 }
 
-/** The Phase 2 starting party — unchanged for every test and code path that hasn't moved to `PartyCreationUI` yet. */
+/**
+ * Builds a party from a player's choices — any class in any slot, per
+ * docs/03-party-and-characters.md#party-creation-vs-pre-generated's
+ * "pick a class, a portrait, and a name for your character."
+ */
+export function createParty(specs: PartyMemberSpec[]): Party {
+  return new Party(specs.map(createCharacterFromSpec));
+}
+
+/** The Phase 2 starting party (all four classic members) — still used by anything that hasn't moved to the solo-start-then-recruit flow, tests included, where exercising full-party mechanics matters more than the recruitment pacing itself. */
 export function createStartingParty(): Party {
   return createParty(DEFAULT_PARTY_SPEC);
+}
+
+/**
+ * The three classic roster members the player *didn't* start as
+ * (docs/03-party-and-characters.md#party-creation-vs-pre-generated),
+ * in fixed roster order — what `RescueEncounter` offers across levels
+ * 1-3. `DEFAULT_PARTY_SPEC` is already ordered warrior/rogue/mage/cleric,
+ * so filtering out the starting class preserves a stable, predictable
+ * recruitment order without needing to re-sort anything.
+ */
+export function recruitableCompanions(startingClassId: ClassId): PartyMemberSpec[] {
+  return DEFAULT_PARTY_SPEC.filter((spec) => spec.classId !== startingClassId);
 }

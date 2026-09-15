@@ -31,4 +31,19 @@ describe("Party", () => {
 
     expect(party.livingFrontRank().map((m) => m.name)).toEqual(["Front2"]);
   });
+
+  describe("addMember", () => {
+    it("appends a recruit to a party that started smaller than 4", () => {
+      const party = new Party([newMember("Solo")]);
+      party.addMember(newMember("Recruit"));
+      expect(party.members.map((m) => m.name)).toEqual(["Solo", "Recruit"]);
+    });
+
+    it("is a no-op once the party is already at MAX_PARTY_SIZE", () => {
+      const party = new Party([newMember("A"), newMember("B"), newMember("C"), newMember("D")]);
+      party.addMember(newMember("Fifth"));
+      expect(party.members).toHaveLength(4);
+      expect(party.members.map((m) => m.name)).not.toContain("Fifth");
+    });
+  });
 });

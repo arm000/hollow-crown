@@ -21,10 +21,15 @@ named for the artifact still resting, they say, on a king who never
 managed to die.
 
 The party is a group of outsiders — sellswords, a disgraced scholar of
-the old court, an exile with a family claim, whoever the campaign's
-opening roster turns out to be — hired or driven to descend and settle
-what's down there, for reasons as mercenary or personal as we want each
-character to be.
+the old court, an exile with a family claim, whoever the player creates
+at the start — hired or driven to descend and settle what's down
+there, for reasons as mercenary or personal as we want each character
+to be. They don't descend together: whatever scattered or captured the
+rest of the party before the game begins is left to the player's
+imagination (or a future lore pass), but the practical result is that
+the created character goes down alone, and the other three find their
+way back only as the Wards give them up — see
+[03-party-and-characters.md](03-party-and-characters.md#party-creation-vs-pre-generated).
 
 ## Tone
 
@@ -74,7 +79,11 @@ In keeping with pillar 3 ("the dungeon is the character"):
   exploring, short (a paragraph or two), never mandatory reading.
 - **Sparse NPC encounters** — a handful of non-hostile or
   conditionally-hostile figures per act, used for one memorable exchange
-  each rather than branching dialogue trees.
+  each rather than branching dialogue trees. A few of these, one per
+  level across Act 1's first three levels, are **rescues**: a
+  companion found and freed rather than just spoken to, growing the
+  party by one on the spot (see
+  [03-party-and-characters.md](03-party-and-characters.md#party-creation-vs-pre-generated)).
 - **No full cutscenes.** Big story beats happen in the first-person view
   itself (a door opening on a new room, a boss standing where you
   expected an empty hall), not in a cutaway.
@@ -84,9 +93,6 @@ In keeping with pillar 3 ("the dungeon is the character"):
 Left open deliberately until later phases, so we don't lock in worldbuilding
 that content production hasn't tested yet:
 
-- Exact number/identity of the starting party members and whether any are
-  fixed vs. player-created (see
-  [03-party-and-characters.md](03-party-and-characters.md)).
 - Whether the crown is ultimately destroyed, claimed, or something
   stranger — the ending is a Phase 5/6 decision.
 - Whether other survivors of Ashveil exist outside the dungeon (relevant

@@ -58,6 +58,14 @@ export const LEVEL_3_ENTITIES: EntitySpawn[] = [
       text: "A shard of the crown itself, or a forgery convincing enough to leave a Wretch guarding it. Either way, someone wanted this corridor remembered.",
     },
   },
+  {
+    type: "rescue",
+    x: 8,
+    z: 1,
+    params: {
+      line: "Wedged into the alcove past both patrols, someone who's clearly been counting on nobody finding this corridor twice.",
+    },
+  },
 ];
 
 export const LEVEL_3_MONSTERS: MonsterSpawn[] = [

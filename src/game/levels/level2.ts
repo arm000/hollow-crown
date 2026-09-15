@@ -26,6 +26,14 @@ export const LEVEL_2_ENTITIES: EntitySpawn[] = [
   // just ahead. `old-buckler` existed in Equipment.ts since Phase 3 but
   // was never actually placed in a level until now.
   { type: "equipmentItem", x: 2, z: 1, params: { itemId: "old-buckler" } },
+  {
+    type: "rescue",
+    x: 2,
+    z: 2,
+    params: {
+      line: "Someone's rigged a rough shelter out of broken crates against the cold. They stiffen when you approach, then recognize a fellow prisoner rather than a warder.",
+    },
+  },
   { type: "keyItem", x: 3, z: 2, params: { itemId: "iron-key", name: "an Iron Key" } },
   { type: "door", x: 6, z: 1, params: { keyId: "iron-key", locked: true } },
   { type: "stairsDown", x: 7, z: 1, params: { targetLevelId: "level-3" } },

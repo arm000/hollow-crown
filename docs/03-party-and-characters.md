@@ -2,11 +2,14 @@
 
 ## Party structure
 
-The player controls a **party of 4**, moving and facing as a single unit
-on the dungeon grid (one `Player`/party position + facing, per
-[04-exploration-and-world.md](04-exploration-and-world.md)). Individual
-characters only become separately relevant in combat and on the
-character/inventory screens.
+The player controls a party of **up to 4**, moving and facing as a
+single unit on the dungeon grid (one `Player`/party position + facing,
+per [04-exploration-and-world.md](04-exploration-and-world.md)). A run
+starts with just one character, created at the game's opening screen,
+and grows toward 4 through mid-run recruitment — see
+[Party creation vs. pre-generated](#party-creation-vs-pre-generated)
+below. Individual characters only become separately relevant in combat
+and on the character/inventory screens.
 
 The party has a fixed **rank**, front and back:
 
@@ -98,15 +101,49 @@ To avoid blocking early combat/UI work on a full character creator:
 
 - **Phases 0–2**: party is hardcoded (4 pre-built characters, one per
   class), no creation UI.
-- **Phase 3+**: a minimal creation/naming screen — pick a class and a
-  portrait per slot, assign a name. Full attribute-point-buy creation is
-  a stretch goal, not required for v1.
+- **Phase 3**: a minimal creation/naming screen for all 4 slots at
+  once — pick a class and a portrait per slot, assign a name. Full
+  attribute-point-buy creation is a stretch goal, not required for v1.
+- **Phase 7**: creation shrank to a single slot. The run now starts
+  with just the one character built there, and the other three classic
+  roster members (Bram/warrior, Ysolde/rogue, Corvin/mage, Maren/cleric
+  — whichever three the player didn't just build) are found and
+  recruited over the course of the descent instead of chosen up front.
+
+### Recruitment (Phase 7)
+
+`RescueEncounter` (`src/game/interactables/RescueEncounter.ts`) places
+one guaranteed, unmissable companion on each of levels 1–3 — a strict
+upgrade every time (another class's kit, more HP, no cost), so
+interacting *is* the whole offer; there's no accept/decline dialogue
+to build a branching-choice UI for, matching this game's existing
+"sparse encounter, not a dialogue tree" storytelling shape
+([02-setting-and-story.md#how-story-is-delivered](02-setting-and-story.md#how-story-is-delivered)).
+
+Which of the three companions shows up at a given `RescueEncounter`
+isn't baked into level data — it's resolved live, the moment the
+player interacts, against the starting character's class:
+`roster.recruitableCompanions(startingClassId)` returns the other
+three classic roster members in a fixed order (warrior, rogue, mage,
+cleric, skipping whichever the player picked), and each encounter
+recruits the first one not already in the party. That's what lets the
+same three level-1/2/3 spawns correctly offer the right three
+companions regardless of which class was chosen at creation, with the
+three level files needing no knowledge of each other or of the
+player's choice.
+
+Accepting every offer grows the party from 1 to 4 by the time it
+reaches level 4's boss fight. Declining isn't a real option in the
+current design (there's nothing to decline — no cost, no downside),
+so the "up to 4" ceiling in practice means "4, unless the player
+chooses to skip a rescue tile entirely."
 
 ## Death & recovery
 
 - A character reduced to 0 HP is **downed**, not permanently dead —
   removed from turn order, can be revived by a Cleric ability or an
   item.
-- A full party wipe (all 4 downed) ends the run and reloads from the last
-  save. Permadeath is a possible optional difficulty toggle for later,
-  not a default.
+- A full party wipe (every current member downed, whatever the party's
+  size at the time) ends the run and reloads from the last save.
+  Permadeath is a possible optional difficulty toggle for later, not a
+  default.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createParty, createStartingParty, DEFAULT_PARTY_SPEC } from "./roster";
+import { ALL_CLASS_IDS } from "./Character";
+import { createCharacterFromSpec, createParty, createStartingParty, DEFAULT_PARTY_SPEC, recruitableCompanions } from "./roster";
 
 describe("createStartingParty", () => {
   it("still produces the Phase 2 defaults (Bram/Ysolde/Corvin/Maren, one per class)", () => {
@@ -33,5 +34,30 @@ describe("createParty", () => {
   it("matches DEFAULT_PARTY_SPEC one-to-one when passed through directly", () => {
     const party = createParty(DEFAULT_PARTY_SPEC);
     expect(party.members.map((m) => m.name)).toEqual(DEFAULT_PARTY_SPEC.map((s) => s.name));
+  });
+});
+
+describe("createCharacterFromSpec", () => {
+  it("builds the same character createParty would, for reuse by RescueEncounter", () => {
+    const spec = { name: "Solo", classId: "cleric" as const, portrait: "🟣" };
+    const character = createCharacterFromSpec(spec);
+    expect(character.name).toBe("Solo");
+    expect(character.classId).toBe("cleric");
+    expect(character.rank).toBe("back");
+    expect(character.maxMana).toBeGreaterThan(0);
+  });
+});
+
+describe("recruitableCompanions", () => {
+  it("returns the other three classic roster members, in fixed roster order", () => {
+    expect(recruitableCompanions("warrior").map((s) => s.name)).toEqual(["Ysolde", "Corvin", "Maren"]);
+    expect(recruitableCompanions("mage").map((s) => s.name)).toEqual(["Bram", "Ysolde", "Maren"]);
+  });
+
+  it("never includes the starting class itself, for any class", () => {
+    for (const classId of ALL_CLASS_IDS) {
+      expect(recruitableCompanions(classId).some((s) => s.classId === classId)).toBe(false);
+      expect(recruitableCompanions(classId)).toHaveLength(3);
+    }
   });
 });

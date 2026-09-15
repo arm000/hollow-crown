@@ -10,6 +10,7 @@ import { LoreItem } from "./LoreItem";
 import { NpcEncounter } from "./NpcEncounter";
 import { PressurePlate } from "./PressurePlate";
 import { PushableBlock } from "./PushableBlock";
+import { RescueEncounter } from "./RescueEncounter";
 import { SecretWall } from "./SecretWall";
 import { StairsDown } from "./StairsDown";
 import type { EntitySpawn, Interactable } from "./types";
@@ -59,6 +60,8 @@ function buildOne(spawn: EntitySpawn): Interactable {
       return new LoreItem(spawn.x, spawn.z, params.text as string);
     case "npc":
       return new NpcEncounter(spawn.x, spawn.z, params.name as string, params.line as string);
+    case "rescue":
+      return new RescueEncounter(spawn.x, spawn.z, params.line as string);
     case "classGate":
       return new ClassGate(
         spawn.x,

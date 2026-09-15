@@ -135,19 +135,29 @@ source of truth for every real art/VFX asset the game will need once it
 moves off today's procedural placeholders — every skill, monster,
 class, and item is cross-checked against it by a test, so a new one
 shipping with no art entry fails loudly instead of quietly falling
-through the cracks. Playable now: a
-one-time party-creation screen (name each of the four slots, pick a
-class and a color-swatch portrait — placeholder art, real pixel art is
-still ahead — or accept the defaults to get the original
-Bram/Ysolde/Corvin/Maren party), then grid movement (keyboard or touch)
-through a 4-level descent, all of it Act 1 ("The Sunken Wards"): level
+through the cracks. Most recently, character creation shrank from four
+slots to one: the run now starts with a single player-built character
+(name, class, color-swatch portrait), and the other three classic
+roster members (Bram/Ysolde/Corvin/Maren, minus whichever class was
+just picked) are found and recruited on the way down instead — one
+guaranteed, unmissable rescue per level on levels 1-3, a strict upgrade
+every time so there's no accept/decline choice to make of it, growing
+the party from 1 to 4 by level 4's boss fight if every offer is taken.
+Which companion shows up where isn't hardcoded per level; it's resolved
+live against whichever class the player started as, so the same three
+level spawns work correctly no matter what was picked at creation.
+Playable now: a one-time party-creation screen (name your character,
+pick a class and a color-swatch portrait — placeholder art, real pixel
+art is still ahead), then grid movement (keyboard or touch) through a
+4-level descent, all of it Act 1 ("The Sunken Wards"): level
 1's hand-authored puzzle box (a mandatory key-and-door gate, an optional
 lever/plate/block bonus alcove, a secret wall, and a passage that only
 opens for a party with a Rogue along), two smaller, more linear levels
 proving the descent mechanic itself — a `StairsDown` tile carries the
 party to the next level's own start tile — and a final open boss arena.
-Two sparse NPC encounters (a steward, a sentry naming the boss ahead)
-punctuate the corridors, and the current level's name shows in the HUD.
+Two sparse, non-recruitable NPC encounters (a steward, a sentry naming
+the boss ahead) punctuate the corridors alongside the three rescue
+encounters above, and the current level's name shows in the HUD.
 Five monster types along the way, all with real turn-based combat: a
 Rot-thing (telegraphed heavy strike), a Cinder Wretch (resistant to
 Physical, weak to Fire — melee alone goes badly, the Mage's Firebolt

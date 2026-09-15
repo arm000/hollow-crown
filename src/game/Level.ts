@@ -72,6 +72,14 @@ export const STARTING_LEVEL_ENTITIES: EntitySpawn[] = [
       line: "The masters will be down for supper. They are always almost down for supper.",
     },
   },
+  {
+    type: "rescue",
+    x: 2,
+    z: 2,
+    params: {
+      line: "A figure crouches behind the old shelving, more startled than hostile once they see you're no guard.",
+    },
+  },
 
   { type: "equipmentItem", x: 2, z: 3, params: { itemId: "rusted-sword" } },
   { type: "equipmentItem", x: 4, z: 4, params: { itemId: "ember-charm" } },
