@@ -181,8 +181,15 @@ export class InventoryUI {
         useButton.textContent = `Use ${selectedConsumable.name}`;
         useButton.addEventListener("pointerdown", (event) => {
           event.preventDefault();
-          this.onUseConsumable(character.name, selectedConsumable.id);
+          // Cleared *before* the callback, not after: `onUseConsumable`
+          // synchronously triggers `Game.refreshInventoryUI` -> `render`
+          // -- clearing the selection only afterward left that
+          // re-render still seeing the just-used item as selected, so
+          // this same "Use" button got redrawn right back, live and
+          // clickable, even though the item was already gone (player
+          // report: "the potion disappears but the button stays").
           this.selectedItemId = undefined;
+          this.onUseConsumable(character.name, selectedConsumable.id);
         });
         card.appendChild(useButton);
       }
@@ -209,8 +216,11 @@ export class InventoryUI {
     if (this.selectedItemId) {
       const item = EQUIPMENT_ITEMS[this.selectedItemId];
       if (!item || item.slot !== slot) return; // no equipment selected (a consumable is, instead), or the wrong slot for it -- ignore the tap either way
-      this.onEquip(character.name, this.selectedItemId);
+      // Same ordering fix as the "Use" button above: cleared before
+      // the callback, since `onEquip` synchronously re-renders too.
+      const itemId = this.selectedItemId;
       this.selectedItemId = undefined;
+      this.onEquip(character.name, itemId);
       return;
     }
     if (hasItem) this.onUnequip(character.name, slot);

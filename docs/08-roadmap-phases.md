@@ -1907,6 +1907,19 @@ true before shipping.
   - 440 tests passing (7 new, all headless coverage of
     `GameLogic.useConsumable` — `InventoryUI`/`Game.ts` themselves stay
     untested DOM glue per docs/11-testing-strategy.md).
+  - **Follow-up (player report): "After clicking 'Use an Antidote' the
+    potion disappears but the 'Use an Antidote' button stays."** A
+    real event-ordering bug: both the "Use" button and an equip-slot
+    tap cleared `selectedItemId` *after* calling their mutating
+    callback (`onUseConsumable`/`onEquip`), but that callback
+    synchronously triggers `Game.refreshInventoryUI` -> `render` —
+    so the re-render it causes still saw the just-used item as
+    selected, and redrew the exact same "Use [item]" button right back,
+    live and clickable, even though the item itself was already gone.
+    Fixed by clearing the selection *before* calling the callback in
+    both spots, so the synchronous re-render they trigger already
+    reflects it. `InventoryUI` has no test file (untested DOM glue),
+    so this shipped and was caught by hand rather than a test.
 - ✅ Batch 13 — Current HP in the combat log (player request: "In the
   combat log when a character takes damage, list how much current HP
   they have left"). Every log line where a party member takes damage —
