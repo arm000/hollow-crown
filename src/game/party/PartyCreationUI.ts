@@ -1,4 +1,11 @@
-import { ALL_CLASS_IDS, STAT_DESCRIPTIONS, type CharacterStats, type ClassId } from "./Character";
+import {
+  ALL_CLASS_IDS,
+  FOCUS_MANA_PER_POINT,
+  STAT_DESCRIPTIONS,
+  VITALITY_HP_PER_POINT,
+  type CharacterStats,
+  type ClassId,
+} from "./Character";
 import { SKILLS } from "./Skills";
 import { CLASS_BASE_STATS, CREATION_ATTRIBUTE_POINTS, PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
 
@@ -207,6 +214,8 @@ export class PartyCreationUI {
     heading.textContent = `Attributes — ${remaining} point${remaining === 1 ? "" : "s"} left`;
     section.appendChild(heading);
 
+    section.appendChild(this.buildDerivedRow());
+
     const base = CLASS_BASE_STATS[this.spec.classId].stats;
     for (const stat of STAT_ORDER) {
       const bonus = this.statBonuses[stat] ?? 0;
@@ -239,6 +248,36 @@ export class PartyCreationUI {
     }
 
     return section;
+  }
+
+  /**
+   * HP and Mana, computed live from the class base plus whatever's
+   * currently allocated to Vitality/Focus — player request: "show hp
+   * and mana points so the user can evaluate the attribute changes."
+   * Neither is itself an allocatable stat (there's no "+1 HP" button —
+   * Vitality/Focus are what's spent), so this is read-only, purely a
+   * preview of what `createCharacterFromSpec` will actually build:
+   * the exact same `VITALITY_HP_PER_POINT`/`FOCUS_MANA_PER_POINT`
+   * constants `Character.spendPointOnStat` itself uses, not a
+   * hand-rolled copy that could drift out of sync with the real
+   * mechanic.
+   */
+  private buildDerivedRow(): HTMLElement {
+    const base = CLASS_BASE_STATS[this.spec.classId];
+    const maxHp = base.maxHp + (this.statBonuses.vitality ?? 0) * VITALITY_HP_PER_POINT;
+    const maxMana = base.maxMana + (this.statBonuses.focus ?? 0) * FOCUS_MANA_PER_POINT;
+
+    const row = document.createElement("div");
+    row.className = "party-creation-derived-row";
+    row.title = "Max HP tracks Vitality; max Mana tracks Focus -- both update as you spend points on either.";
+
+    const hp = document.createElement("span");
+    hp.textContent = `HP: ${maxHp}`;
+    const mana = document.createElement("span");
+    mana.textContent = `Mana: ${maxMana}`;
+    row.append(hp, mana);
+
+    return row;
   }
 
   /** The starting-skill picker (player request: "pick a starting skill") -- a real, permanent choice between the class's two tier-1 options (`Skills.ts`'s indices 0-1: an offense-leaning skill and a defense/utility-leaning one), same mutually-exclusive-fork mechanism the tier-2 skills use later via leveling, just made here instead. */

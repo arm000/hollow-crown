@@ -12,9 +12,17 @@ export const ALL_CLASS_IDS: ClassId[] = ["warrior", "rogue", "mage", "cleric"];
 /** Front rank can be targeted by melee and can melee; back rank is safe from melee bar reach. */
 export type Rank = "front" | "back";
 
-/** How much a single skill point spent on Vitality/Focus nudges max HP/Mana (see `Character.spendPointOnStat`) — roughly half of a typical level-up's own flat class bonus (`Leveling.ts`'s `LEVEL_UP_GROWTH`), since a point is a smaller, player-chosen increment rather than a guaranteed per-level one. */
-const VITALITY_HP_PER_POINT = 3;
-const FOCUS_MANA_PER_POINT = 3;
+/**
+ * How much a single point spent on Vitality/Focus nudges max HP/Mana
+ * (see `Character.spendPointOnStat`) — roughly half of a typical
+ * level-up's own flat class bonus (`Leveling.ts`'s `LEVEL_UP_GROWTH`),
+ * since a point is a smaller, player-chosen increment rather than a
+ * guaranteed per-level one. Exported so `PartyCreationUI` can preview
+ * the exact HP/Mana a bonus-point allocation will produce without
+ * having to build a throwaway `Character` just to ask it.
+ */
+export const VITALITY_HP_PER_POINT = 3;
+export const FOCUS_MANA_PER_POINT = 3;
 
 /**
  * The five core stats (docs/03-party-and-characters.md#core-stats).

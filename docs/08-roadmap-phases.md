@@ -1764,6 +1764,27 @@ true before shipping.
       rows. `PartyCreationUI`'s skill-picker buttons gained
       `title = skill.description` directly.
   - 421 tests passing.
+  - **Follow-up (player request): "The character creation screen should
+    show hp and mana points so the user can evaluate the attribute
+    changes."** The attribute allocator showed the five raw stats
+    changing live, but not the two numbers a Vitality/Focus point
+    actually buys — a player had to do the arithmetic themselves (or
+    just guess) to see what a point spent there was really worth.
+    - `Character.ts`'s `VITALITY_HP_PER_POINT`/`FOCUS_MANA_PER_POINT`
+      (previously private, the exact constants `spendPointOnStat`
+      itself uses) are now exported, so `PartyCreationUI` previews the
+      real number rather than a hand-rolled copy that could drift out
+      of sync with the actual mechanic.
+    - `PartyCreationUI.buildDerivedRow` (new): a read-only `HP: X
+      Mana: Y` line at the top of the attributes section, recomputed
+      on every `renderCustomize` (so it updates live as points are
+      spent, or the class changes) from `CLASS_BASE_STATS` plus
+      whatever's currently allocated to Vitality/Focus. Read-only
+      because neither is itself an allocatable stat — there's no "+1
+      HP" button, only "+1 Vitality."
+  - 421 tests passing (unchanged — `PartyCreationUI` has no test file,
+    untested DOM glue per docs/11-testing-strategy.md, and the
+    exported constants' values didn't change, just their visibility).
 
 ---
 
