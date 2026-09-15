@@ -5,13 +5,15 @@ import { defaultSkillId, SKILLS } from "./Skills";
 const CLASS_IDS: ClassId[] = ["warrior", "rogue", "mage", "cleric"];
 
 describe("Skills data integrity (docs/08-roadmap-phases.md Phase 7)", () => {
-  it("every class has exactly one always-known tier-1 skill and two alternative tier-2 skills", () => {
+  it("every class has exactly two free tier-1 skills (a real choice at creation) and two alternative tier-2 skills", () => {
     for (const classId of CLASS_IDS) {
       const skills = SKILLS[classId];
-      expect(skills, classId).toHaveLength(3);
-      expect(skills[0].unlockCost, `${classId} tier 1`).toBe(0);
-      expect(skills[0].exclusiveWith, `${classId} tier 1`).toBeUndefined();
-      for (const tier2 of skills.slice(1)) {
+      expect(skills, classId).toHaveLength(4);
+      for (const tier1 of skills.slice(0, 2)) {
+        expect(tier1.unlockCost, `${classId} ${tier1.id}`).toBe(0);
+        expect(tier1.exclusiveWith, `${classId} ${tier1.id}`).toBeDefined();
+      }
+      for (const tier2 of skills.slice(2)) {
         expect(tier2.unlockCost, `${classId} ${tier2.id}`).toBeGreaterThan(0);
         expect(tier2.exclusiveWith, `${classId} ${tier2.id}`).toBeDefined();
       }

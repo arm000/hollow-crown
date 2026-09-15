@@ -86,13 +86,17 @@ working before the full roster is built out.
   automatically" version this section originally asked for, before two
   rounds of post-release player feedback built the real allocation
   screen and then turned its one optional skill into a real fork.
-- Three skills per class, not a sprawling tree: each class's original
-  signature ability, known from level 1, plus **two** mutually
-  exclusive alternatives bought with skill points — choosing one
-  permanently rules out the other, a real build decision rather than a
-  checklist. Full breakdown of every class's exact skills, and which
-  gap each one answers, in
-  [13-skill-system.md](13-skill-system.md).
+- Four skills per class, not a sprawling tree, in two exclusive pairs.
+  **Tier 1** (free, no unlock cost) is chosen at character creation —
+  an offense-leaning option vs. a defense/utility-leaning one — rather
+  than through leveling; see
+  [Party creation vs. pre-generated](#party-creation-vs-pre-generated)
+  below. **Tier 2** is the original level-up build fork: two mutually
+  exclusive alternatives bought with skill points once enough are
+  saved, choosing one permanently ruling out the other. Both forks use
+  the same "no respec, ever" rule, just made at different moments. Full
+  breakdown of every class's exact skills, and which gap each one
+  answers, in [13-skill-system.md](13-skill-system.md).
 - No level cap defined yet; tune once Act 1 content exists to pace against.
 
 ## Party creation vs. pre-generated
@@ -109,6 +113,18 @@ To avoid blocking early combat/UI work on a full character creator:
   roster members (Bram/warrior, Ysolde/rogue, Corvin/mage, Maren/cleric
   — whichever three the player didn't just build) are found and
   recruited over the course of the descent instead of chosen up front.
+- **Phase 7 Batch 9** (player request: "assign attribute points and
+  pick a starting skill") built the "full attribute-point-buy creation"
+  the line above used to flag as a stretch goal — a small one, not the
+  whole stat sheet: `CREATION_ATTRIBUTE_POINTS` (5) freely allocated
+  on top of the class's base stats, one +1 at a time, the same
+  mechanic `LevelUpUI` already uses for stat points earned by leveling
+  (Vitality/Focus also nudge max HP/Mana). Anything left unallocated
+  isn't lost — it carries over as ordinary unspent `skillPoints`,
+  spendable at the first Level Up screen instead. Alongside it, a real
+  choice between the class's two tier-1 skills (see the Leveling
+  section above) — permanent, same "no respec" rule the tier-2 fork
+  already uses.
 
 ### Recruitment (Phase 7)
 

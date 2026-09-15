@@ -19,6 +19,8 @@ const SECOND_WIND_FRACTION = 1 / 3;
 const RALLY_CRY_HEAL = 6;
 /** Rogue's Ambush: bonus flat damage added only while the target hasn't taken any damage yet this fight. */
 const AMBUSH_BONUS = 8;
+/** Rogue's Feint: an immediate flee attempt, better odds than a plain Flee's `30 + resolve*5` but deliberately short of Smoke Bomb's guaranteed 100% -- a tier-1 taste of the same escape identity Smoke Bomb (tier 2, unlockCost 8) later perfects. */
+const FEINT_FLEE_BONUS = 25;
 
 /**
  * Resolves one encounter turn-by-turn: initiative order, Attack/Defend/
@@ -215,11 +217,31 @@ export class CombatEngine {
         this.log.push(`${actor.name} bellows a rally cry — the party steadies, healing ${totalHealed} HP total.`);
         break;
       }
+      case "warrior-powerStrike": {
+        const rawDamage = Math.round(actor.effectiveStats.might * 1.5) + rollInt(this.rng, 1, 6);
+        const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
+        this.monster.takeDamage(damage);
+        this.log.push(`${actor.name} lands a Power Strike for ${damage} damage.`);
+        break;
+      }
       case "rogue-precisionStrike": {
         const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 4) + 2;
         this.monster.takeDamage(rawDamage); // ignores resistance entirely -- that's the point
         this.monster.statusEffects.apply({ type: "bleed", turnsRemaining: BLEED_DURATION, tickDamage: BLEED_TICK_DAMAGE });
         this.log.push(`${actor.name}'s Precision Strike finds a weak point for ${rawDamage} damage and draws blood!`);
+        break;
+      }
+      case "rogue-feint": {
+        const chance = 30 + actor.effectiveStats.resolve * 5 + FEINT_FLEE_BONUS;
+        if (rollInt(this.rng, 1, 100) <= chance) {
+          // Same "set result, just break" pattern as Smoke Bomb below --
+          // submitAction's own post-switch check already stops short
+          // the moment `result` isn't "ongoing" anymore.
+          this.result = "fled";
+          this.log.push(`${actor.name} spots an opening — the party slips away!`);
+        } else {
+          this.log.push(`${actor.name} tries to create an opening, but ${this.monster.name} doesn't bite.`);
+        }
         break;
       }
       case "rogue-smokeBomb": {
@@ -246,6 +268,11 @@ export class CombatEngine {
         this.log.push(`${actor.name} hurls a Firebolt for ${damage} fire damage.`);
         break;
       }
+      case "mage-arcaneBarrier": {
+        this.warded.add(actor);
+        this.log.push(`${actor.name} raises a shimmering arcane barrier, ready to blunt the next blow.`);
+        break;
+      }
       case "mage-frostLance": {
         const rawDamage = Math.ceil(actor.effectiveStats.focus / 2) + rollInt(this.rng, 1, 3);
         const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
@@ -268,6 +295,13 @@ export class CombatEngine {
         this.log.push(
           hadEffects ? `${actor.name} cleanses ${target.name}.` : `${actor.name} finds nothing to cleanse.`,
         );
+        break;
+      }
+      case "cleric-radiantSpark": {
+        const rawDamage = Math.ceil(actor.effectiveStats.focus / 2) + rollInt(this.rng, 1, 4);
+        const damage = applyResistance(rawDamage, this.monster.resistances, "holy");
+        this.monster.takeDamage(damage);
+        this.log.push(`${actor.name} calls down a Radiant Spark for ${damage} holy damage.`);
         break;
       }
       case "cleric-smite": {

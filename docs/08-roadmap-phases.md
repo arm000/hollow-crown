@@ -1673,6 +1673,75 @@ true before shipping.
     time a 2nd-4th member joins. `RescueEncounter.interact` calls it
     with the current party's portraits before building the recruit.
   - 409 tests passing.
+- ✅ Batch 9 — Attribute points and a starting skill at character
+  creation (player request: "There should be a character creation
+  screen at the beginning of the game where the user can assign
+  attribute points and pick a starting skill"). Scoped by two
+  follow-up answers: attributes are bonus points on top of the class's
+  existing base stats (not a from-scratch point-buy), and "a starting
+  skill" means a brand-new second tier-1 option per class — a real
+  choice at level 1 — rather than moving the existing tier-2 fork
+  earlier.
+  - `Skills.ts`: every class gains a second free (`unlockCost: 0`)
+    tier-1 skill, exclusive with the class's original one via the same
+    `exclusiveWith` mechanism the tier-2 fork already uses — an
+    offense-leaning option paired with a defense/utility-leaning one,
+    same "everything answers something specific" principle as every
+    fork before it: Warrior's **Power Strike** (harder physical hit, no
+    downside) vs. Guard (defense); Rogue's **Feint** (an immediate,
+    better-than-usual but not guaranteed flee attempt) vs. Precision
+    Strike (offense); Mage's **Arcane Barrier** (self-Ward, reusing
+    `CombatEngine`'s `warded` set) vs. Firebolt (offense); Cleric's
+    **Radiant Spark** (modest Holy damage, deliberately weaker than
+    Smite) vs. Cleanse (utility). `defaultSkillId` stays index 0 of
+    each class's array (the class's *original* signature skill), so
+    every existing caller that never chooses — `createStartingParty`,
+    `RescueEncounter`'s recruits, the whole pre-Batch-9 test suite —
+    keeps behaving exactly as before.
+  - `Character.ts`'s constructor gained an optional `startingSkillId`
+    param (defaults to `defaultSkillId`), seeding `knownSkillIds` with
+    whichever tier-1 option was actually chosen instead of always the
+    class default. `LevelUpUI.buildSkillRow` needed **no changes at
+    all** — its existing "known" / "unavailable (chose the other one)"
+    / "Unlock" branching, written for the tier-2 fork, already
+    generalizes correctly to a second exclusive pair for free, since it
+    keys off `exclusiveWith` + `knowsSkill` rather than anything
+    tier-specific.
+  - `roster.ts`: `PartyMemberSpec` gained `statBonuses` (bonus points
+    per stat) and `startingSkillId`; a new `CREATION_ATTRIBUTE_POINTS`
+    constant (5); `createCharacterFromSpec` applies `statBonuses`
+    through the real `Character.spendPointOnStat` (not a hand-rolled
+    copy of its Vitality/Focus max-HP/Mana logic), granting exactly
+    `CREATION_ATTRIBUTE_POINTS` worth of `skillPoints` first so
+    anything left unallocated at creation carries over as ordinary
+    unspent points, spendable at the first Level Up screen instead of
+    being forced or lost. Both fields are `undefined` for
+    `DEFAULT_PARTY_SPEC`'s four classic members and anything built from
+    them (`RescueEncounter`'s recruits), so only the player's own
+    created character ever gets bonus points or a real tier-1 choice.
+  - `PartyCreationUI.ts`: two new sections per character, rebuilt
+    whenever the class selection changes (base stats and the tier-1
+    pair both depend on it) — an attribute allocator (same +1-per-point
+    mechanic `LevelUpUI` already uses for leveling) and a starting-skill
+    picker between the class's two tier-1 options, each with its own
+    description shown live.
+  - `CombatEngine.resolveAbility` gained the four new skills' execution
+    logic. Two needed care to test correctly: Feint's success case
+    can't be told apart from Smoke Bomb's own `this.result = "fled"`
+    pattern by inspection alone, so its test found a real seed rather
+    than assuming one; Arcane Barrier's self-halving test discovered
+    that neither "defend" (self-defending never actually clears before
+    a 1v1 monster turn, contaminating the baseline — the exact class of
+    bug the real Cleric Ward fix already fixed once) nor "attack"
+    (consumes an RNG roll the ability branch doesn't, desyncing the two
+    runs) works as a baseline action with only one party member; a
+    zero-roll, non-defending `"item"` no-op (no matching item, no
+    inventory attached) is what actually isolates the halving.
+  - 4 new skill-VFX manifest entries, one per new skill
+    (`asset-manifest.yaml` + `Game.ts`'s `SKILL_VFX`, now 16 total) —
+    `AssetManifest.test.ts`'s completeness check requires one per real
+    skill, tier-1 alternatives included.
+  - 420 tests passing.
 
 ---
 

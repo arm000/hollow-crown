@@ -64,15 +64,26 @@ export class Character {
     maxMana: number,
     /** A plain color-swatch placeholder, not real character art (that's docs/10-visual-style-guide.md's job, still ahead) — enough for a party-creation slot and the HUD/inventory screen to be visually distinguishable at a glance. */
     public readonly portrait: string = "⚪",
+    /**
+     * Which of the class's two tier-1 skills (`Skills.ts` — e.g.
+     * Warrior's Guard vs. Power Strike) this character starts knowing.
+     * Defaults to the class's original signature skill
+     * (`defaultSkillId`) so every existing caller that doesn't pass
+     * this — `roster.createStartingParty`, `RescueEncounter`'s
+     * recruits, every test that builds a `Character` directly — keeps
+     * behaving exactly as before. `PartyCreationUI` is the one caller
+     * that lets a player actually choose the other option; same
+     * permanent, no-respec spirit as the later tier-2 fork
+     * (`GameLogic.unlockSkill`'s exclusivity check), just made at
+     * creation instead of earned via leveling.
+     */
+    startingSkillId: string = defaultSkillId(classId),
   ) {
     this.maxHp = maxHp;
     this.maxMana = maxMana;
     this.hp = maxHp;
     this.mana = maxMana;
-    // Every class's first skill (see Skills.ts) has always been
-    // unconditionally available, since Phase 3 -- only a class's
-    // *second* skill is ever actually locked behind spending points.
-    this.knownSkillIds = new Set([defaultSkillId(classId)]);
+    this.knownSkillIds = new Set([startingSkillId]);
   }
 
   equip(item: EquipmentItem): EquipmentItem | undefined {

@@ -118,13 +118,19 @@ itch.io-ready zip alongside the primary GitHub Pages deploy. Since v1,
 Phase 7 turned the original design doc's always-deferred "stat points
 to allocate" into a real level-up screen: every level grants skill
 points spent by hand, either +1 to a stat or toward one of a class's
-**two mutually exclusive** second skills — a real build fork per class,
-not a single yes/no unlock (choosing either side permanently rules out
-the other). Warrior: a self-heal vs. a party-wide heal that clears
-Fear. Rogue: a guaranteed escape vs. a much harder hit while the target
-is still undamaged. Mage: a stun vs. a bigger raw-damage nuke. Cleric:
-its first offensive spell vs. shielding an ally's next hit without
-spending their turn. Full breakdown in
+**two mutually exclusive** second (tier-2) skills — a real build fork
+per class, not a single yes/no unlock (choosing either side permanently
+rules out the other). Warrior: a self-heal vs. a party-wide heal that
+clears Fear. Rogue: a guaranteed escape vs. a much harder hit while the
+target is still undamaged. Mage: a stun vs. a bigger raw-damage nuke.
+Cleric: its strongest offensive spell vs. shielding an ally's next hit
+without spending their turn. Every class now has a matching tier-1
+fork too, chosen for free at character creation instead of via
+leveling — an offense-leaning option vs. a defense/utility-leaning one
+(Warrior: draw-and-halve an attack vs. a harder physical hit; Rogue:
+resistance-piercing damage vs. a good-odds immediate flee; Mage:
+Firebolt vs. a self-only shield; Cleric: status cleansing vs. a first,
+modest taste of Holy damage). Full breakdown in
 [13-skill-system.md](docs/13-skill-system.md); the general combat rules
 every skill plays inside of are in
 [12-combat-system.md](docs/12-combat-system.md). A new asset manifest
@@ -145,11 +151,19 @@ every time so there's no accept/decline choice to make of it, growing
 the party from 1 to 4 by level 4's boss fight if every offer is taken.
 Which companion shows up where isn't hardcoded per level; it's resolved
 live against whichever class the player started as, so the same three
-level spawns work correctly no matter what was picked at creation.
-Playable now: a one-time party-creation screen (name your character,
-pick a class and a color-swatch portrait — placeholder art, real pixel
-art is still ahead), then grid movement (keyboard or touch) through a
-4-level descent, all of it Act 1 ("The Sunken Wards"): level
+level spawns work correctly no matter what was picked at creation. Most
+recently, that same creation screen gained the "full point-buy
+attribute creation" its own docs used to flag as a stretch goal (a
+small one): 5 bonus attribute points to freely allocate on top of the
+chosen class's base stats — the exact +1-per-point mechanic the
+level-up screen already uses, so anything left unspent just carries
+over as ordinary skill points for that first level-up instead of being
+lost — plus the new tier-1 skill fork above, picked right there rather
+than defaulted. Playable now: a one-time party-creation screen (name
+your character, pick a class, allocate a few bonus attribute points, choose
+a starting skill, and pick a color-swatch portrait — placeholder art,
+real pixel art is still ahead), then grid movement (keyboard or touch)
+through a 4-level descent, all of it Act 1 ("The Sunken Wards"): level
 1's hand-authored puzzle box (a mandatory key-and-door gate, an optional
 lever/plate/block bonus alcove, a secret wall, and a passage that only
 opens for a party with a Rogue along), two smaller, more linear levels

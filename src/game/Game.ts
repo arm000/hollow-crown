@@ -970,15 +970,19 @@ const MONSTER_COLORS: Record<string, number> = {
  */
 const SKILL_VFX: Record<string, { kind: "projectile" | "melee" | "screen"; color: number }> = {
   "warrior-guard": { kind: "screen", color: 0xd8a24a }, // bronze -- a raised-shield cue
+  "warrior-powerStrike": { kind: "melee", color: 0xffa040 }, // solid orange -- a harder physical blow than a plain Attack's white flash
   "warrior-secondWind": { kind: "screen", color: 0x6adf7a }, // green heal
   "warrior-rallyCry": { kind: "screen", color: 0xf0c860 }, // warm gold, brighter than Guard's bronze -- a party-wide beat, not a solo one
   "rogue-precisionStrike": { kind: "melee", color: 0xd83a3a }, // blood red -- Bleed
+  "rogue-feint": { kind: "screen", color: 0xc8c8e0 }, // pale lavender-gray -- an opening/shimmer, distinct from Smoke Bomb's flatter gray
   "rogue-smokeBomb": { kind: "screen", color: 0x888888 }, // gray smoke
   "rogue-ambush": { kind: "melee", color: 0xfff0a0 }, // pale flash -- a fleeting opening struck fast
   "mage-firebolt": { kind: "projectile", color: 0xff6a2a }, // fire orange
+  "mage-arcaneBarrier": { kind: "screen", color: 0x9060d8 }, // violet -- an arcane self-shield, distinct from Cleric Ward's blue
   "mage-frostLance": { kind: "projectile", color: 0x8ad8ff }, // ice blue
   "mage-cinderNova": { kind: "projectile", color: 0xff3a1a }, // deeper red-orange -- reads as more intense than Firebolt
   "cleric-cleanse": { kind: "screen", color: 0xa0f0ff }, // cyan-white
+  "cleric-radiantSpark": { kind: "projectile", color: 0xffcf70 }, // softer amber-gold than Smite's -- reads as the lesser tier-1 version
   "cleric-smite": { kind: "projectile", color: 0xfff2b8 }, // holy gold-white
   "cleric-ward": { kind: "screen", color: 0x4a90d8 }, // shield blue
 };

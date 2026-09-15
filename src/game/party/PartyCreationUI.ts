@@ -1,17 +1,25 @@
-import { ALL_CLASS_IDS, type ClassId } from "./Character";
+import { ALL_CLASS_IDS, type CharacterStats, type ClassId } from "./Character";
 import { SKILLS } from "./Skills";
-import { PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
+import { CLASS_BASE_STATS, CREATION_ATTRIBUTE_POINTS, PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
 
 /** The single starting character's defaults — accepting every default without touching anything still needs a valid spec to prefill. */
 const DEFAULT_STARTER_SPEC: PartyMemberSpec = { name: "Wren", classId: "warrior", portrait: PORTRAIT_OPTIONS[0] };
+
+const STAT_ORDER: Array<keyof CharacterStats> = ["might", "grace", "vitality", "focus", "resolve"];
+const STAT_LABELS: Record<keyof CharacterStats, string> = {
+  might: "Might",
+  grace: "Grace",
+  vitality: "Vitality",
+  focus: "Focus",
+  resolve: "Resolve",
+};
 
 /**
  * The Phase 3 "minimal creation/naming screen" from
  * docs/03-party-and-characters.md#party-creation-vs-pre-generated: pick
  * a class, a portrait, and a name for the *one* character the run
  * starts with. Shown once, before `Game` exists at all (see
- * `main.ts`) — full point-buy attribute creation is an explicit
- * stretch goal, not built here.
+ * `main.ts`).
  *
  * Phase 7's recruitment feature is what shrank this from four slots to
  * one: the party now starts solo and grows via `RescueEncounter`s found
@@ -19,10 +27,25 @@ const DEFAULT_STARTER_SPEC: PartyMemberSpec = { name: "Wren", classId: "warrior"
  * still hands back a `PartyMemberSpec[]` (of length 1) rather than a
  * single spec, so `Game`'s constructor and `roster.createParty` — both
  * already generic over party size — need no change to accept it.
+ *
+ * Batch 9 (player request: "a character creation screen... where the
+ * user can assign attribute points and pick a starting skill") added
+ * the two `renderCustomize` sections below — the "full point-buy
+ * attribute creation" this class's own doc comment used to flag as an
+ * explicit stretch goal, now built. Both sections depend on the chosen
+ * class (different base stats to show, different tier-1 skill pair),
+ * so they live in `customizeEl`, rebuilt from scratch by
+ * `onClassChanged` every time the class selection changes — same
+ * "cheap to just redraw" convention `LevelUpUI`/`InventoryUI` already
+ * use, rather than trying to patch individual rows in place.
  */
 export class PartyCreationUI {
   private readonly root: HTMLElement;
   private readonly spec: PartyMemberSpec;
+  private readonly customizeEl: HTMLElement;
+  /** Points allocated so far, keyed by stat — summed against `CREATION_ATTRIBUTE_POINTS` to know how many are left. Reset whenever the class changes, same as `startingSkillId` below. */
+  private statBonuses: Partial<Record<keyof CharacterStats, number>> = {};
+  private startingSkillId: string;
 
   /**
    * `onContinue`, when given, means a save exists (see
@@ -36,6 +59,9 @@ export class PartyCreationUI {
     private readonly onContinue?: () => void,
   ) {
     this.spec = { ...DEFAULT_STARTER_SPEC };
+    this.startingSkillId = SKILLS[this.spec.classId][0].id;
+    this.customizeEl = document.createElement("div");
+    this.customizeEl.className = "party-creation-customize";
 
     this.root = document.createElement("div");
     this.root.id = "party-creation";
@@ -123,8 +149,10 @@ export class PartyCreationUI {
       if (classId === spec.classId) button.classList.add("selected");
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
+        if (classId === this.spec.classId) return;
         this.spec.classId = classId;
         for (const [id, btn] of classButtons) btn.classList.toggle("selected", id === classId);
+        this.onClassChanged();
       });
       classButtons.set(classId, button);
       classRow.appendChild(button);
@@ -148,14 +176,111 @@ export class PartyCreationUI {
       portraitRow.appendChild(button);
     }
 
-    card.append(nameInput, classRow, portraitRow);
+    this.renderCustomize();
+    card.append(nameInput, classRow, portraitRow, this.customizeEl);
     return card;
+  }
+
+  /** Attribute points and starting skill both depend on the chosen class -- reset and re-render whenever it changes, rather than trying to carry allocations across a class swap that may not even share the same tier-1 skill ids. */
+  private onClassChanged(): void {
+    this.statBonuses = {};
+    this.startingSkillId = SKILLS[this.spec.classId][0].id;
+    this.renderCustomize();
+  }
+
+  private renderCustomize(): void {
+    this.customizeEl.replaceChildren(this.buildStatsSection(), this.buildSkillSection());
+  }
+
+  private pointsSpent(): number {
+    return Object.values(this.statBonuses).reduce((sum: number, n) => sum + (n ?? 0), 0);
+  }
+
+  /** The attribute-point allocator (player request: "assign attribute points") -- same +1-per-point mechanic as `LevelUpUI.buildStatRow`, just spending a fixed creation-time pool instead of `Character.skillPoints` earned from leveling (that pool is `roster.CREATION_ATTRIBUTE_POINTS`, granted for real once `createCharacterFromSpec` builds the actual `Character` — see that function's doc comment for why any points left unspent here aren't lost). */
+  private buildStatsSection(): HTMLElement {
+    const section = document.createElement("div");
+    section.className = "party-creation-section";
+
+    const remaining = CREATION_ATTRIBUTE_POINTS - this.pointsSpent();
+    const heading = document.createElement("div");
+    heading.className = "party-creation-heading";
+    heading.textContent = `Attributes — ${remaining} point${remaining === 1 ? "" : "s"} left`;
+    section.appendChild(heading);
+
+    const base = CLASS_BASE_STATS[this.spec.classId].stats;
+    for (const stat of STAT_ORDER) {
+      const bonus = this.statBonuses[stat] ?? 0;
+      const row = document.createElement("div");
+      row.className = "party-creation-stat-row";
+
+      const label = document.createElement("span");
+      label.textContent = `${STAT_LABELS[stat]}: ${base[stat] + bonus}`;
+      row.appendChild(label);
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "party-creation-choice-btn";
+      button.textContent = "+1";
+      button.disabled = remaining <= 0;
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        if (button.disabled) return;
+        this.statBonuses[stat] = bonus + 1;
+        this.renderCustomize();
+      });
+      row.appendChild(button);
+
+      section.appendChild(row);
+    }
+
+    return section;
+  }
+
+  /** The starting-skill picker (player request: "pick a starting skill") -- a real, permanent choice between the class's two tier-1 options (`Skills.ts`'s indices 0-1: an offense-leaning skill and a defense/utility-leaning one), same mutually-exclusive-fork mechanism the tier-2 skills use later via leveling, just made here instead. */
+  private buildSkillSection(): HTMLElement {
+    const section = document.createElement("div");
+    section.className = "party-creation-section";
+
+    const heading = document.createElement("div");
+    heading.className = "party-creation-heading";
+    heading.textContent = "Starting skill";
+    section.appendChild(heading);
+
+    const tier1Options = SKILLS[this.spec.classId].slice(0, 2);
+    const row = document.createElement("div");
+    row.className = "party-creation-row";
+    for (const skill of tier1Options) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "party-creation-choice-btn";
+      button.textContent = skill.name;
+      if (skill.id === this.startingSkillId) button.classList.add("selected");
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        this.startingSkillId = skill.id;
+        this.renderCustomize();
+      });
+      row.appendChild(button);
+    }
+    section.appendChild(row);
+
+    const description = document.createElement("div");
+    description.className = "party-creation-skill-description";
+    description.textContent = tier1Options.find((skill) => skill.id === this.startingSkillId)!.description;
+    section.appendChild(description);
+
+    return section;
   }
 
   private confirm(): void {
     // A blank name falls back to the default rather than blocking the
     // player with a validation error over something this minor.
-    const finalSpec = { ...this.spec, name: this.spec.name.trim() || DEFAULT_STARTER_SPEC.name };
+    const finalSpec: PartyMemberSpec = {
+      ...this.spec,
+      name: this.spec.name.trim() || DEFAULT_STARTER_SPEC.name,
+      statBonuses: { ...this.statBonuses },
+      startingSkillId: this.startingSkillId,
+    };
     document.body.removeChild(this.root);
     this.onConfirm([finalSpec]);
   }

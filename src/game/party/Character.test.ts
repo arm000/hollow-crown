@@ -60,6 +60,22 @@ describe("Character", () => {
     it("starts with zero skill points", () => {
       expect(newCharacter().skillPoints).toBe(0);
     });
+
+    it("knows the given startingSkillId instead of the class default, when one is passed (PartyCreationUI's tier-1 choice)", () => {
+      const character = new Character(
+        "Test",
+        "warrior",
+        "front",
+        { might: 5, grace: 5, vitality: 5, focus: 5, resolve: 5 },
+        20,
+        0,
+        "⚪",
+        "warrior-powerStrike",
+      );
+      expect(character.knowsSkill("warrior-powerStrike")).toBe(true);
+      expect(character.knowsSkill("warrior-guard")).toBe(false);
+      expect(character.listKnownSkillIds()).toEqual(["warrior-powerStrike"]);
+    });
   });
 
   describe("spendPointOnStat", () => {

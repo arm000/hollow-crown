@@ -24,10 +24,28 @@ export const CLASS_BASE_STATS: Record<ClassId, { rank: Rank; stats: CharacterSta
  */
 export const PORTRAIT_OPTIONS = ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣"];
 
+/** How many bonus attribute points `PartyCreationUI` grants on top of the class's base stats -- freely allocated there, or left unspent and banked as ordinary `Character.skillPoints` for the first Level Up screen instead of forcing a full spend before "Descend." */
+export const CREATION_ATTRIBUTE_POINTS = 5;
+
 export interface PartyMemberSpec {
   name: string;
   classId: ClassId;
   portrait: string;
+  /**
+   * Bonus attribute points allocated at creation (`PartyCreationUI`,
+   * docs/08-roadmap-phases.md Phase 7 Batch 9), keyed by stat, applied
+   * on top of `CLASS_BASE_STATS` via `Character.spendPointOnStat` — the
+   * exact same +1-per-point mechanic (and Vitality/Focus max HP/Mana
+   * nudge) `LevelUpUI` already uses, so creation and leveling feel
+   * consistent. Absent for anything that isn't the player's own
+   * creation-screen character — `DEFAULT_PARTY_SPEC`'s four classic
+   * members, and any spec built from one of them (`RescueEncounter`'s
+   * recruits), never carry this field, so `createCharacterFromSpec`
+   * skips the whole bonus-points mechanic for them.
+   */
+  statBonuses?: Partial<Record<keyof CharacterStats, number>>;
+  /** Which of the class's two tier-1 skills (`Skills.ts`) this character starts knowing — see `Character`'s `startingSkillId`. Absent falls back to the class's original default, same as omitting it from `Character`'s constructor directly. */
+  startingSkillId?: string;
 }
 
 /**
@@ -50,10 +68,36 @@ export const DEFAULT_PARTY_SPEC: PartyMemberSpec[] = [
  * (party creation) and `RescueEncounter` (mid-run recruitment), so
  * there's exactly one place that turns a `PartyMemberSpec` into a real
  * `Character`.
+ *
+ * `statBonuses`, when present, grants `CREATION_ATTRIBUTE_POINTS` worth
+ * of `skillPoints` and immediately spends exactly what's recorded —
+ * via the real `Character.spendPointOnStat`, not a hand-rolled copy of
+ * its Vitality/Focus max-HP/Mana logic — leaving any unallocated
+ * remainder as ordinary unspent `skillPoints`, spendable later at the
+ * first Level Up screen instead of being lost. Absent entirely
+ * (`DEFAULT_PARTY_SPEC` members, and recruits built from them) skips
+ * this whole mechanism, so nobody but the player's own created
+ * character ever starts with bonus points.
  */
-export function createCharacterFromSpec({ name, classId, portrait }: PartyMemberSpec): Character {
-  const base = CLASS_BASE_STATS[classId];
-  return new Character(name, classId, base.rank, { ...base.stats }, base.maxHp, base.maxMana, portrait);
+export function createCharacterFromSpec(spec: PartyMemberSpec): Character {
+  const base = CLASS_BASE_STATS[spec.classId];
+  const character = new Character(
+    spec.name,
+    spec.classId,
+    base.rank,
+    { ...base.stats },
+    base.maxHp,
+    base.maxMana,
+    spec.portrait,
+    spec.startingSkillId,
+  );
+  if (spec.statBonuses) {
+    character.skillPoints = CREATION_ATTRIBUTE_POINTS;
+    for (const [stat, count] of Object.entries(spec.statBonuses)) {
+      for (let i = 0; i < (count ?? 0); i++) character.spendPointOnStat(stat as keyof CharacterStats);
+    }
+  }
+  return character;
 }
 
 /**

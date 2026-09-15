@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ALL_CLASS_IDS } from "./Character";
 import {
+  CREATION_ATTRIBUTE_POINTS,
   createCharacterFromSpec,
   createParty,
   createStartingParty,
@@ -53,6 +54,51 @@ describe("createCharacterFromSpec", () => {
     expect(character.classId).toBe("cleric");
     expect(character.rank).toBe("back");
     expect(character.maxMana).toBeGreaterThan(0);
+  });
+
+  it("without statBonuses, starts with zero skill points -- the recruit/createStartingParty path, unaffected by Batch 9", () => {
+    const character = createCharacterFromSpec({ name: "Bram", classId: "warrior", portrait: "🔴" });
+    expect(character.skillPoints).toBe(0);
+  });
+
+  it("applies statBonuses on top of the class base, via the real spendPointOnStat (Vitality/Focus also nudge max HP/Mana)", () => {
+    const base = createCharacterFromSpec({ name: "Base", classId: "warrior", portrait: "🔴" });
+    const boosted = createCharacterFromSpec({
+      name: "Boosted",
+      classId: "warrior",
+      portrait: "🔴",
+      statBonuses: { vitality: 2, might: 1 },
+    });
+
+    expect(boosted.stats.vitality).toBe(base.stats.vitality + 2);
+    expect(boosted.stats.might).toBe(base.stats.might + 1);
+    expect(boosted.maxHp).toBeGreaterThan(base.maxHp); // Vitality's max-HP nudge, same mechanic LevelUpUI uses
+  });
+
+  it("spends exactly what statBonuses records, leaving any unallocated remainder as ordinary unspent skillPoints", () => {
+    const character = createCharacterFromSpec({
+      name: "Partial",
+      classId: "mage",
+      portrait: "🔵",
+      statBonuses: { focus: 2 }, // 2 of the CREATION_ATTRIBUTE_POINTS pool spent, the rest left for the first Level Up screen
+    });
+    expect(character.skillPoints).toBe(CREATION_ATTRIBUTE_POINTS - 2);
+  });
+
+  it("banks the whole pool as unspent skillPoints when statBonuses allocates nothing at all", () => {
+    const character = createCharacterFromSpec({ name: "Unspent", classId: "rogue", portrait: "🟠", statBonuses: {} });
+    expect(character.skillPoints).toBe(CREATION_ATTRIBUTE_POINTS);
+  });
+
+  it("uses the given startingSkillId instead of the class default", () => {
+    const character = createCharacterFromSpec({
+      name: "Alt",
+      classId: "rogue",
+      portrait: "🟠",
+      startingSkillId: "rogue-feint",
+    });
+    expect(character.knowsSkill("rogue-feint")).toBe(true);
+    expect(character.knowsSkill("rogue-precisionStrike")).toBe(false);
   });
 });
 

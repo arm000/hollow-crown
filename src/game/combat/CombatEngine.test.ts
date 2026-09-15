@@ -472,6 +472,162 @@ describe("CombatEngine", () => {
     });
   });
 
+  describe("each class's tier-1 alternative (docs/08-roadmap-phases.md Phase 7 Batch 9's character-creation build fork)", () => {
+    // Constructed with an explicit startingSkillId (Character's 8th
+    // constructor param), not unlockSkill -- unlockSkill would
+    // correctly *refuse* every one of these, since the class's default
+    // tier-1 skill is exclusiveWith it and already known the moment a
+    // Character exists. This mirrors exactly how PartyCreationUI's own
+    // choice reaches a real Character (roster.createCharacterFromSpec).
+    it("Warrior's Power Strike deals more physical damage than a plain Attack, with no other effect", () => {
+      const warrior = new Character(
+        "Test",
+        "warrior",
+        "front",
+        { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 },
+        30,
+        0,
+        "⚪",
+        "warrior-powerStrike",
+      );
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(new Party([warrior]), monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "warrior-powerStrike");
+
+      const dealt = 9999 - monster.hp;
+      expect(dealt).toBeGreaterThan(warrior.stats.might + 4); // clearly more than a plain Attack's might + 1d4 ceiling
+      expect(monster.statusEffects.list()).toHaveLength(0); // no control/DoT effect, unlike Precision Strike's Bleed
+    });
+
+    it("Rogue's Feint attempts an immediate flee at much better odds than a plain Flee", () => {
+      const rogue = new Character(
+        "Test",
+        "rogue",
+        "front",
+        { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 0 }, // 0 Resolve -- an ordinary Flee here is a coin flip at best (30%)
+        22,
+        0,
+        "⚪",
+        "rogue-feint",
+      );
+      const party = new Party([rogue]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "rogue-feint");
+
+      expect(engine.result).toBe("fled");
+    });
+
+    it("Rogue's Feint isn't a guaranteed escape, unlike Smoke Bomb -- a bad enough roll still fails it", () => {
+      const rogue = new Character(
+        "Test",
+        "rogue",
+        "front",
+        { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 0 },
+        22,
+        0,
+        "⚪",
+        "rogue-feint",
+      );
+      const party = new Party([rogue]);
+      const monster = newMonster({ maxHp: 9999 });
+      // Feint's chance here is 30 + 0*5 + 25 = 55 -- seed 6 rolls
+      // above that on rollInt(1,100)'s first call (verified directly
+      // against SeededRng rather than assumed).
+      const engine = new CombatEngine(party, monster, new SeededRng(6));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "rogue-feint");
+
+      expect(engine.result).toBe("ongoing");
+      expect(engine.log.some((line) => line.includes("doesn't bite"))).toBe(true);
+    });
+
+    it("Mage's Arcane Barrier halves the monster's next hit on the caster themself, the same halving Ward uses on an ally", () => {
+      function runFight(useBarrier: boolean): number {
+        const mage = new Character(
+          "Test",
+          "mage",
+          "front", // front rank so the monster's single target is guaranteed to be the mage, not picked at random
+          { might: 2, grace: 20, vitality: 5, focus: 9, resolve: 4 },
+          30,
+          20,
+          "⚪",
+          "mage-arcaneBarrier",
+        );
+        const party = new Party([mage]);
+        const monster = new Monster(
+          { name: "Rot-thing", x: 1, z: 1, patrolPoints: [{ x: 1, z: 1 }], detectionRadius: 0, maxHp: 9999, might: 2, initiativeStat: -10 },
+          OPEN_MAP,
+          new Player(1, 1, 1, 2, 1),
+        );
+        const engine = new CombatEngine(party, monster, new SeededRng(2));
+
+        if (engine.isPartyTurn) {
+          if (useBarrier) {
+            engine.submitAction("ability", undefined, "mage-arcaneBarrier");
+          } else {
+            // Deliberately not "defend": with only one party member who
+            // is both caster and the monster's only possible target,
+            // self-Defending on their own turn never actually clears
+            // (defending only clears on the *owner's own next turn*,
+            // which never comes before the monster's turn in a 1v1
+            // exchange) -- the same contamination this suite's real
+            // Ward test avoids by having a second, un-defended party
+            // member take the hit instead. There's no second member
+            // here (Arcane Barrier is self-only), so the baseline
+            // needs a genuinely zero-effect action instead: an "item"
+            // action with no matching item (and no inventory attached
+            // to the engine) is a documented no-op elsewhere in this
+            // suite, touches `defending` not at all, and -- just as
+            // important -- consumes zero rolls from the RNG stream,
+            // same as the ability branch's own `warded.add` (an
+            // "attack" baseline would consume a damage roll instead,
+            // shifting the monster's subsequent roll out of alignment
+            // between the two runs).
+            engine.submitAction("item", "nonexistent");
+          }
+        }
+
+        return 30 - mage.hp;
+      }
+
+      const unwardedDamage = runFight(false);
+      const wardedDamage = runFight(true);
+
+      expect(unwardedDamage).toBeGreaterThan(0); // sanity: the monster actually landed a hit in the baseline
+      expect(wardedDamage).toBe(Math.ceil(unwardedDamage / 2));
+    });
+
+    it("Cleric's Radiant Spark deals Holy damage, weaker than Smite", () => {
+      const cleric = new Character(
+        "Test",
+        "cleric",
+        "back",
+        { might: 3, grace: 5, vitality: 6, focus: 8, resolve: 7 },
+        18,
+        18,
+        "⚪",
+        "cleric-radiantSpark",
+      );
+      const monster = newMonster({ maxHp: 9999, resistances: { holy: 2 } });
+      const engine = new CombatEngine(new Party([cleric]), monster, new SeededRng(1));
+
+      if (engine.isPartyTurn) engine.submitAction("ability", undefined, "cleric-radiantSpark");
+
+      const dealt = 9999 - monster.hp;
+      expect(dealt).toBeGreaterThan(0);
+      // Smite's own damage floor (focus + 1d4, doubled by the same
+      // weakness) is strictly higher than Radiant Spark's ceiling
+      // (ceil(focus/2) + 1d4, doubled) at this focus value -- proof
+      // the tier-1 freebie stays meaningfully weaker than the skill
+      // point-gated upgrade.
+      expect(dealt).toBeLessThan((cleric.stats.focus + 4) * 2);
+      expect(cleric.mana).toBe(14); // 18 - Radiant Spark's 4-mana cost
+    });
+  });
+
   describe("items", () => {
     it("a damage item (Oil Flask) hits the monster and is consumed", () => {
       const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);

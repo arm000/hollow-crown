@@ -124,7 +124,7 @@ system.
 - **The two generic combat VFX** (`vfx-monster-attack`,
   `vfx-monster-hit-reaction`) — `MonsterAnimator.ts`'s lunge/punch-flash,
   pure mesh transform + material property, no particles or sprites.
-- **Every one of the twelve skill-specific VFX entries** — `Game.ts`'s
+- **Every one of the sixteen skill-specific VFX entries** — `Game.ts`'s
   `SKILL_VFX` table picks, per skill, one of three placeholder kinds:
   a small colored bolt traveling from the camera to the monster
   (`Projectile.ts`, for the ranged/magic-feeling skills), the same

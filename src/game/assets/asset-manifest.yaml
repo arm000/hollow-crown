@@ -397,6 +397,20 @@ vfx-warrior-guard:
   links:
     - kind: skill
       id: warrior-guard
+vfx-warrior-powerstrike:
+  id: vfx-warrior-powerstrike
+  category: skill-vfx
+  name: Power Strike VFX
+  description: >-
+    A harder physical hit than a plain Attack, no other effect — a heavier weapon-swing impact
+    than the basic-attack VFX, no status/DoT flourish.
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + MonsterAnimator.ts: the existing hit-punch/flash reaction, colored
+    solid orange (0xffa040), distinct from Precision Strike's red and Ambush's pale yellow.
+  links:
+    - kind: skill
+      id: warrior-powerStrike
 vfx-warrior-secondwind:
   id: vfx-warrior-secondwind
   category: skill-vfx
@@ -435,6 +449,18 @@ vfx-rogue-precisionstrike:
   links:
     - kind: skill
       id: rogue-precisionStrike
+vfx-rogue-feint:
+  id: vfx-rogue-feint
+  category: skill-vfx
+  name: Feint VFX
+  description: >-
+    An immediate flee attempt at better-than-usual odds — a quick sidestep/opening cue on
+    success, distinct from Smoke Bomb's full smoke cloud.
+  status: procedural
+  placeholderNotes: "Game.ts's SKILL_VFX + ScreenFlash.ts: a brief pale lavender-gray (0xc8c8e0) screen-wide tint."
+  links:
+    - kind: skill
+      id: rogue-feint
 vfx-rogue-smokebomb:
   id: vfx-rogue-smokebomb
   category: skill-vfx
@@ -471,6 +497,18 @@ vfx-mage-firebolt:
   links:
     - kind: skill
       id: mage-firebolt
+vfx-mage-arcanebarrier:
+  id: vfx-mage-arcanebarrier
+  category: skill-vfx
+  name: Arcane Barrier VFX
+  description: >-
+    Shields the Mage's own next hit, without spending a later turn — a shimmering personal
+    ward, distinct from Cleric Ward's ally-targeted shield.
+  status: procedural
+  placeholderNotes: "Game.ts's SKILL_VFX + ScreenFlash.ts: a brief violet (0x9060d8) screen-wide tint."
+  links:
+    - kind: skill
+      id: mage-arcaneBarrier
 vfx-mage-frostlance:
   id: vfx-mage-frostlance
   category: skill-vfx
@@ -513,6 +551,21 @@ vfx-cleric-cleanse:
   links:
     - kind: skill
       id: cleric-cleanse
+vfx-cleric-radiantspark:
+  id: vfx-cleric-radiantspark
+  category: skill-vfx
+  name: Radiant Spark VFX
+  description: >-
+    A modest burst of Holy damage, weaker than Smite — a smaller, softer light burst than
+    Smite's beam, reading clearly as the lesser of the two.
+  status: procedural
+  placeholderNotes: >-
+    Game.ts's SKILL_VFX + Projectile.ts: a small unlit amber-gold (0xffcf70) sphere travels
+    from the camera to the monster, which then flashes the same color — softer/dimmer than
+    Smite's near-white gold, same travel/flash mechanism.
+  links:
+    - kind: skill
+      id: cleric-radiantSpark
 vfx-cleric-smite:
   id: vfx-cleric-smite
   category: skill-vfx

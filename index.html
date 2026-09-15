@@ -785,6 +785,37 @@
         font-size: 16px;
         padding: 6px 10px;
       }
+      /* Batch 9's attribute-point/starting-skill sections, appended
+         after the name/class/portrait rows and rebuilt whenever the
+         class selection changes (PartyCreationUI.onClassChanged) --
+         same visual language as the rest of the screen (.party-creation-row/
+         .party-creation-choice-btn are reused as-is for the skill
+         picker), plus a couple of small new rules for the stat rows
+         and headings, deliberately styled like LevelUpUI's own
+         .levelup-heading/.levelup-row rather than inventing a third
+         look for what's mechanically the same "+1 per point" idea. */
+      .party-creation-section {
+        width: 100%;
+      }
+      .party-creation-heading {
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        opacity: 0.7;
+        margin-top: 10px;
+      }
+      .party-creation-stat-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 0;
+        font-size: 13px;
+      }
+      .party-creation-skill-description {
+        font-size: 12px;
+        opacity: 0.75;
+        margin-top: 6px;
+      }
       #party-creation-confirm {
         margin: 10px 0 24px;
         font-size: 16px;
