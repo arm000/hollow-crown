@@ -1621,6 +1621,16 @@ true before shipping.
     old "exact number/identity of starting party members" open
     question is resolved, not open anymore.
   - 401 tests passing.
+  - **Follow-up (player report): "there were no companions on level 1
+    that I saw."** `InteractableMesh.ts`'s `createInteractableMesh`
+    switch had no case for `"rescue"`, so it fell through to `default:
+    undefined` — every `RescueEncounter` was mechanically real
+    (reachable, interactable, correctly resolved) but completely
+    invisible in the 3D view, indistinguishable from empty floor. Added
+    `buildRescue`: a crouched, warmly-glowing cylinder, deliberately
+    shorter and differently lit than `buildNpc`'s standing cone so a
+    rescue reads as "someone here, come find them" rather than
+    blending into ordinary NPC flavor dressing.
 
 ---
 

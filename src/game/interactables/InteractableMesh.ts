@@ -28,6 +28,8 @@ export function createInteractableMesh(entity: Interactable, tileSize: number): 
       return buildLoreItem(entity, tileSize);
     case "npc":
       return buildNpc(entity, tileSize);
+    case "rescue":
+      return buildRescue(entity, tileSize);
     case "pushableBlock":
       return buildPushableBlock(entity, tileSize);
     case "pressurePlate":
@@ -135,6 +137,29 @@ function buildNpc(entity: Interactable, tileSize: number): THREE.Object3D {
   const mesh = new THREE.Mesh(
     new THREE.ConeGeometry(0.35, height, 8),
     new THREE.MeshStandardMaterial({ color: 0x7a7264, roughness: 1 }),
+  );
+  mesh.position.set(entity.x * tileSize, height / 2, entity.z * tileSize);
+  return mesh;
+}
+
+function buildRescue(entity: Interactable, tileSize: number): THREE.Object3D {
+  // A crouched, huddled silhouette -- shorter and squatter than
+  // buildNpc's standing cone, and warmly lit unlike it, so a rescue
+  // reads as "someone in need, come here" at a glance instead of
+  // blending into ordinary flavor dressing. These are meant to be
+  // unmissable (docs/03-party-and-characters.md#recruitment-phase-7) --
+  // without a mesh at all, `createInteractableMesh`'s `default:
+  // undefined` silently made every one of them invisible in the 3D
+  // view, mechanically present but impossible to actually find.
+  const height = 1.0;
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3, 0.42, height, 8),
+    new THREE.MeshStandardMaterial({
+      color: 0xd8a24a,
+      emissive: 0x8a5a1a,
+      emissiveIntensity: 0.55,
+      roughness: 0.8,
+    }),
   );
   mesh.position.set(entity.x * tileSize, height / 2, entity.z * tileSize);
   return mesh;
