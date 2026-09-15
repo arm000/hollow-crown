@@ -1631,6 +1631,19 @@ true before shipping.
     shorter and differently lit than `buildNpc`'s standing cone so a
     rescue reads as "someone here, come find them" rather than
     blending into ordinary NPC flavor dressing.
+  - **Follow-up (player question): "After the companion joins the
+    party, shouldn't their interactable disappear?"** It didn't —
+    `RescueEncounter` had no `isConsumed`, so its (now-visible) mesh
+    and tile sat there forever after recruiting, unlike every other
+    one-time pickup (`KeyItem`, `EquipmentPickup`). Added `isConsumed`,
+    true once `resolved` — the same convention those already use, read
+    by `InteractableManager.handleInteract` to drop the entity from the
+    level and by `Game.refreshEntityVisual` to remove its mesh. Set on
+    a successful recruit and on the "every companion already found"
+    edge case; deliberately left `false` on the "party's already full"
+    decline, so a companion that genuinely couldn't join yet stays
+    findable rather than silently vanishing.
+  - 404 tests passing.
 
 ---
 

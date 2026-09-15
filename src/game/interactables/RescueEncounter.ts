@@ -22,10 +22,20 @@ import type { InteractionContext, Interactable } from "./types";
  * already recruited. That makes the same three spawns correctly offer
  * the right three companions no matter which class was picked at
  * creation, with no coordination needed between the three level files.
+ *
+ * `isConsumed` (true once `resolved`) is what makes the figure actually
+ * disappear once there's nothing left to do here — same convention
+ * `KeyItem`/`EquipmentPickup` already use, read by
+ * `InteractableManager.handleInteract` to drop it from the level and by
+ * `Game.refreshEntityVisual` to remove its mesh. A party that's
+ * genuinely full (shouldn't happen given the one-per-level-1-3 pacing,
+ * but not impossible) leaves it *not* resolved — the companion is
+ * still there, just not able to join yet.
  */
 export class RescueEncounter implements Interactable {
   readonly kind = "rescue";
   private recruitedName: string | undefined;
+  private resolved = false;
 
   constructor(
     public x: number,
@@ -38,7 +48,9 @@ export class RescueEncounter implements Interactable {
   }
 
   interact(ctx: InteractionContext): string {
-    if (this.recruitedName) return `${this.recruitedName} is already at your side.`;
+    if (this.resolved) {
+      return this.recruitedName ? `${this.recruitedName} is already at your side.` : "There's no one here anymore.";
+    }
 
     // party.members[0] is always the character built at creation --
     // members are only ever appended (`Party.addMember`), never
@@ -48,7 +60,7 @@ export class RescueEncounter implements Interactable {
       (spec) => !ctx.party.members.some((member) => member.name === spec.name),
     );
     if (remaining.length === 0) {
-      this.recruitedName = "no one";
+      this.resolved = true;
       return `${this.line}\nBut there's no one left down here to find.`;
     }
     if (ctx.party.members.length >= 4) {
@@ -60,6 +72,11 @@ export class RescueEncounter implements Interactable {
     const spec = remaining[0];
     ctx.party.addMember(createCharacterFromSpec(spec));
     this.recruitedName = spec.name;
+    this.resolved = true;
     return `${this.line}\n${spec.name} joins your party!`;
+  }
+
+  isConsumed(): boolean {
+    return this.resolved;
   }
 }
