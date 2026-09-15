@@ -839,6 +839,21 @@
       #party-creation-confirm:active {
         background: rgba(216, 201, 163, 0.35);
       }
+      #party-creation-confirm:disabled {
+        opacity: 0.4;
+        touch-action: none;
+      }
+      /* Shown only while attribute points remain unspent (PartyCreationUI.refreshConfirmButton)
+         -- disabling the confirm button alone has no touch-friendly
+         explanation (no hover tooltip on a phone), so this text is the
+         actual reason, not just decoration. */
+      #party-creation-confirm-hint {
+        font-size: 12px;
+        opacity: 0.75;
+        color: #d8a24a;
+        margin: -4px 0 6px;
+        text-align: center;
+      }
       #party-creation-continue {
         margin-top: 4px;
         font-size: 15px;

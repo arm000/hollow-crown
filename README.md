@@ -156,19 +156,20 @@ same creation screen gained the "full point-buy attribute creation" its
 own docs used to flag as a stretch goal (a small one): 5 bonus
 attribute points to freely allocate on top of the chosen class's base
 stats — the exact +1-per-point mechanic the level-up screen already
-uses, so anything left unspent just carries over as ordinary skill
-points for that first level-up instead of being lost — plus the new
-tier-1 skill fork above, picked right there rather than defaulted, with
-tooltips on every stat and skill in both that screen and Level Up
-explaining what each one actually does. Most recently: every skill —
-tier-1 and tier-2, mana-gated or not — now has a cooldown (2 rounds for
-tier 1, 3 for tier 2), so a skill that used to be strictly better than
-a plain Attack with nothing to weigh against it (Power Strike, say) is
-no longer just the obvious pick every single turn; Attack itself still
-has no cooldown at all, staying the reliable fallback while something
-recharges. A skill still cooling down shows exactly how many turns are
-left, right on its button. Playable now: a one-time party-creation screen (name
-your character, pick a class, allocate a few bonus attribute points, choose
+uses — plus the new tier-1 skill fork above, picked right there rather
+than defaulted, with tooltips on every stat and skill in both that
+screen and Level Up explaining what each one actually does. Descend
+stays disabled, naming how many points are left, until every one of
+those 5 is actually spent — nothing used to stop starting a run having
+never touched the allocator at all. Every skill — tier-1 and tier-2,
+mana-gated or not — also has a cooldown now (2 rounds for tier 1, 3 for
+tier 2), so a skill that used to be strictly better than a plain Attack
+with nothing to weigh against it (Power Strike, say) is no longer just
+the obvious pick every single turn; Attack itself still has no cooldown
+at all, staying the reliable fallback while something recharges. A
+skill still cooling down shows exactly how many turns are left, right
+on its button. Playable now: a one-time party-creation screen (name
+your character, pick a class, allocate every bonus attribute point, choose
 a starting skill, and pick a color-swatch portrait — placeholder art,
 real pixel art is still ahead), then grid movement (keyboard or touch)
 through a 4-level descent, all of it Act 1 ("The Sunken Wards"): level

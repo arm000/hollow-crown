@@ -50,6 +50,8 @@ export class PartyCreationUI {
   private readonly root: HTMLElement;
   private readonly spec: PartyMemberSpec;
   private readonly customizeEl: HTMLElement;
+  private readonly confirmButton: HTMLButtonElement;
+  private readonly confirmHintEl: HTMLElement;
   /** Points allocated so far, keyed by stat — summed against `CREATION_ATTRIBUTE_POINTS` to know how many are left. Reset whenever the class changes, same as `startingSkillId` below. */
   private statBonuses: Partial<Record<keyof CharacterStats, number>> = {};
   private startingSkillId: string;
@@ -70,6 +72,22 @@ export class PartyCreationUI {
     this.customizeEl = document.createElement("div");
     this.customizeEl.className = "party-creation-customize";
 
+    // Built before `buildSlot` below (which calls `renderCustomize`,
+    // which calls `refreshConfirmButton`) so that method always has a
+    // real button to update rather than needing an extra "has this
+    // been created yet" check.
+    this.confirmButton = document.createElement("button");
+    this.confirmButton.type = "button";
+    this.confirmButton.id = "party-creation-confirm";
+    this.confirmButton.textContent = "Descend";
+    this.confirmButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      if (this.confirmButton.disabled) return;
+      this.confirm();
+    });
+    this.confirmHintEl = document.createElement("div");
+    this.confirmHintEl.id = "party-creation-confirm-hint";
+
     this.root = document.createElement("div");
     this.root.id = "party-creation";
 
@@ -84,15 +102,6 @@ export class PartyCreationUI {
     const slotsEl = document.createElement("div");
     slotsEl.id = "party-creation-slots";
     slotsEl.appendChild(this.buildSlot(this.spec));
-
-    const confirmButton = document.createElement("button");
-    confirmButton.type = "button";
-    confirmButton.id = "party-creation-confirm";
-    confirmButton.textContent = "Descend";
-    confirmButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      this.confirm();
-    });
 
     if (this.onContinue) {
       const continueButton = document.createElement("button");
@@ -109,9 +118,18 @@ export class PartyCreationUI {
       newGameLabel.id = "party-creation-new-game-label";
       newGameLabel.textContent = "— or start over —";
 
-      this.root.append(title, continueButton, newGameLabel, subtitle, slotsEl, this.buildHint(), confirmButton);
+      this.root.append(
+        title,
+        continueButton,
+        newGameLabel,
+        subtitle,
+        slotsEl,
+        this.buildHint(),
+        this.confirmHintEl,
+        this.confirmButton,
+      );
     } else {
-      this.root.append(title, subtitle, slotsEl, this.buildHint(), confirmButton);
+      this.root.append(title, subtitle, slotsEl, this.buildHint(), this.confirmHintEl, this.confirmButton);
     }
     document.body.appendChild(this.root);
   }
@@ -197,10 +215,33 @@ export class PartyCreationUI {
 
   private renderCustomize(): void {
     this.customizeEl.replaceChildren(this.buildStatsSection(), this.buildSkillSection());
+    this.refreshConfirmButton();
   }
 
   private pointsSpent(): number {
     return Object.values(this.statBonuses).reduce((sum: number, n) => sum + (n ?? 0), 0);
+  }
+
+  /**
+   * Player request: "The player should not be allowed to enter the
+   * dungeon until they have allocated all unspent attribute points."
+   * Without this, `roster.createCharacterFromSpec`'s own "anything
+   * left unspent banks as ordinary `skillPoints` for the first Level
+   * Up screen instead of being lost" fallback meant a player could
+   * just never touch the allocator at all and start the run with
+   * every one of `CREATION_ATTRIBUTE_POINTS` sitting unspent — that
+   * fallback still exists (nothing here changes it, and it's still
+   * exactly right for a save written before this screen ever offered
+   * points), it's just no longer reachable from a *fresh* character
+   * this screen builds, since Descend refuses to fire until there's
+   * nothing left to spend.
+   */
+  private refreshConfirmButton(): void {
+    const remaining = CREATION_ATTRIBUTE_POINTS - this.pointsSpent();
+    this.confirmButton.disabled = remaining > 0;
+    this.confirmHintEl.hidden = remaining <= 0;
+    this.confirmHintEl.textContent =
+      remaining > 0 ? `Allocate ${remaining} more attribute point${remaining === 1 ? "" : "s"} to descend.` : "";
   }
 
   /** The attribute-point allocator (player request: "assign attribute points") -- same +1-per-point mechanic as `LevelUpUI.buildStatRow`, just spending a fixed creation-time pool instead of `Character.skillPoints` earned from leveling (that pool is `roster.CREATION_ATTRIBUTE_POINTS`, granted for real once `createCharacterFromSpec` builds the actual `Character` — see that function's doc comment for why any points left unspent here aren't lost). */

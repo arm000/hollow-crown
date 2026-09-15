@@ -119,12 +119,20 @@ To avoid blocking early combat/UI work on a full character creator:
   whole stat sheet: `CREATION_ATTRIBUTE_POINTS` (5) freely allocated
   on top of the class's base stats, one +1 at a time, the same
   mechanic `LevelUpUI` already uses for stat points earned by leveling
-  (Vitality/Focus also nudge max HP/Mana). Anything left unallocated
-  isn't lost — it carries over as ordinary unspent `skillPoints`,
-  spendable at the first Level Up screen instead. Alongside it, a real
-  choice between the class's two tier-1 skills (see the Leveling
-  section above) — permanent, same "no respec" rule the tier-2 fork
-  already uses.
+  (Vitality/Focus also nudge max HP/Mana). Alongside it, a real choice
+  between the class's two tier-1 skills (see the Leveling section
+  above) — permanent, same "no respec" rule the tier-2 fork already
+  uses. The Descend button stays disabled, with a line naming how many
+  points are left, until every one of those 5 points is actually
+  spent — a later player request ("the player should not be allowed to
+  enter the dungeon until they have allocated all unspent attribute
+  points"), since nothing originally stopped starting the run having
+  never touched the allocator at all. The underlying mechanism (any
+  points left over "bank" as ordinary unspent `skillPoints`, spendable
+  at the first Level Up screen instead of being lost) still exists in
+  `roster.createCharacterFromSpec` — it's just no longer reachable from
+  this screen specifically, and still applies as-is to an old save
+  written before any of this existed.
 
 ### Recruitment (Phase 7)
 

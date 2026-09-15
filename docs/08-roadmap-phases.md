@@ -1836,6 +1836,28 @@ true before shipping.
     cooldown — narrowed to proving what a *single* successful cast
     does, which is still exactly true.
   - 433 tests passing.
+  - **Follow-up (player request): "The player should not be allowed to
+    enter the dungeon until they have allocated all unspent attribute
+    points."** Nothing previously stopped a player from hitting
+    Descend having never touched the allocator at all —
+    `roster.createCharacterFromSpec`'s own "anything left unspent
+    banks as ordinary `skillPoints` for the first Level Up screen"
+    fallback (by design, so a partial allocation was never *lost*)
+    also meant a *complete* non-allocation silently worked the same
+    way, which wasn't the intent.
+    - `PartyCreationUI.confirmButton` is now disabled
+      (`refreshConfirmButton`, called from `renderCustomize` on every
+      state change — a class swap, a stat spent, a skill picked) while
+      any of `CREATION_ATTRIBUTE_POINTS` remain unspent. A new
+      `#party-creation-confirm-hint` line names exactly how many are
+      left, since a disabled button alone has no touch-friendly
+      explanation (no hover tooltip on a phone).
+    - `roster.createCharacterFromSpec`'s "banks unspent points"
+      fallback is untouched — still exactly right for a save written
+      before this screen ever offered points — it's just no longer
+      reachable from a *fresh* character this screen builds.
+  - 433 tests passing (unchanged — `PartyCreationUI` has no test file,
+    untested DOM glue per docs/11-testing-strategy.md).
 
 ---
 
