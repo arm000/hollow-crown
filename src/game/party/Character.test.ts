@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { Character } from "./Character";
+import { Character, STAT_DESCRIPTIONS, type CharacterStats } from "./Character";
+
+const ALL_STATS: Array<keyof CharacterStats> = ["might", "grace", "vitality", "focus", "resolve"];
 
 function newCharacter(overrides: Partial<{ maxHp: number }> = {}) {
   return new Character(
@@ -160,6 +162,14 @@ describe("Character", () => {
       character.restoreKnownSkillIds(["warrior-guard", "warrior-secondWind"]);
       expect(character.knowsSkill("warrior-secondWind")).toBe(true);
       expect(character.skillPoints).toBe(0); // unaffected -- restoring isn't spending
+    });
+  });
+
+  describe("STAT_DESCRIPTIONS (tooltip text shared by PartyCreationUI and LevelUpUI)", () => {
+    it("covers every stat with a non-empty description", () => {
+      for (const stat of ALL_STATS) {
+        expect(STAT_DESCRIPTIONS[stat].length, stat).toBeGreaterThan(0);
+      }
     });
   });
 });

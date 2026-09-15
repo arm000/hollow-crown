@@ -1,5 +1,5 @@
 import { buildMenuNav, type MenuNavCallbacks } from "./MenuNav";
-import type { Character, CharacterStats } from "./party/Character";
+import { STAT_DESCRIPTIONS, type Character, type CharacterStats } from "./party/Character";
 import type { Party } from "./party/Party";
 import { SKILLS } from "./party/Skills";
 
@@ -106,6 +106,9 @@ export class LevelUpUI {
   private buildStatRow(character: Character, stat: keyof CharacterStats): HTMLElement {
     const row = document.createElement("div");
     row.className = "levelup-row";
+    // On the row, not just the label, so hovering the +1 button (the
+    // part a player's cursor is actually headed for) shows it too.
+    row.title = STAT_DESCRIPTIONS[stat];
 
     const label = document.createElement("span");
     label.textContent = `${STAT_LABELS[stat]}: ${character.stats[stat]}`;
@@ -130,6 +133,10 @@ export class LevelUpUI {
     const skill = SKILLS[character.classId].find((candidate) => candidate.id === skillId)!;
     const row = document.createElement("div");
     row.className = "levelup-row";
+    // On the row too, not just the label -- same reasoning as
+    // buildStatRow's own row.title: hovering the Unlock button itself
+    // should show it, not just the label text next to it.
+    row.title = skill.description;
 
     const label = document.createElement("span");
     label.title = skill.description;

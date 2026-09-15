@@ -1,4 +1,4 @@
-import { ALL_CLASS_IDS, type CharacterStats, type ClassId } from "./Character";
+import { ALL_CLASS_IDS, STAT_DESCRIPTIONS, type CharacterStats, type ClassId } from "./Character";
 import { SKILLS } from "./Skills";
 import { CLASS_BASE_STATS, CREATION_ATTRIBUTE_POINTS, PORTRAIT_OPTIONS, type PartyMemberSpec } from "./roster";
 
@@ -212,6 +212,11 @@ export class PartyCreationUI {
       const bonus = this.statBonuses[stat] ?? 0;
       const row = document.createElement("div");
       row.className = "party-creation-stat-row";
+      // On the row, not just the label, so hovering the +1 button
+      // (what a player's cursor is actually headed for) shows it too
+      // -- same convention LevelUpUI.buildStatRow uses for the exact
+      // same stats, from the same STAT_DESCRIPTIONS source of truth.
+      row.title = STAT_DESCRIPTIONS[stat];
 
       const label = document.createElement("span");
       label.textContent = `${STAT_LABELS[stat]}: ${base[stat] + bonus}`;
@@ -254,6 +259,13 @@ export class PartyCreationUI {
       button.type = "button";
       button.className = "party-creation-choice-btn";
       button.textContent = skill.name;
+      // Same tooltip as the always-visible description text below --
+      // redundant while a skill is already selected (its description
+      // shows there regardless), but the *other*, unselected option's
+      // description is otherwise only ever a click away, unlike
+      // LevelUpUI's skill rows, which show every option's description
+      // as a tooltip up front, known or not.
+      button.title = skill.description;
       if (skill.id === this.startingSkillId) button.classList.add("selected");
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();

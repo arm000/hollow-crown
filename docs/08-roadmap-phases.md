@@ -1742,6 +1742,28 @@ true before shipping.
     `AssetManifest.test.ts`'s completeness check requires one per real
     skill, tier-1 alternatives included.
   - 420 tests passing.
+  - **Follow-up (player request): "Add tooltips to the attributes and
+    skills in both the character creation and levelup screens so users
+    know what they do."** `LevelUpUI.buildSkillRow` already set a
+    tooltip for skills (`label.title = skill.description`, from the
+    original Phase 7 build) but nothing set one for stats, on either
+    screen, and `PartyCreationUI`'s new skill-picker buttons (Batch 9)
+    had none either — the skill's description was only ever visible as
+    static text once selected, not on hover, and never for the
+    unselected option without clicking it.
+    - `Character.ts` gained `STAT_DESCRIPTIONS` (one line per stat,
+      exactly matching docs/03-party-and-characters.md#core-stats'
+      "Drives" column) — a single source of truth both
+      `PartyCreationUI` and `LevelUpUI` import, so the two screens
+      explain the same five stats with the same wording rather than
+      risking two copies drifting apart.
+    - Both screens' stat rows now set the tooltip on the whole row, not
+      just the label text — hovering the actual `+1` button shows it
+      too, not just the number next to it. `LevelUpUI`'s skill rows got
+      the same "whole row" treatment for consistency with its own stat
+      rows. `PartyCreationUI`'s skill-picker buttons gained
+      `title = skill.description` directly.
+  - 421 tests passing.
 
 ---
 

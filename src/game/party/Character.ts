@@ -30,6 +30,22 @@ export interface CharacterStats {
 }
 
 /**
+ * One line per stat, exactly matching docs/03-party-and-characters.md#core-stats'
+ * "Drives" column — the single source of truth for what a stat does,
+ * shared as tooltip text by both `PartyCreationUI` (allocating bonus
+ * points at creation) and `LevelUpUI` (spending points from leveling),
+ * so a player sees the same explanation in both places rather than two
+ * screens quietly drifting apart on the wording.
+ */
+export const STAT_DESCRIPTIONS: Record<keyof CharacterStats, string> = {
+  might: "Melee damage, carry capacity.",
+  grace: "Initiative order, ranged accuracy, evasion.",
+  vitality: "Max HP.",
+  focus: "Max Mana, spell/ability effect strength.",
+  resolve: "Resistance to debuffs/fear effects, flee chance.",
+};
+
+/**
  * A party member. Phase 3's `PartyCreationUI`/`roster.createParty` build
  * these from a player's class/name/portrait choices
  * (docs/03-party-and-characters.md "Party creation vs. pre-generated");
