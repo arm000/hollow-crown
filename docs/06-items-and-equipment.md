@@ -61,10 +61,14 @@ identification system is built.
 **Once that consequence has actually been read at least once, the
 principle stops applying** (docs/08-roadmap-phases.md Phase 7, on a
 player request that an item's properties, once "activated in combat,"
-become learnable "from then on"): a consumable's carried-item tooltip
-in the Inventory screen (`InventoryUI`, reading `Inventory.isIdentified`)
-states its real mechanical effect, but only after the player has
-already discovered it firsthand — the same moment the mystery name
+become learnable "from then on"): a consumable's carried-item entry in
+the Inventory screen (`InventoryUI`, reading `Inventory.isIdentified`)
+shows its real mechanical effect as plain, always-visible text right
+under it — not a hover tooltip, which doesn't exist as a concept on a
+touch screen at all (a later player report: "The tooltips don't work
+on mobile touch screen because I can't hover over") — but only after
+the player has already discovered it firsthand, the same moment the
+mystery name
 itself resolves to the true one. This isn't the UI explaining the item
 ahead of the player; it's not making them re-derive or memorize what
 the log already told them once, every single time after.

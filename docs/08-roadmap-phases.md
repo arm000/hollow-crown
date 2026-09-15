@@ -2032,6 +2032,40 @@ true before shipping.
     instead of being fire-and-forget.
   - 453 tests passing (unchanged — `TouchControls`/`Game.ts` are
     untested DOM glue).
+- ✅ Batch 18 — Every hover tooltip replaced with always-visible text
+  (player report: "The tooltips don't work on mobile touch screen
+  because I can't hover over"). Batches 9, 13, and 15 had each added
+  `title=` attributes for stat/skill/item descriptions — a real
+  regression against a principle this project documented for itself
+  from Phase 1 onward (docs/07-technical-architecture.md#input--touch:
+  "no hover-only affordance... no tooltips-on-hover as the only way to
+  see something... call this out explicitly in each phase's design as
+  it's built, don't leave it as an afterthought pass" — exactly what
+  happened here). Offered a choice between a shared tap-to-show popup,
+  always-visible inline text, or a mix of the two by screen; always-
+  visible text chosen, for every screen uniformly.
+  - `PartyCreationUI`: stat rows and the HP/Mana derived row each
+    gained a `.party-creation-description` caption underneath. The
+    starting-skill picker's two options now show *both* descriptions
+    at once, one under each button, rather than a single shared caption
+    that only reflected whichever was currently selected — "select it
+    to read about it" replaces "hover to preview before choosing" as
+    the discovery flow, and costs nothing since switching the
+    selection is free. The class buttons' own tooltip (a preview of
+    that class's default skill) was dropped outright rather than made
+    visible inline — redundant now that selecting a class immediately
+    shows its full skill-fork descriptions below it anyway.
+  - `LevelUpUI`: stat and skill rows each gained a `.levelup-description`
+    caption underneath, shown regardless of a skill's known/locked/
+    unlockable state, same as the label text next to it always was.
+  - `InventoryUI`: an identified consumable gets an
+    `.inventory-item-description` line under its button instead of a
+    tooltip.
+  - `CombatUI`: each known skill button is now wrapped with its own
+    `.combat-skill-description` caption underneath (including the
+    "recharging, N more turns" note while on cooldown) rather than a
+    bare row of buttons.
+  - 453 tests passing (unchanged — all four are untested DOM glue).
 
 ---
 

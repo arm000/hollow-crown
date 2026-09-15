@@ -135,19 +135,6 @@ export class InventoryUI {
       button.className = "inventory-item-btn";
       button.textContent = count > 1 ? `${name} x${count}` : name;
 
-      // A consumable's real effect stays hidden until it's actually
-      // been used once (player request: once an item's properties are
-      // "activated in combat," hovering it here should describe them
-      // "from then on") — same discovery-not-explanation principle the
-      // mystery name itself already follows, and the exact same
-      // `isIdentified` moment that reveals that name. A damage
-      // consumable gets this too, not just a cure one: it's not
-      // *usable* here (nothing to throw it at outside combat), but
-      // it's still something the player has learned about.
-      if (consumable && inventory.isIdentified(id)) {
-        button.title = consumable.description;
-      }
-
       if (gearItem || usableConsumable) {
         if (id === this.selectedItemId) button.classList.add("selected");
         button.addEventListener("pointerdown", (event) => {
@@ -164,6 +151,24 @@ export class InventoryUI {
         button.classList.add("not-equippable");
       }
       section.appendChild(button);
+
+      // A consumable's real effect stays hidden until it's actually
+      // been used once (player request: once an item's properties are
+      // "activated in combat," it should be learnable "from then on")
+      // — same discovery-not-explanation principle the mystery name
+      // itself already follows, and the exact same `isIdentified`
+      // moment that reveals that name. Always-visible text, not a
+      // hover tooltip (player report: "The tooltips don't work on
+      // mobile touch screen because I can't hover over"). A damage
+      // consumable gets this too, not just a cure one: it's not
+      // *usable* here (nothing to throw it at outside combat), but
+      // it's still something the player has learned about.
+      if (consumable && inventory.isIdentified(id)) {
+        const description = document.createElement("div");
+        description.className = "inventory-item-description";
+        description.textContent = consumable.description;
+        section.appendChild(description);
+      }
     }
     return section;
   }

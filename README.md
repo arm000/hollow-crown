@@ -157,8 +157,10 @@ own docs used to flag as a stretch goal (a small one): 5 bonus
 attribute points to freely allocate on top of the chosen class's base
 stats — the exact +1-per-point mechanic the level-up screen already
 uses — plus the new tier-1 skill fork above, picked right there rather
-than defaulted, with tooltips on every stat and skill in both that
-screen and Level Up explaining what each one actually does. Descend
+than defaulted, with every stat and skill in both that screen and
+Level Up explaining what it actually does as always-visible text
+(originally a hover tooltip, fixed once that turned out not to work on
+a touch screen at all). Descend
 stays disabled, naming how many points are left, until every one of
 those 5 is actually spent — nothing used to stop starting a run having
 never touched the allocator at all. Every skill — tier-1 and tier-2,
@@ -168,7 +170,13 @@ with nothing to weigh against it (Power Strike, say) is no longer just
 the obvious pick every single turn; Attack itself still has no cooldown
 at all, staying the reliable fallback while something recharges. A
 skill still cooling down shows exactly how many turns are left, right
-on its button. Playable now: a one-time party-creation screen (name
+on its button. Most recently: the on-screen move/turn pads now hide
+for the duration of a fight (they never did anything mid-combat
+anyway, and used to sit right where the log/action buttons are also
+pinned on a small phone screen), and every one of those stat/skill/item
+descriptions above switched from a hover tooltip to always-visible
+text once it turned out hovering isn't a thing a touch screen can even
+do. Playable now: a one-time party-creation screen (name
 your character, pick a class, allocate every bonus attribute point, choose
 a starting skill, and pick a color-swatch portrait — placeholder art,
 real pixel art is still ahead), then grid movement (keyboard or touch)

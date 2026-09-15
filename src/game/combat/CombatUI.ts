@@ -145,6 +145,9 @@ export class CombatUI {
     for (const skill of SKILLS[actor.classId]) {
       if (!known.has(skill.id)) continue;
       const onCooldown = !actor.isSkillReady(skill.id);
+      const option = document.createElement("div");
+      option.className = "combat-skill-option";
+
       const button = document.createElement("button");
       button.type = "button";
       button.className = "combat-action-btn combat-skill-btn";
@@ -153,16 +156,25 @@ export class CombatUI {
         : skill.manaCost > 0
           ? `${skill.name} (${skill.manaCost} MP)`
           : skill.name;
-      button.title = onCooldown
-        ? `${skill.description} -- recharging, ${actor.cooldownRemaining(skill.id)} more turn${actor.cooldownRemaining(skill.id) === 1 ? "" : "s"}.`
-        : skill.description;
       button.disabled = onCooldown || actor.mana < skill.manaCost;
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
         if (button.disabled) return;
         this.onAction("ability", undefined, skill.id);
       });
-      this.skillsEl.appendChild(button);
+      option.appendChild(button);
+
+      // Always visible, not a hover tooltip -- player report: "The
+      // tooltips don't work on mobile touch screen because I can't
+      // hover over."
+      const description = document.createElement("div");
+      description.className = "combat-skill-description";
+      description.textContent = onCooldown
+        ? `${skill.description} — recharging, ${actor.cooldownRemaining(skill.id)} more turn${actor.cooldownRemaining(skill.id) === 1 ? "" : "s"}.`
+        : skill.description;
+      option.appendChild(description);
+
+      this.skillsEl.appendChild(option);
     }
   }
 

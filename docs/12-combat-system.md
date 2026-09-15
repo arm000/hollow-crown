@@ -89,8 +89,10 @@ type, thrown at the monster, resistance-adjusted the same as a spell).
 Using an item is also the moment it gets identified — an unidentified
 "bubbling amber vial" becomes "an Oil Flask" in every list the instant
 it's used once, win or lose — and, from that same moment, the Inventory
-screen's carried-item tooltip states its real effect on hover
-(`ConsumableItem.description`, `Inventory.isIdentified`). The combat
+screen's carried-item entry shows its real effect as always-visible
+text underneath it, not a hover tooltip (`ConsumableItem.description`,
+`Inventory.isIdentified` — see docs/06-items-and-equipment.md#discovery-not-explanation).
+The combat
 log line for a cure item always names the status it treats, even on a
 use that finds nothing to cure ("but there's no poison to cure") — so
 the item's purpose is learnable from a single use regardless of whether

@@ -125,11 +125,10 @@ export class LevelUpUI {
   }
 
   private buildStatRow(character: Character, stat: keyof CharacterStats): HTMLElement {
+    const wrapper = document.createElement("div");
+
     const row = document.createElement("div");
     row.className = "levelup-row";
-    // On the row, not just the label, so hovering the +1 button (the
-    // part a player's cursor is actually headed for) shows it too.
-    row.title = STAT_DESCRIPTIONS[stat];
 
     const label = document.createElement("span");
     label.textContent = `${STAT_LABELS[stat]}: ${character.stats[stat]}`;
@@ -146,26 +145,45 @@ export class LevelUpUI {
       this.onSpendStat(character.name, stat);
     });
     row.appendChild(button);
+    wrapper.appendChild(row);
 
-    return row;
+    // Always visible, not a hover tooltip -- player report: "The
+    // tooltips don't work on mobile touch screen because I can't
+    // hover over."
+    const description = document.createElement("div");
+    description.className = "levelup-description";
+    description.textContent = STAT_DESCRIPTIONS[stat];
+    wrapper.appendChild(description);
+
+    return wrapper;
   }
 
   private buildSkillRow(character: Character, skillId: string): HTMLElement {
     const skill = SKILLS[character.classId].find((candidate) => candidate.id === skillId)!;
+    const wrapper = document.createElement("div");
+
     const row = document.createElement("div");
     row.className = "levelup-row";
-    // On the row too, not just the label -- same reasoning as
-    // buildStatRow's own row.title: hovering the Unlock button itself
-    // should show it, not just the label text next to it.
-    row.title = skill.description;
 
     const label = document.createElement("span");
-    label.title = skill.description;
     row.appendChild(label);
+
+    // Always visible, not a hover tooltip -- player report: "The
+    // tooltips don't work on mobile touch screen because I can't
+    // hover over." Shown regardless of known/locked/unlockable state,
+    // same as the label text next to it always is.
+    const description = document.createElement("div");
+    description.className = "levelup-description";
+    description.textContent = skill.description;
+
+    const finish = (): HTMLElement => {
+      wrapper.append(row, description);
+      return wrapper;
+    };
 
     if (character.knowsSkill(skill.id)) {
       label.textContent = `${skill.name} — known`;
-      return row;
+      return finish();
     }
 
     // A skill locked out by the other side of its own fork already
@@ -175,7 +193,7 @@ export class LevelUpUI {
     if (skill.exclusiveWith && character.knowsSkill(skill.exclusiveWith)) {
       const chosen = SKILLS[character.classId].find((candidate) => candidate.id === skill.exclusiveWith)!;
       label.textContent = `${skill.name} — unavailable (chose ${chosen.name})`;
-      return row;
+      return finish();
     }
 
     label.textContent = `${skill.name} (${skill.unlockCost} points)`;
@@ -191,6 +209,6 @@ export class LevelUpUI {
     });
     row.appendChild(button);
 
-    return row;
+    return finish();
   }
 }

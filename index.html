@@ -430,6 +430,24 @@
         font-size: 13px;
         padding: 8px 14px;
       }
+      /* Each known skill's own column: button, then its always-visible
+         effect text right under it -- player report: hover tooltips
+         "don't work on mobile touch screen because I can't hover
+         over." Narrower than the general .party-creation-description/
+         .levelup-description captions since this sits in a
+         flex-wrapped row of several, not a single-column list. */
+      .combat-skill-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        max-width: 160px;
+      }
+      .combat-skill-description {
+        font-size: 11px;
+        opacity: 0.75;
+        text-align: center;
+      }
       .combat-action-btn {
         font-size: 16px;
         padding: 10px 22px;
@@ -550,6 +568,14 @@
       }
       .inventory-item-btn.not-equippable {
         opacity: 0.65;
+      }
+      /* An identified consumable's effect, always visible under its
+         button -- player report: hover tooltips "don't work on mobile
+         touch screen because I can't hover over." */
+      .inventory-item-description {
+        font-size: 12px;
+        opacity: 0.7;
+        margin: -3px 0 8px;
       }
       .inventory-item-btn.selected {
         border-color: #d8c9a3;
@@ -756,6 +782,15 @@
         padding: 4px 0;
         font-size: 13px;
       }
+      /* Always-visible descriptive caption under a stat/skill row --
+         player report: hover tooltips "don't work on mobile touch
+         screen because I can't hover over." Same role
+         .party-creation-description plays on the creation screen. */
+      .levelup-description {
+        font-size: 12px;
+        opacity: 0.7;
+        margin: -2px 0 6px;
+      }
       .levelup-btn {
         font-size: 12px;
         padding: 5px 12px;
@@ -884,12 +919,21 @@
         font-size: 13px;
         opacity: 0.85;
         padding: 2px 0 6px;
-        border-bottom: 1px solid rgba(216, 201, 163, 0.15);
-        margin-bottom: 2px;
       }
-      .party-creation-skill-description {
+      /* Always-visible descriptive caption -- stat meanings, the HP/Mana
+         derived row, and each starting-skill option all reuse this one
+         rule (player report: hover tooltips "don't work on mobile touch
+         screen because I can't hover over" -- these captions replace
+         every tooltip this screen used to rely on). */
+      .party-creation-description {
         font-size: 12px;
         opacity: 0.75;
+        margin: 0 0 8px;
+      }
+      .party-creation-skill-option {
+        margin-bottom: 10px;
+      }
+      .party-creation-skill-option .party-creation-description {
         margin-top: 6px;
       }
       #party-creation-confirm {

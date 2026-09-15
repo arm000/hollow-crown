@@ -164,14 +164,6 @@ export class PartyCreationUI {
       button.type = "button";
       button.className = "party-creation-choice-btn";
       button.textContent = classLabel(classId);
-      // The class's default signature skill, same description CombatUI
-      // already shows as a tooltip mid-fight -- a class's role is
-      // public information, unlike an item's mechanical effect (see
-      // docs/06-items-and-equipment.md#discovery-not-explanation, which
-      // only ever applies to items). A second skill exists to unlock
-      // via leveling (Skills.ts) but isn't spoiled here -- this is
-      // about knowing a class's role up front, not its whole kit.
-      button.title = SKILLS[classId][0].description;
       if (classId === spec.classId) button.classList.add("selected");
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
@@ -263,11 +255,6 @@ export class PartyCreationUI {
       const bonus = this.statBonuses[stat] ?? 0;
       const row = document.createElement("div");
       row.className = "party-creation-stat-row";
-      // On the row, not just the label, so hovering the +1 button
-      // (what a player's cursor is actually headed for) shows it too
-      // -- same convention LevelUpUI.buildStatRow uses for the exact
-      // same stats, from the same STAT_DESCRIPTIONS source of truth.
-      row.title = STAT_DESCRIPTIONS[stat];
 
       const label = document.createElement("span");
       label.textContent = `${STAT_LABELS[stat]}: ${base[stat] + bonus}`;
@@ -287,6 +274,15 @@ export class PartyCreationUI {
       row.appendChild(button);
 
       section.appendChild(row);
+
+      // Always visible, not a hover tooltip -- player report: "The
+      // tooltips don't work on mobile touch screen because I can't
+      // hover over." Same STAT_DESCRIPTIONS source of truth
+      // LevelUpUI's own stat rows use.
+      const description = document.createElement("div");
+      description.className = "party-creation-description";
+      description.textContent = STAT_DESCRIPTIONS[stat];
+      section.appendChild(description);
     }
 
     return section;
@@ -309,20 +305,43 @@ export class PartyCreationUI {
     const maxHp = base.maxHp + (this.statBonuses.vitality ?? 0) * VITALITY_HP_PER_POINT;
     const maxMana = base.maxMana + (this.statBonuses.focus ?? 0) * FOCUS_MANA_PER_POINT;
 
+    const wrapper = document.createElement("div");
+
     const row = document.createElement("div");
     row.className = "party-creation-derived-row";
-    row.title = "Max HP tracks Vitality; max Mana tracks Focus -- both update as you spend points on either.";
-
     const hp = document.createElement("span");
     hp.textContent = `HP: ${maxHp}`;
     const mana = document.createElement("span");
     mana.textContent = `Mana: ${maxMana}`;
     row.append(hp, mana);
+    wrapper.appendChild(row);
 
-    return row;
+    // Always visible, not a hover tooltip -- see buildStatsSection's
+    // matching note.
+    const description = document.createElement("div");
+    description.className = "party-creation-description";
+    description.textContent = "Max HP tracks Vitality; max Mana tracks Focus -- both update as you spend points on either.";
+    wrapper.appendChild(description);
+
+    return wrapper;
   }
 
-  /** The starting-skill picker (player request: "pick a starting skill") -- a real, permanent choice between the class's two tier-1 options (`Skills.ts`'s indices 0-1: an offense-leaning skill and a defense/utility-leaning one), same mutually-exclusive-fork mechanism the tier-2 skills use later via leveling, just made here instead. */
+  /**
+   * The starting-skill picker (player request: "pick a starting
+   * skill") -- a real, permanent choice between the class's two
+   * tier-1 options (`Skills.ts`'s indices 0-1: an offense-leaning
+   * skill and a defense/utility-leaning one), same mutually-exclusive-
+   * fork mechanism the tier-2 skills use later via leveling, just made
+   * here instead.
+   *
+   * Both options' descriptions are always visible, right under their
+   * own button -- not just the selected one, and not a hover tooltip
+   * (player report: "The tooltips don't work on mobile touch screen
+   * because I can't hover over"). Switching which one's selected costs
+   * nothing, so "select it to read about it" replaces "hover to
+   * preview before choosing" as the discovery flow, and works
+   * identically on touch and desktop.
+   */
   private buildSkillSection(): HTMLElement {
     const section = document.createElement("div");
     section.className = "party-creation-section";
@@ -333,34 +352,29 @@ export class PartyCreationUI {
     section.appendChild(heading);
 
     const tier1Options = SKILLS[this.spec.classId].slice(0, 2);
-    const row = document.createElement("div");
-    row.className = "party-creation-row";
     for (const skill of tier1Options) {
+      const option = document.createElement("div");
+      option.className = "party-creation-skill-option";
+
       const button = document.createElement("button");
       button.type = "button";
       button.className = "party-creation-choice-btn";
       button.textContent = skill.name;
-      // Same tooltip as the always-visible description text below --
-      // redundant while a skill is already selected (its description
-      // shows there regardless), but the *other*, unselected option's
-      // description is otherwise only ever a click away, unlike
-      // LevelUpUI's skill rows, which show every option's description
-      // as a tooltip up front, known or not.
-      button.title = skill.description;
       if (skill.id === this.startingSkillId) button.classList.add("selected");
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
         this.startingSkillId = skill.id;
         this.renderCustomize();
       });
-      row.appendChild(button);
-    }
-    section.appendChild(row);
+      option.appendChild(button);
 
-    const description = document.createElement("div");
-    description.className = "party-creation-skill-description";
-    description.textContent = tier1Options.find((skill) => skill.id === this.startingSkillId)!.description;
-    section.appendChild(description);
+      const description = document.createElement("div");
+      description.className = "party-creation-description";
+      description.textContent = skill.description;
+      option.appendChild(description);
+
+      section.appendChild(option);
+    }
 
     return section;
   }
