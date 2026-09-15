@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { ALL_CLASS_IDS } from "./Character";
-import { createCharacterFromSpec, createParty, createStartingParty, DEFAULT_PARTY_SPEC, recruitableCompanions } from "./roster";
+import {
+  createCharacterFromSpec,
+  createParty,
+  createStartingParty,
+  DEFAULT_PARTY_SPEC,
+  pickAvailablePortrait,
+  PORTRAIT_OPTIONS,
+  recruitableCompanions,
+} from "./roster";
 
 describe("createStartingParty", () => {
   it("still produces the Phase 2 defaults (Bram/Ysolde/Corvin/Maren, one per class)", () => {
@@ -59,5 +67,23 @@ describe("recruitableCompanions", () => {
       expect(recruitableCompanions(classId).some((s) => s.classId === classId)).toBe(false);
       expect(recruitableCompanions(classId)).toHaveLength(3);
     }
+  });
+});
+
+describe("pickAvailablePortrait", () => {
+  it("returns the preferred portrait when nobody else is wearing it", () => {
+    expect(pickAvailablePortrait(["🔵", "🟢"], "🔴")).toBe("🔴");
+  });
+
+  it("falls back to a free portrait when the preferred one is already taken", () => {
+    const picked = pickAvailablePortrait(["🔴", "🟢"], "🔴");
+    expect(picked).not.toBe("🔴");
+    expect(PORTRAIT_OPTIONS).toContain(picked);
+  });
+
+  it("never returns a portrait already in use, given only one is free", () => {
+    const used = PORTRAIT_OPTIONS.slice(0, 5); // every option but the last
+    const picked = pickAvailablePortrait(used, used[0]);
+    expect(picked).toBe(PORTRAIT_OPTIONS[5]);
   });
 });

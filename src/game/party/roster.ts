@@ -81,3 +81,22 @@ export function createStartingParty(): Party {
 export function recruitableCompanions(startingClassId: ClassId): PartyMemberSpec[] {
   return DEFAULT_PARTY_SPEC.filter((spec) => spec.classId !== startingClassId);
 }
+
+/**
+ * Picks a portrait for a new recruit that no current party member is
+ * already wearing, preferring `preferred` (the companion's own
+ * `DEFAULT_PARTY_SPEC` color) when it's still free. Needed because the
+ * player's own starting character is a free portrait choice
+ * (`PartyCreationUI`) — nothing stops them picking, say, Bram's usual
+ * 🔴 for themself, and `RescueEncounter` recruiting Bram later would
+ * then hand him the exact same swatch already in use, indistinguishable
+ * in the HUD's party status. With up to 4 members sharing 6 options,
+ * there's always at least one free color left by the time a 2nd, 3rd,
+ * or 4th member joins, but `preferred` is still returned as a last
+ * resort so this never produces an empty portrait.
+ */
+export function pickAvailablePortrait(usedPortraits: Iterable<string>, preferred: string): string {
+  const used = new Set(usedPortraits);
+  if (!used.has(preferred)) return preferred;
+  return PORTRAIT_OPTIONS.find((portrait) => !used.has(portrait)) ?? preferred;
+}

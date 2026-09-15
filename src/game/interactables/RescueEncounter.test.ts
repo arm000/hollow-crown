@@ -68,6 +68,27 @@ describe("RescueEncounter", () => {
     expect(ctx.party.members).toHaveLength(4);
   });
 
+  it("gives a recruit a different portrait than the starter's, if the starter already claimed the recruit's usual color", () => {
+    // Bram's DEFAULT_PARTY_SPEC portrait is PORTRAIT_OPTIONS[0] ("🔴"),
+    // same as ctxFor's starter -- recruiting Bram naively would leave
+    // two party members visually identical in the HUD.
+    const ctx = ctxFor("cleric"); // recruits Bram first
+    new RescueEncounter(1, 1, "line").interact(ctx);
+
+    const [starter, bram] = ctx.party.members;
+    expect(bram.name).toBe("Bram");
+    expect(bram.portrait).not.toBe(starter.portrait);
+  });
+
+  it("still uses a companion's usual portrait when nothing else is wearing it", () => {
+    const ctx: InteractionContext = {
+      inventory: new Inventory(),
+      party: createParty([{ name: "Solo", classId: "cleric", portrait: "🟣" }]), // doesn't collide with Bram's 🔴
+    };
+    new RescueEncounter(1, 1, "line").interact(ctx);
+    expect(ctx.party.members[1].portrait).toBe("🔴");
+  });
+
   it("offers a different companion depending on the starting class", () => {
     const ctx = ctxFor("cleric");
     new RescueEncounter(1, 1, "line").interact(ctx);

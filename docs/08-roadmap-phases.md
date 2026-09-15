@@ -1658,6 +1658,21 @@ true before shipping.
     DOM/rendering glue per docs/11-testing-strategy.md); the party
     mutation this surfaces was already covered by
     `RescueEncounter.test.ts`.
+  - **Follow-up (player report): "When new companions join the party
+    they may have the same color as already existing party members."**
+    Real gap: a companion always recruited wearing their fixed
+    `DEFAULT_PARTY_SPEC` portrait, but the player's own starting
+    character is a free portrait choice in `PartyCreationUI` — nothing
+    stopped them picking, say, Bram's usual 🔴 for themself, and
+    recruiting Bram later handed him that exact same swatch, two party
+    members indistinguishable in the HUD's party status.
+    `roster.pickAvailablePortrait(usedPortraits, preferred)` (new):
+    keeps a recruit's usual color when it's actually free, otherwise
+    picks whatever's left from `PORTRAIT_OPTIONS` — with up to 4
+    members sharing 6 colors there's always at least one free by the
+    time a 2nd-4th member joins. `RescueEncounter.interact` calls it
+    with the current party's portraits before building the recruit.
+  - 409 tests passing.
 
 ---
 

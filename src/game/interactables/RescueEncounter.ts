@@ -1,4 +1,4 @@
-import { createCharacterFromSpec, recruitableCompanions } from "../party/roster";
+import { createCharacterFromSpec, pickAvailablePortrait, recruitableCompanions } from "../party/roster";
 import type { InteractionContext, Interactable } from "./types";
 
 /**
@@ -22,6 +22,12 @@ import type { InteractionContext, Interactable } from "./types";
  * already recruited. That makes the same three spawns correctly offer
  * the right three companions no matter which class was picked at
  * creation, with no coordination needed between the three level files.
+ *
+ * A recruit's portrait color usually matches their
+ * `DEFAULT_PARTY_SPEC` entry, but falls back to whatever's actually
+ * free (`pickAvailablePortrait`) if the player's own freely-chosen
+ * starting portrait already claimed it — otherwise a party member
+ * could be indistinguishable from another in the HUD's party status.
  *
  * `isConsumed` (true once `resolved`) is what makes the figure actually
  * disappear once there's nothing left to do here — same convention
@@ -70,7 +76,15 @@ export class RescueEncounter implements Interactable {
     }
 
     const spec = remaining[0];
-    ctx.party.addMember(createCharacterFromSpec(spec));
+    // The companion's usual DEFAULT_PARTY_SPEC color, unless the
+    // player's freely-chosen starting portrait (or an earlier recruit,
+    // in a party this size shouldn't collide but why not check) is
+    // already wearing it -- see `pickAvailablePortrait`.
+    const portrait = pickAvailablePortrait(
+      ctx.party.members.map((member) => member.portrait),
+      spec.portrait,
+    );
+    ctx.party.addMember(createCharacterFromSpec({ ...spec, portrait }));
     this.recruitedName = spec.name;
     this.resolved = true;
     return `${this.line}\n${spec.name} joins your party!`;
