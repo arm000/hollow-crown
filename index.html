@@ -951,7 +951,14 @@
       /* Touch controls: mounted by TouchControls.ts, hidden by default so
          mouse-driven desktops don't see buttons they don't need. Shown for
          any device whose primary pointer is coarse and has no hover (i.e.
-         touch-primary), regardless of screen size. */
+         touch-primary), regardless of screen size -- *unless* `hidden` is
+         also set (`TouchControls.hide`, e.g. for the duration of a fight —
+         player report: the pads used to draw over the combat log). The
+         `:not([hidden])` here, not a bare `#touch-controls { display: block }`,
+         is what lets that JS-driven hide actually win over this media
+         query's own `display: block` -- same "an ID selector alone would
+         beat the browser's own [hidden] rule" gotcha #win-screen already
+         documents elsewhere in this file. */
       #touch-controls {
         position: fixed;
         inset: 0;
@@ -959,7 +966,7 @@
         display: none;
       }
       @media (hover: none) and (pointer: coarse) {
-        #touch-controls {
+        #touch-controls:not([hidden]) {
           display: block;
         }
         #hud .keyboard-hint {

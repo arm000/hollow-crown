@@ -2004,6 +2004,34 @@ true before shipping.
     stat point, unlocking a skill, opening the screen).
   - 453 tests passing (unchanged — `Game.ts`/`Hud.ts` are untested DOM
     glue per docs/11-testing-strategy.md).
+- ✅ Batch 17 — Hide the touch move/turn pads during combat (player
+  report: on mobile, "the controls draw over the combat log making it
+  hard to read"). `TouchControls` had zero mode-awareness — the pads
+  stayed fully visible at the bottom corners even mid-fight, the exact
+  screen region `#combat-ui`'s own bottom-pinned layout (`justify-content:
+  flex-end`) also uses for the log and action buttons. Offered as one
+  of four options (make the log's background more opaque instead;
+  move the log to the top during a fight; shrink/dim the pads rather
+  than hiding them) — this one chosen since move/turn genuinely do
+  nothing mid-combat (it's all tap-a-combat-button), so hiding them
+  loses no functionality and clears the whole region rather than just
+  relocating the clutter.
+  - `TouchControls` gained `show`/`hide` (`root.hidden`, the same
+    convention every other DOM-overlay class in this codebase already
+    uses) and now keeps a reference to its own root element instead of
+    a fire-and-forget local `const`.
+  - `index.html`'s coarse-pointer media query rule changed from a bare
+    `#touch-controls { display: block }` to `#touch-controls:not([hidden])`
+    — same "an ID selector alone would beat the browser's own `[hidden]`
+    rule" fix `#win-screen` already needed elsewhere in this file, just
+    inside a media query this time instead of at the top level.
+  - `Game.ts`: `startCombat` calls `hide`, `checkCombatEnd` calls
+    `show` unconditionally (harmless on a defeat too — `runEnded`
+    freezes input regardless, and the defeat screen covers everything
+    anyway). The `TouchControls` instance is now kept as a field
+    instead of being fire-and-forget.
+  - 453 tests passing (unchanged — `TouchControls`/`Game.ts` are
+    untested DOM glue).
 
 ---
 

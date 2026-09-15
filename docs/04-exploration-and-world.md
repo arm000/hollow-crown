@@ -42,6 +42,14 @@ strafe right, turn left, turn right), touch controls are a direct,
 - Touch controls are shown based on the device's input capability (coarse
   pointer / no hover), not screen size — a touch laptop and a phone both
   get them, a mouse-driven desktop doesn't clutter its screen with them.
+- Hidden for the duration of a fight (`TouchControls.hide`, called from
+  `Game.startCombat`/`checkCombatEnd`, docs/08-roadmap-phases.md Phase
+  7 — player report: on mobile, "the controls draw over the combat log
+  making it hard to read"). Move/turn don't do anything mid-combat —
+  it's all tap-a-combat-button — and the pads sat in the exact same
+  bottom-of-screen region the combat log/action row is also pinned to,
+  so hiding them (rather than, say, repositioning the log) loses
+  nothing functional.
 
 ## World turns
 

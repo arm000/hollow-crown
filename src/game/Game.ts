@@ -71,6 +71,7 @@ export class Game {
   private readonly clock = new THREE.Clock();
   private readonly world: WorldState;
   private readonly hud = new Hud();
+  private readonly touchControls: TouchControls;
   private readonly combatUI: CombatUI;
   private readonly inventoryUI: InventoryUI;
   private readonly bestiaryUI: BestiaryUI;
@@ -209,8 +210,7 @@ export class Game {
     this.markVisited(startPosition.x, startPosition.z);
     this.refreshMinimap();
 
-    // Mounts on-screen touch buttons as a side effect; no reference needed.
-    new TouchControls(this.input);
+    this.touchControls = new TouchControls(this.input);
     this.combatUI = new CombatUI((choice, itemId, skillId) => this.handleCombatAction(choice, itemId, skillId));
 
     // One shared set of cross-navigation callbacks, identical across
@@ -583,6 +583,11 @@ export class Game {
     this.combatEngine = new CombatEngine(this.world.party, monster, new RandomRng(), this.world.inventory);
     this.hud.showMessage(`${monster.name} attacks!`);
     this.audio.playEncounterStinger();
+    // Move/turn don't mean anything mid-fight -- freeing up the space
+    // they'd otherwise occupy right where the combat log/actions are
+    // also pinned (player report: on mobile, "the controls draw over
+    // the combat log making it hard to read").
+    this.touchControls.hide();
     this.combatUI.show();
     this.refreshCombatUI();
     this.checkCombatEnd();
@@ -915,6 +920,7 @@ export class Game {
     // everything else here, win, lose, or flee alike.
     const finalLog = this.combatEngine.log.slice(-14);
     this.combatUI.hide();
+    this.touchControls.show(); // harmless on a defeat too -- runEnded freezes input regardless, and the defeat screen covers everything anyway
     this.mode = "explore";
     this.input.clear(); // drop anything queued during combat -- see InputManager.clear()
     this.combatEngine = undefined;

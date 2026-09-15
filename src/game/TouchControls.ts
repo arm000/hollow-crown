@@ -22,19 +22,40 @@ const TURN_BUTTONS: ButtonSpec[] = [
 /**
  * On-screen buttons mirroring the keyboard action set, so the game is
  * fully playable by touch alone (see docs/04-exploration-and-world.md
- * "Input & touch controls"). Always mounted; whether they're actually
- * shown is left entirely to CSS (`@media (hover: none) and
- * (pointer: coarse)` in index.html) rather than JS device sniffing.
+ * "Input & touch controls"). Always mounted; whether a touch device
+ * shows them *at all* is left entirely to CSS (`@media (hover: none)
+ * and (pointer: coarse)` in index.html) rather than JS device sniffing.
+ *
+ * `show`/`hide` add a second, narrower condition on top of that: move
+ * and turn don't mean anything mid-fight (combat is entirely
+ * tap-a-combat-button), so `Game.ts` hides these for the duration of
+ * one (player report: on mobile, "the controls draw over the combat
+ * log making it hard to read" — `#combat-ui`'s own bottom-pinned
+ * layout put the log/action row in the exact same screen region these
+ * pads already occupied). The CSS media query above still gates
+ * whether a touch device shows them *outside* combat; `hidden` only
+ * ever narrows that further, never widens it back on for a
+ * mouse-driven desktop.
  */
 export class TouchControls {
+  private readonly root: HTMLElement;
+
   constructor(private readonly input: InputManager) {
-    const root = document.createElement("div");
-    root.id = "touch-controls";
-    root.append(
+    this.root = document.createElement("div");
+    this.root.id = "touch-controls";
+    this.root.append(
       this.buildPad("move-pad", MOVE_BUTTONS),
       this.buildPad("turn-pad", TURN_BUTTONS),
     );
-    document.body.appendChild(root);
+    document.body.appendChild(this.root);
+  }
+
+  show(): void {
+    this.root.hidden = false;
+  }
+
+  hide(): void {
+    this.root.hidden = true;
   }
 
   private buildPad(id: string, buttons: ButtonSpec[]): HTMLDivElement {
