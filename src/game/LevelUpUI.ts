@@ -1,5 +1,5 @@
 import { buildMenuNav, type MenuNavCallbacks } from "./MenuNav";
-import { STAT_DESCRIPTIONS, type Character, type CharacterStats } from "./party/Character";
+import { classLabel, STAT_DESCRIPTIONS, type Character, type CharacterStats } from "./party/Character";
 import type { Party } from "./party/Party";
 import { SKILLS } from "./party/Skills";
 
@@ -81,6 +81,7 @@ export class LevelUpUI {
     points.textContent = `${character.skillPoints} point${character.skillPoints === 1 ? "" : "s"}`;
     header.appendChild(points);
     card.appendChild(header);
+    card.appendChild(this.buildMetaRow(character));
 
     const statsHeading = document.createElement("div");
     statsHeading.className = "levelup-heading";
@@ -101,6 +102,26 @@ export class LevelUpUI {
     }
 
     return card;
+  }
+
+  /**
+   * Class and current HP/Mana (player request: "The level up screen
+   * should show each character's class and HP / Mana Points") — a
+   * point spent on Vitality or Focus changes these numbers right on
+   * this same screen (`Character.spendPointOnStat`'s max-HP/Mana
+   * nudge), so seeing them here, not just elsewhere in the HUD, is
+   * what actually lets a player judge the effect of that choice in
+   * context. Mana is omitted for a class with none (Warrior, Rogue) —
+   * `maxMana` for those is always 0 and always will be, so "0/0 Mana"
+   * would just be noise, not information.
+   */
+  private buildMetaRow(character: Character): HTMLElement {
+    const row = document.createElement("div");
+    row.className = "levelup-meta";
+    const parts = [classLabel(character.classId), `${character.hp}/${character.maxHp} HP`];
+    if (character.maxMana > 0) parts.push(`${character.mana}/${character.maxMana} Mana`);
+    row.textContent = parts.join(" — ");
+    return row;
   }
 
   private buildStatRow(character: Character, stat: keyof CharacterStats): HTMLElement {

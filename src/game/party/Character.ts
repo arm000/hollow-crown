@@ -9,6 +9,11 @@ export type ClassId = "warrior" | "rogue" | "mage" | "cleric";
 /** Every `ClassId`, for anything that needs to iterate all of them rather than hardcode the union — `PartyCreationUI`'s class picker, and `AssetManifest.test.ts`'s "every class has a linked portrait" check. */
 export const ALL_CLASS_IDS: ClassId[] = ["warrior", "rogue", "mage", "cleric"];
 
+/** A `ClassId` capitalized for display ("warrior" -> "Warrior") — the one place this formatting lives, shared by `PartyCreationUI` and `LevelUpUI` rather than each keeping its own copy of the same one-line transform. */
+export function classLabel(classId: ClassId): string {
+  return classId.charAt(0).toUpperCase() + classId.slice(1);
+}
+
 /** Front rank can be targeted by melee and can melee; back rank is safe from melee bar reach. */
 export type Rank = "front" | "back";
 

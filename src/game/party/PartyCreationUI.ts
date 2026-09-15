@@ -1,5 +1,6 @@
 import {
   ALL_CLASS_IDS,
+  classLabel,
   FOCUS_MANA_PER_POINT,
   STAT_DESCRIPTIONS,
   VITALITY_HP_PER_POINT,
@@ -376,8 +377,4 @@ export class PartyCreationUI {
     document.body.removeChild(this.root);
     this.onConfirm([finalSpec]);
   }
-}
-
-function classLabel(classId: ClassId): string {
-  return classId.charAt(0).toUpperCase() + classId.slice(1);
 }

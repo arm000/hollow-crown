@@ -1917,6 +1917,24 @@ true before shipping.
   of those same log lines — `CombatUI.statusEl` already shows it
   persistently, so repeating it on every hit would just be noise.
   443 tests passing (3 new).
+- ✅ Batch 14 — Class and HP/Mana on the Level Up screen (player
+  request: "The level up screen should show each character's class
+  and HP / Mana Points"). Previously the header showed only a name,
+  portrait, and level — a point spent on Vitality or Focus changes max
+  HP/Mana right then and there (`Character.spendPointOnStat`), but
+  nothing on the screen itself showed either number to judge that
+  effect against.
+  - `LevelUpUI.buildMetaRow` (new): a line under each character's
+    header reading `Warrior — 30/30 HP` or, for a class with mana,
+    `Mage — 14/14 HP — 18/20 Mana`. Mana is omitted entirely for a
+    class that never has any (Warrior, Rogue) — `maxMana` for those is
+    always 0, so "0/0 Mana" would be noise, not information.
+  - `Character.ts` gained `classLabel` (a `ClassId` capitalized for
+    display) — pulled out of `PartyCreationUI`'s own local copy of the
+    exact same one-line transform into one shared place, now that a
+    second screen needs it too.
+  - 445 tests passing (2 new — `classLabel` itself; `LevelUpUI` stays
+    untested DOM glue per docs/11-testing-strategy.md).
 
 ---
 

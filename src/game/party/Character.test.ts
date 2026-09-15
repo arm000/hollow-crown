@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Character, STAT_DESCRIPTIONS, type CharacterStats } from "./Character";
+import { ALL_CLASS_IDS, Character, classLabel, STAT_DESCRIPTIONS, type CharacterStats } from "./Character";
 
 const ALL_STATS: Array<keyof CharacterStats> = ["might", "grace", "vitality", "focus", "resolve"];
 
@@ -219,6 +219,19 @@ describe("Character", () => {
       const character = newCharacter();
       character.startCooldown("warrior-guard", 3);
       expect(character.isSkillReady("warrior-secondWind")).toBe(true);
+    });
+  });
+
+  describe("classLabel (shared by PartyCreationUI and LevelUpUI)", () => {
+    it("capitalizes the class id for display", () => {
+      expect(classLabel("warrior")).toBe("Warrior");
+      expect(classLabel("mage")).toBe("Mage");
+    });
+
+    it("produces a non-empty label for every class", () => {
+      for (const classId of ALL_CLASS_IDS) {
+        expect(classLabel(classId).length, classId).toBeGreaterThan(0);
+      }
     });
   });
 });
