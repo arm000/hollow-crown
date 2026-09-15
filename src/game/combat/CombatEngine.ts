@@ -395,7 +395,14 @@ export class CombatEngine {
         const dotDamage = combatant.statusEffects.tick();
         if (dotDamage > 0) {
           combatant.takeDamage(dotDamage);
-          this.log.push(`${combatant.name} takes ${dotDamage} damage from lingering wounds.`);
+          // The monster's own HP is already shown persistently
+          // elsewhere (CombatUI.statusEl), so the "X/Y HP left" note
+          // (player request: "list how much current HP they have
+          // left") is only worth repeating in the log for a party
+          // member -- the one place that number isn't already on
+          // screen at a glance mid-fight.
+          const hpNote = combatant.side === "party" ? ` — ${combatant.hp}/${combatant.maxHp} HP left` : "";
+          this.log.push(`${combatant.name} takes ${dotDamage} damage from lingering wounds${hpNote}.`);
         }
       }
       // Skill cooldowns tick the same round boundary status effects do
@@ -468,7 +475,13 @@ export class CombatEngine {
     const baseDamage = defended ? Math.ceil(action.damage / 2) : action.damage;
     const dealt = applyResistance(baseDamage, target.effectiveResistances, "physical");
     target.takeDamage(dealt);
-    this.log.push(`${target.name} takes ${dealt} damage${defended ? " (defended)" : ""}.`);
+    // Player request: "list how much current HP they have left" --
+    // `target` is always a party member here (the monster's own HP is
+    // already shown persistently in CombatUI.statusEl, not repeated
+    // per hit in the log).
+    this.log.push(
+      `${target.name} takes ${dealt} damage${defended ? " (defended)" : ""} — ${target.hp}/${target.maxHp} HP left.`,
+    );
 
     if (action.statusEffect) {
       target.statusEffects.apply(action.statusEffect);

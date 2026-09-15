@@ -159,6 +159,14 @@ encountered (win, lose, or flee all count), is visible from then on in
 the in-game Bestiary screen — so a repeat fight can be won on memory,
 not luck.
 
+Every log line where a party member takes damage — a monster's hit
+landing, or a DoT tick (Bleed/Poison) — names their current/max HP
+right in the line itself (player request: "list how much current HP
+they have left"), not just as a number elsewhere on screen. The
+monster's own HP isn't repeated the same way: `CombatUI.statusEl`
+already shows it persistently, so echoing it in every damage line
+would just be noise.
+
 ## Monster turns
 
 A monster's turn alternates a lighter hit with a **telegraphed** heavy

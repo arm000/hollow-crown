@@ -837,5 +837,62 @@ describe("CombatEngine", () => {
 
       expect(monster.hp).toBeLessThanOrEqual(hpBefore - 5);
     });
+
+    it("a DoT tick on the monster doesn't repeat its HP in the log -- CombatUI's status line already shows it persistently", () => {
+      const party = newParty();
+      const monster = newMonster({ maxHp: 9999 });
+      monster.statusEffects.apply({ type: "bleed", turnsRemaining: 1, tickDamage: 5 });
+      const hpBefore = monster.hp;
+
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 6 && monster.hp === hpBefore) {
+        if (engine.isPartyTurn) engine.submitAction("defend");
+        guard++;
+      }
+
+      const woundsLine = engine.log.find((line) => line.includes("lingering wounds"));
+      expect(woundsLine).toBeDefined();
+      expect(woundsLine).not.toContain("HP left"); // the monster's own hits landing on the party may add other "HP left" lines elsewhere in the log -- this checks the wounds line itself, specifically
+    });
+
+    it("a DoT tick on a party member lists their current HP -- player request: \"list how much current HP they have left\"", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      bram.statusEffects.apply({ type: "bleed", turnsRemaining: 1, tickDamage: 5 });
+      const party = new Party([bram]);
+      const monster = newMonster({ maxHp: 9999, might: 0 }); // might: 0 -- isolates the DoT's own HP change from the monster's own attack
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 6 && bram.hp === 30) {
+        if (engine.isPartyTurn) engine.submitAction("defend");
+        guard++;
+      }
+
+      expect(bram.hp).toBeLessThan(30);
+      expect(engine.log.some((line) => line.includes(`lingering wounds — ${bram.hp}/${bram.maxHp} HP left`))).toBe(
+        true,
+      );
+    });
+  });
+
+  describe("monster attacks list the target's remaining HP (player request: \"list how much current HP they have left\")", () => {
+    it("a landed hit's log line names the target's current/max HP", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const party = new Party([bram]);
+      const monster = newMonster({ maxHp: 9999 });
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 6 && bram.hp === 30) {
+        if (engine.isPartyTurn) engine.submitAction("defend");
+        guard++;
+      }
+
+      expect(bram.hp).toBeLessThan(30);
+      expect(engine.log.some((line) => line.includes(`takes`) && line.includes(`${bram.hp}/${bram.maxHp} HP left`))).toBe(
+        true,
+      );
+    });
   });
 });

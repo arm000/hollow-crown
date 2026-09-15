@@ -1907,6 +1907,16 @@ true before shipping.
   - 440 tests passing (7 new, all headless coverage of
     `GameLogic.useConsumable` — `InventoryUI`/`Game.ts` themselves stay
     untested DOM glue per docs/11-testing-strategy.md).
+- ✅ Batch 13 — Current HP in the combat log (player request: "In the
+  combat log when a character takes damage, list how much current HP
+  they have left"). Every log line where a party member takes damage —
+  a monster's hit landing (`runMonsterTurn`) or a DoT tick (`rollInitiative`'s
+  Bleed/Poison resolution) — now names their current/max HP right in
+  the line (`"... — 14/22 HP left."`), not just as a number elsewhere
+  on screen. Deliberately *not* added to the monster's own HP in either
+  of those same log lines — `CombatUI.statusEl` already shows it
+  persistently, so repeating it on every hit would just be noise.
+  443 tests passing (3 new).
 
 ---
 
