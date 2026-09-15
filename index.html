@@ -225,6 +225,27 @@
       #quick-menu button:active {
         background: rgba(216, 201, 163, 0.35);
       }
+      /* Player request: the Level Up button should highlight for new,
+         not-yet-seen points -- glows until the screen's actually been
+         opened (Hud.updateLevelUpButton/Game.levelUpNeedsAttention),
+         independent of the point count itself, which always shows
+         regardless (see that button's own textContent, set alongside
+         this class). */
+      #levelup-toggle.has-points {
+        border-color: #d8a24a;
+        background: rgba(216, 162, 74, 0.35);
+        box-shadow: 0 0 8px rgba(216, 162, 74, 0.7);
+        animation: levelup-glow 1.6s ease-in-out infinite;
+      }
+      @keyframes levelup-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 6px rgba(216, 162, 74, 0.55);
+        }
+        50% {
+          box-shadow: 0 0 12px rgba(216, 162, 74, 0.95);
+        }
+      }
       #win-screen {
         position: fixed;
         inset: 0;

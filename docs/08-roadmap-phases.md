@@ -1976,6 +1976,34 @@ true before shipping.
     to land on someone already healthy previously taught the player
     nothing about what the item is actually *for*.
   - 453 tests passing (8 new).
+- ✅ Batch 16 — The Level Up HUD button highlights for new points
+  (player request: "The Level Up button on the main interface should
+  highlight when there are new points to allocate. Then if the user
+  has opened the Level Up menu stop highlighting the button even if
+  they didn't spend the new points. It should always indicate the
+  number of unspent points in the button regardless if it's
+  highlighted"). Previously the always-visible `#levelup-toggle`
+  button was static text, no count, no state.
+  - `Hud.updateLevelUpButton(totalPoints, highlighted)` (new): sets the
+    button's text (`Level Up (3)`, or plain `Level Up` at 0) and a
+    `.has-points` CSS class independently — the count always reflects
+    `totalPoints` exactly regardless of `highlighted`, per the third
+    part of the request. `.has-points` (index.html) is a gently
+    pulsing gold glow.
+  - `Game.ts` gained `levelUpNeedsAttention`, the one piece of state
+    the highlight actually depends on: starts `true` (a loaded save
+    could already be sitting on points this session hasn't shown the
+    screen for), set `true` again the moment `checkCombatEnd`'s
+    victory branch sees `awardPartyXp` actually grant a level (`levelUps.length
+    > 0`), set `false` the instant `openLevelUp` runs — regardless of
+    whether anything actually gets spent once there, matching "stop
+    highlighting... even if they didn't spend the new points" exactly.
+    A new `refreshLevelUpButton` recomputes the count from
+    `party.members` and pushes both to `Hud`, called from every place
+    either input could change (initial load, a level-up, spending a
+    stat point, unlocking a skill, opening the screen).
+  - 453 tests passing (unchanged — `Game.ts`/`Hud.ts` are untested DOM
+    glue per docs/11-testing-strategy.md).
 
 ---
 

@@ -100,6 +100,18 @@ export class Game {
   private readonly screenFlash = new ScreenFlash();
   /** True once the run is over (win or defeat) — freezes input, per the win/defeat screens. */
   private runEnded = false;
+  /**
+   * Whether the always-visible "Level Up" button should glow (player
+   * request: highlight for new points, stop once the screen's been
+   * opened — even unspent — until the *next* level-up grants more).
+   * Starts `true`: a loaded save can already be sitting on unspent
+   * points this session has never shown the screen for, same as a
+   * fresh level-up would. Set `true` again in `checkCombatEnd`'s
+   * victory branch whenever `awardPartyXp` actually grants a level;
+   * set `false` in `openLevelUp`, regardless of what happens once
+   * there. `refreshLevelUpButton` is the only reader.
+   */
+  private levelUpNeedsAttention = true;
 
   /**
    * `partySpecs` defaults to the Phase 2 roster so anything that
@@ -191,6 +203,7 @@ export class Game {
     this.player.teleportTo(startPosition.x, startPosition.z, startPosition.facing);
     this.world = { player: this.player, inventory, party, worldClock, ...loaded };
     this.hud.updateParty(party.members);
+    this.refreshLevelUpButton();
     this.hud.updateLevelName(firstLevel.name);
     this.hud.showMessage(firstLevel.introMessage);
     this.markVisited(startPosition.x, startPosition.z);
@@ -814,6 +827,11 @@ export class Game {
     this.hideAllMenus();
     this.levelUpUI.show();
     this.refreshLevelUpUI();
+    // The whole point of opening this screen at all -- the HUD button
+    // stops glowing the instant it's seen, whether or not anything
+    // actually gets spent once inside (player request).
+    this.levelUpNeedsAttention = false;
+    this.refreshLevelUpButton();
   }
 
   /** Closes straight back to exploration, not back to the inventory screen — same convention as `closeBestiary`/`closeOptions`. */
@@ -827,15 +845,23 @@ export class Game {
     this.levelUpUI.render(this.world.party);
   }
 
+  /** The always-visible "Level Up" HUD button's count/glow (player request) — reads current `this.levelUpNeedsAttention` state, which every caller that could change it (`openLevelUp`, a level-up in `checkCombatEnd`) sets first. */
+  private refreshLevelUpButton(): void {
+    const totalPoints = this.world.party.members.reduce((sum, member) => sum + member.skillPoints, 0);
+    this.hud.updateLevelUpButton(totalPoints, this.levelUpNeedsAttention);
+  }
+
   private handleSpendStat(characterName: string, stat: keyof CharacterStats): void {
     spendStatPoint(this.world, characterName, stat);
     this.refreshLevelUpUI();
+    this.refreshLevelUpButton(); // the count shown there should always be exact, screen open or not (player request)
   }
 
   private handleUnlockSkill(characterName: string, skillId: string): void {
     const result = unlockSkill(this.world, characterName, skillId);
     if (result.message) this.hud.showMessage(result.message);
     this.refreshLevelUpUI();
+    this.refreshLevelUpButton();
   }
 
   private handleEquip(characterName: string, itemId: string): void {
@@ -910,6 +936,11 @@ export class Game {
         [`${monster.name} is defeated! The party gains ${monster.xpReward} XP.`, ...levelUps].join(" "),
       );
       this.hud.updateParty(this.world.party.members); // a level-up can change HP/Mana shown there
+      // New points to allocate -- the HUD button should glow again,
+      // even if it was already dismissed for an earlier, still-unspent
+      // batch (player request).
+      if (levelUps.length > 0) this.levelUpNeedsAttention = true;
+      this.refreshLevelUpButton();
       this.audio.playVictoryStinger();
     } else if (result === "fled") {
       // Otherwise the still-alerted, still-adjacent monster would just

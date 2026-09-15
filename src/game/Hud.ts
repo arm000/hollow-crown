@@ -78,6 +78,25 @@ export class Hud {
       .join("\n");
   }
 
+  /**
+   * The always-visible "Level Up" quick-menu button (player request:
+   * "should highlight when there are new points to allocate... stop
+   * highlighting... even if they didn't spend the new points... always
+   * indicate the number of unspent points... regardless if it's
+   * highlighted"). The count and the highlight are independent: the
+   * count (`Level Up (3)`) always reflects `totalPoints` exactly,
+   * whether or not `highlighted` is set, so leaving points unspent
+   * after visiting the screen still shows how many are left — only the
+   * `.has-points` class (a glow, see index.html) is gated on
+   * `highlighted`, which `Game.ts` owns: true again the moment a new
+   * level-up grants points, false the moment the player opens the
+   * screen, regardless of whether they actually spend anything there.
+   */
+  updateLevelUpButton(totalPoints: number, highlighted: boolean): void {
+    this.levelUpToggleEl.textContent = totalPoints > 0 ? `Level Up (${totalPoints})` : "Level Up";
+    this.levelUpToggleEl.classList.toggle("has-points", highlighted && totalPoints > 0);
+  }
+
   showWinScreen(): void {
     this.winScreenEpilogueEl.textContent = WIN_EPILOGUE;
     this.winScreenEl.hidden = false;
