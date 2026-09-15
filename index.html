@@ -511,7 +511,8 @@
         font-style: italic;
       }
       .inventory-item-btn,
-      .inventory-slot-btn {
+      .inventory-slot-btn,
+      .inventory-use-btn {
         display: block;
         width: 100%;
         text-align: left;
@@ -535,6 +536,15 @@
       }
       .inventory-slot-btn.match {
         border-color: rgba(140, 200, 140, 0.8);
+      }
+      /* Shown per character card only while a cure consumable is
+         selected (InventoryUI.buildPartySection) -- a distinct green
+         tint, same family as .inventory-slot-btn.match above, so it
+         reads as "tap here to actually do the thing" rather than
+         blending into the plain gear-slot rows underneath it. */
+      .inventory-use-btn {
+        border-color: rgba(140, 200, 140, 0.6);
+        background: rgba(140, 200, 140, 0.15);
       }
       #inventory-party {
         display: flex;

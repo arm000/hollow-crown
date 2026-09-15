@@ -223,7 +223,13 @@ lands in the shared inventory unequipped — tap the always-visible
 choose who wears what, swapping gear freely between party members.
 Consumables are usable mid-fight via the Item action, curing a status or
 dealing resistance-adjusted damage — a party without a Mage can still
-answer a Fire-weak monster by throwing the flask. Defeating a monster or
+answer a Fire-weak monster by throwing the flask. A cure item (Antidote,
+Bandages, Smelling Salts) is also usable straight from the Inventory
+screen while exploring — select it, then tap whichever party member
+should drink it — so a status picked up in a fight the party won or
+fled doesn't have to wait for the next fight to shake off; a damage
+item stays combat-only, since there's nothing to throw it at otherwise.
+Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
 character up (a class-flavored flat HP/Mana bump plus skill points to
 spend by hand, shown in the HUD and inventory screen as `Lv2`, etc.).

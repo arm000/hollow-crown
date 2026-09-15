@@ -1882,6 +1882,31 @@ true before shipping.
     rendering glue per docs/11-testing-strategy.md; `CombatEngine.log`
     itself, the data being surfaced, was already covered everywhere
     else it's used).
+- ✅ Batch 12 — Use consumables outside combat (player request: "I need
+  to be able to use consumables outside of combat"). Previously the
+  only way to reach a cure item's effect was the Item action mid-fight
+  — a party that won or fled a fight still carrying Bleed/Poison/Fear
+  had no way to shake it off before whatever came next.
+  - `GameLogic.useConsumable(world, characterName, itemId)` (new): the
+    same cure logic `CombatEngine.resolveItem`'s cure branch already
+    has (consume, identify, remove the status, report whether there
+    was anything to cure), reachable from exploration instead of a
+    fight. A damage consumable (Holy Water, Oil Flask) is refused with
+    a message rather than silently doing nothing — there's no monster
+    to throw it at outside combat. Works on a downed party member too:
+    curing a status isn't reviving anyone, but there's no reason a
+    status should be un-curable just because its owner is at 0 HP.
+  - `InventoryUI`: a cure consumable is now selectable from `Carried`
+    the same way a piece of gear is; selecting one shows a "Use
+    [item]" button on every character card (a damage consumable, or a
+    plain key item, stays reference-only, same as before). Unlike
+    mid-combat use — which always targets whoever uses it, per
+    docs/12-combat-system.md's "no ally-targeting for cure items yet"
+    — this path *does* let the player choose the target, since there's
+    no single "acting character" to default to outside a turn.
+  - 440 tests passing (7 new, all headless coverage of
+    `GameLogic.useConsumable` — `InventoryUI`/`Game.ts` themselves stay
+    untested DOM glue per docs/11-testing-strategy.md).
 
 ---
 

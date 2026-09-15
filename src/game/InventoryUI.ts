@@ -1,3 +1,4 @@
+import { CONSUMABLE_ITEMS } from "./combat/Consumable";
 import { EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
 import type { Character } from "./party/Character";
 import type { Party } from "./party/Party";
@@ -16,10 +17,22 @@ const SLOTS: Array<{ slot: EquipmentSlot; label: string }> = [
  * "UI layer" — plain DOM, same family as `CombatUI`): view what the
  * party carries and, per docs/08-roadmap-phases.md Phase 3 batch 4,
  * actually choose who wears what rather than a level auto-equipping it.
- * Owns no equip rules itself -- taps a carried item then a slot, and
- * hands both to `onEquip`/`onUnequip`, which call `GameLogic.ts`'s
- * `equipItem`/`unequipItem`. Never shows an item's mechanical effect,
- * only its name, per docs/06-items-and-equipment.md#discovery-not-explanation.
+ * Owns no equip/use rules itself -- taps a carried item then either a
+ * slot or a character, and hands the pair to `onEquip`/`onUnequip`/
+ * `onUseConsumable`, which call `GameLogic.ts`'s `equipItem`/
+ * `unequipItem`/`useConsumable`. Never shows an item's mechanical
+ * effect, only its name, per docs/06-items-and-equipment.md#discovery-not-explanation.
+ *
+ * A cure consumable (Antidote, Bandages, Smelling Salts) is selectable
+ * from `Carried` the same way a piece of gear is (docs/08-roadmap-phases.md
+ * Phase 7, on a player request: "I need to be able to use consumables
+ * outside of combat" — previously the only way to cure a status was
+ * the Item action mid-fight, so a party that won or fled one still
+ * carrying Bleed/Poison/Fear had no way to shake it off first). A
+ * damage consumable (Holy Water, Oil Flask) stays reference-only here
+ * — there's no monster to throw it at outside combat, and
+ * `GameLogic.useConsumable` refuses one anyway if this ever changes
+ * and something slips through.
  */
 export class InventoryUI {
   private readonly root: HTMLElement;
@@ -34,6 +47,7 @@ export class InventoryUI {
   constructor(
     private readonly onEquip: (characterName: string, itemId: string) => void,
     private readonly onUnequip: (characterName: string, slot: EquipmentSlot) => void,
+    private readonly onUseConsumable: (characterName: string, itemId: string) => void,
     nav: MenuNavCallbacks,
   ) {
     this.root = document.createElement("div");
@@ -114,23 +128,27 @@ export class InventoryUI {
 
     for (const { id, name, count } of entries) {
       const gearItem = EQUIPMENT_ITEMS[id];
+      const consumable = CONSUMABLE_ITEMS[id];
+      const usableConsumable = consumable?.effect.kind === "cure" ? consumable : undefined;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "inventory-item-btn";
       button.textContent = count > 1 ? `${name} x${count}` : name;
 
-      if (!gearItem) {
-        // A key item or consumable -- there's nothing to equip it into,
-        // so it's shown for reference only, same idea as the HUD's
-        // "Carrying:" line, not a dead-looking disabled control.
-        button.classList.add("not-equippable");
-      } else {
+      if (gearItem || usableConsumable) {
         if (id === this.selectedItemId) button.classList.add("selected");
         button.addEventListener("pointerdown", (event) => {
           event.preventDefault();
           this.selectedItemId = this.selectedItemId === id ? undefined : id;
           this.rerender();
         });
+      } else {
+        // A key item, or a damage consumable with nothing to throw it
+        // at outside combat -- there's nothing to equip or use it on
+        // right now, so it's shown for reference only, same idea as
+        // the HUD's "Carrying:" line, not a dead-looking disabled
+        // control.
+        button.classList.add("not-equippable");
       }
       section.appendChild(button);
     }
@@ -141,7 +159,11 @@ export class InventoryUI {
     const section = document.createElement("div");
     section.id = "inventory-party";
 
-    const selectedItem = this.selectedItemId ? EQUIPMENT_ITEMS[this.selectedItemId] : undefined;
+    const selectedEquipment = this.selectedItemId ? EQUIPMENT_ITEMS[this.selectedItemId] : undefined;
+    const selectedConsumable =
+      this.selectedItemId && CONSUMABLE_ITEMS[this.selectedItemId]?.effect.kind === "cure"
+        ? CONSUMABLE_ITEMS[this.selectedItemId]
+        : undefined;
 
     for (const character of party.members) {
       const card = document.createElement("div");
@@ -152,13 +174,26 @@ export class InventoryUI {
       name.textContent = `${character.portrait} ${character.name} (Lv${character.level})${character.isDown ? " — down" : ""}`;
       card.appendChild(name);
 
+      if (selectedConsumable) {
+        const useButton = document.createElement("button");
+        useButton.type = "button";
+        useButton.className = "inventory-use-btn";
+        useButton.textContent = `Use ${selectedConsumable.name}`;
+        useButton.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          this.onUseConsumable(character.name, selectedConsumable.id);
+          this.selectedItemId = undefined;
+        });
+        card.appendChild(useButton);
+      }
+
       for (const { slot, label } of SLOTS) {
         const worn = character.equippedIn(slot);
         const row = document.createElement("button");
         row.type = "button";
         row.className = "inventory-slot-btn";
         row.textContent = worn ? `${label}: ${worn.name}` : `${label}: (empty)`;
-        if (selectedItem && selectedItem.slot === slot) row.classList.add("match");
+        if (selectedEquipment && selectedEquipment.slot === slot) row.classList.add("match");
         row.addEventListener("pointerdown", (event) => {
           event.preventDefault();
           this.handleSlotClick(character, slot, worn !== undefined);
@@ -173,7 +208,7 @@ export class InventoryUI {
   private handleSlotClick(character: Character, slot: EquipmentSlot, hasItem: boolean): void {
     if (this.selectedItemId) {
       const item = EQUIPMENT_ITEMS[this.selectedItemId];
-      if (item.slot !== slot) return; // wrong slot for the selected item -- ignore the tap
+      if (!item || item.slot !== slot) return; // no equipment selected (a consumable is, instead), or the wrong slot for it -- ignore the tap either way
       this.onEquip(character.name, this.selectedItemId);
       this.selectedItemId = undefined;
       return;

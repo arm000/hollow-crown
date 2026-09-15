@@ -1,3 +1,4 @@
+import { CONSUMABLE_ITEMS } from "./combat/Consumable";
 import type { DungeonMap } from "./DungeonMap";
 import type { InteractableManager } from "./interactables/InteractableManager";
 import type { Inventory } from "./Inventory";
@@ -226,6 +227,44 @@ export function unequipItem(world: WorldState, characterName: string, slot: Equi
 
   world.inventory.add(item.id, item.name);
   return { success: true, message: `${character.name} stows ${item.name}.` };
+}
+
+/**
+ * Uses a cure consumable on `characterName` from exploration, outside
+ * any fight (player request: "I need to be able to use consumables
+ * outside of combat") — previously the only way to reach
+ * `CombatEngine.resolveItem`'s cure branch was the Item action
+ * mid-fight, so a party that won (or fled) a fight still carrying
+ * Bleed/Poison/Fear had no way to shake it off before finding, or
+ * fighting, whatever comes next. Damage consumables (Holy Water, Oil
+ * Flask) are refused here rather than silently doing nothing — there's
+ * no monster to throw them at outside combat, and `InventoryUI` never
+ * offers them as usable in the first place, so reaching this branch at
+ * all means a stale/malformed call, not a real player action.
+ *
+ * Unlike `equipItem`/`unequipItem`, a party member *can* be targeted
+ * even while down (`isDown`) — curing Fear/Bleed/Poison doesn't revive
+ * anyone, but there's no reason a status effect should be un-curable
+ * just because its owner is currently at 0 HP.
+ */
+export function useConsumable(world: WorldState, characterName: string, itemId: string): EquipOutcome {
+  const item = CONSUMABLE_ITEMS[itemId];
+  const character = world.party.members.find((member) => member.name === characterName);
+  if (!item || !character) return { success: false };
+  if (item.effect.kind !== "cure") {
+    return { success: false, message: `${item.name} can only be used in a fight.` };
+  }
+  if (!world.inventory.consume(itemId)) return { success: false };
+  world.inventory.identify(itemId); // using it is the identification moment, same as CombatEngine.resolveItem
+
+  const hadEffect = character.statusEffects.has(item.effect.status);
+  character.statusEffects.remove(item.effect.status);
+  return {
+    success: true,
+    message: hadEffect
+      ? `${character.name} uses ${item.name} — the ${item.effect.status} fades.`
+      : `${character.name} uses ${item.name}, but there was nothing to cure.`,
+  };
 }
 
 /** Spends one of `characterName`'s unspent skill points (docs/08-roadmap-phases.md Phase 7) to raise `stat` by 1. `success: false` for an unknown character or no points to spend — `LevelUpUI` only offers this when `skillPoints > 0`, so the latter is a defensive guard, not an expected path. */

@@ -32,9 +32,12 @@ later content phases, not v1 — see
   (Warrior-friendly), trading defense for Grace penalties.
 - **Consumables** — healing/mana potions, food (only relevant if a
   hunger system is ever added — not currently planned), thrown
-  utility items (usable as a combat Item action). This is also where a
-  chunk of pillar 3's "every monster is a lesson" gets its answer for
-  parties without the right class on hand — see
+  utility items (usable as a combat Item action; a cure item is also
+  usable from the Inventory screen while exploring, docs/08-roadmap-phases.md
+  Phase 7 — a damage item stays combat-only, since there's no monster
+  to throw it at otherwise). This is also where a chunk of pillar 3's
+  "every monster is a lesson" gets its answer for parties without the
+  right class on hand — see
   [Combat-countering consumables](#combat-countering-consumables) below.
 - **Key items** — quest-critical, non-droppable, non-sellable (level
   keys, crown fragments, plot tokens).

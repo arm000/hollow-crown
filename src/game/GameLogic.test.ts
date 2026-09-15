@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { DungeonMap, STARTING_LEVEL } from "./DungeonMap";
-import { equipItem, facingToward, resolveStartPosition, spendStatPoint, unequipItem, unlockSkill, type WorldState } from "./GameLogic";
+import {
+  equipItem,
+  facingToward,
+  resolveStartPosition,
+  spendStatPoint,
+  unequipItem,
+  unlockSkill,
+  useConsumable,
+  type WorldState,
+} from "./GameLogic";
 import { InteractableManager } from "./interactables/InteractableManager";
 import { Inventory } from "./Inventory";
 import { LEVELS } from "./levels";
@@ -122,6 +131,85 @@ describe("unequipItem", () => {
     expect(result.success).toBe(false);
     expect(result.message).toContain("won't come off");
     expect(world.party.members[0].equippedIn("accessory")?.id).toBe("ambition-ring"); // still worn
+  });
+});
+
+describe("useConsumable (docs/08-roadmap-phases.md Phase 7, on a player request to use consumables outside combat)", () => {
+  it("cures the named status and consumes the item", () => {
+    const world = newWorld();
+    world.inventory.add("antidote", "an Antidote");
+    world.party.members[0].statusEffects.apply({ type: "poison", turnsRemaining: 3, tickDamage: 2 });
+
+    const result = useConsumable(world, "Bram", "antidote");
+
+    expect(result.success).toBe(true);
+    expect(world.party.members[0].statusEffects.has("poison")).toBe(false);
+    expect(world.inventory.has("antidote")).toBe(false);
+  });
+
+  it("identifies the item on use, same as CombatEngine.resolveItem", () => {
+    const world = newWorld();
+    world.inventory.add("antidote", "an Antidote");
+    expect(world.inventory.entries()[0].name).toBe("a cloudy green vial"); // unidentified before use
+
+    useConsumable(world, "Bram", "antidote");
+
+    expect(world.inventory.entries()[0]).toBeUndefined(); // consumed entirely -- only had the one
+    world.inventory.add("antidote", "an Antidote"); // a second, to check identification actually stuck
+    expect(world.inventory.entries()[0].name).toBe("an Antidote");
+  });
+
+  it("still succeeds, with a different message, if there was nothing to cure", () => {
+    const world = newWorld();
+    world.inventory.add("antidote", "an Antidote");
+
+    const result = useConsumable(world, "Bram", "antidote");
+
+    expect(result.success).toBe(true);
+    expect(result.message).toContain("nothing to cure");
+    expect(world.inventory.has("antidote")).toBe(false); // still used up
+  });
+
+  it("refuses a damage consumable -- there's no monster to throw it at outside combat", () => {
+    const world = newWorld();
+    world.inventory.add("oil-flask", "an Oil Flask");
+
+    const result = useConsumable(world, "Bram", "oil-flask");
+
+    expect(result.success).toBe(false);
+    expect(result.message).toContain("only be used in a fight");
+    expect(world.inventory.has("oil-flask")).toBe(true); // never consumed
+  });
+
+  it("fails without consuming anything if the item isn't actually held", () => {
+    const world = newWorld();
+
+    const result = useConsumable(world, "Bram", "antidote");
+
+    expect(result.success).toBe(false);
+  });
+
+  it("fails if the named character isn't in the party", () => {
+    const world = newWorld();
+    world.inventory.add("antidote", "an Antidote");
+
+    const result = useConsumable(world, "Nobody", "antidote");
+
+    expect(result.success).toBe(false);
+    expect(world.inventory.has("antidote")).toBe(true); // untouched
+  });
+
+  it("can cure a downed party member -- a status effect isn't tied to being conscious", () => {
+    const world = newWorld();
+    world.inventory.add("antidote", "an Antidote");
+    world.party.members[0].takeDamage(999);
+    world.party.members[0].statusEffects.apply({ type: "poison", turnsRemaining: 3, tickDamage: 2 });
+
+    const result = useConsumable(world, "Bram", "antidote");
+
+    expect(result.success).toBe(true);
+    expect(world.party.members[0].statusEffects.has("poison")).toBe(false);
+    expect(world.party.members[0].isDown).toBe(true); // still down -- curing isn't reviving
   });
 });
 

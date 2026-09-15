@@ -88,8 +88,14 @@ effect from the user) or a **damage** item (a flat amount of one damage
 type, thrown at the monster, resistance-adjusted the same as a spell).
 Using an item is also the moment it gets identified — an unidentified
 "bubbling amber vial" becomes "an Oil Flask" in every list the instant
-it's used once, win or lose. There's no ally-targeting for cure items
-yet: they always target whoever uses them.
+it's used once, win or lose. A cure item can also be used from the
+Inventory screen while exploring (`GameLogic.useConsumable`, docs/08-roadmap-phases.md
+Phase 7) — *unlike* mid-combat use, that path does let the player pick
+which party member it targets (select the item, then tap a character),
+since there's no single "the acting character" to default to outside a
+turn; the in-combat Item action itself is unchanged and still always
+targets whoever uses it. A damage item stays combat-only either way —
+there's no monster to throw it at outside a fight.
 
 | Item | Effect |
 | --- | --- |

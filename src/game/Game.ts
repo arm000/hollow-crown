@@ -16,6 +16,7 @@ import {
   spendStatPoint,
   unequipItem,
   unlockSkill,
+  useConsumable,
   type WorldState,
 } from "./GameLogic";
 import { Hud } from "./Hud";
@@ -216,6 +217,7 @@ export class Game {
     this.inventoryUI = new InventoryUI(
       (characterName, itemId) => this.handleEquip(characterName, itemId),
       (characterName, slot) => this.handleUnequip(characterName, slot),
+      (characterName, itemId) => this.handleUseConsumable(characterName, itemId),
       menuNav,
     );
     this.bestiaryUI = new BestiaryUI(menuNav);
@@ -849,6 +851,15 @@ export class Game {
 
   private handleUnequip(characterName: string, slot: EquipmentSlot): void {
     const result = unequipItem(this.world, characterName, slot);
+    if (result.message) this.hud.showMessage(result.message);
+    this.refreshInventoryUI();
+    this.hud.updateParty(this.world.party.members);
+    this.hud.updateInventory(this.world.inventory.list());
+  }
+
+  /** `InventoryUI`'s "Use [item]" button (docs/08-roadmap-phases.md Phase 7, on a player request to use consumables outside combat) — same pattern as `handleEquip`/`handleUnequip`: call the pure `GameLogic` function, surface its message, refresh every screen that could now be stale. */
+  private handleUseConsumable(characterName: string, itemId: string): void {
+    const result = useConsumable(this.world, characterName, itemId);
     if (result.message) this.hud.showMessage(result.message);
     this.refreshInventoryUI();
     this.hud.updateParty(this.world.party.members);
