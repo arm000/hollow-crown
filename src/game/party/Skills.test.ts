@@ -48,4 +48,36 @@ describe("Skills data integrity (docs/08-roadmap-phases.md Phase 7)", () => {
       expect(defaultSkillId(classId)).toBe(SKILLS[classId][0].id);
     }
   });
+
+  describe("cooldowns (docs/08-roadmap-phases.md Phase 7 Batch 10)", () => {
+    it("every skill's cooldown is at least 2 -- 1 ticks away before a character could ever attempt a repeat, making it indistinguishable from 0", () => {
+      for (const classId of CLASS_IDS) {
+        for (const skill of SKILLS[classId]) {
+          expect(skill.cooldown, `${classId} ${skill.id}`).toBeGreaterThanOrEqual(2);
+        }
+      }
+    });
+
+    it("every tier-1 skill sits at 2 rounds, every tier-2 skill at 3, regardless of mana cost", () => {
+      for (const classId of CLASS_IDS) {
+        const skills = SKILLS[classId];
+        for (const tier1 of skills.slice(0, 2)) {
+          expect(tier1.cooldown, `${classId} ${tier1.id}`).toBe(2);
+        }
+        for (const tier2 of skills.slice(2)) {
+          expect(tier2.cooldown, `${classId} ${tier2.id}`).toBe(3);
+        }
+      }
+    });
+
+    it("both sides of every fork share the same cooldown, so the choice is about the effect, not recharge speed", () => {
+      for (const classId of CLASS_IDS) {
+        for (const skill of SKILLS[classId]) {
+          if (!skill.exclusiveWith) continue;
+          const sibling = SKILLS[classId].find((candidate) => candidate.id === skill.exclusiveWith)!;
+          expect(skill.cooldown, `${classId} ${skill.id} vs. ${sibling.id}`).toBe(sibling.cooldown);
+        }
+      }
+    });
+  });
 });

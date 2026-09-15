@@ -183,6 +183,10 @@ export class CombatEngine {
       this.log.push(`${actor.name} hasn't learned ${skill.name} yet.`);
       return;
     }
+    if (!actor.isSkillReady(skill.id)) {
+      this.log.push(`${actor.name} can't use ${skill.name} again yet (${actor.cooldownRemaining(skill.id)} turn${actor.cooldownRemaining(skill.id) === 1 ? "" : "s"} left).`);
+      return;
+    }
     if (actor.statusEffects.has("silence")) {
       this.log.push(`${actor.name} tries to use ${skill.name}, but the silence swallows it!`);
       return;
@@ -192,6 +196,7 @@ export class CombatEngine {
       return;
     }
     actor.mana -= skill.manaCost;
+    actor.startCooldown(skill.id, skill.cooldown);
 
     switch (skill.id) {
       case "warrior-guard": {
@@ -393,6 +398,11 @@ export class CombatEngine {
           this.log.push(`${combatant.name} takes ${dotDamage} damage from lingering wounds.`);
         }
       }
+      // Skill cooldowns tick the same round boundary status effects do
+      // -- monsters have none of their own (only `Character` tracks
+      // skill cooldowns), so this is its own loop over party members
+      // rather than folded into the combatants loop above.
+      for (const member of this.party.livingMembers()) member.tickCooldowns();
       if (this.monster.isDown) {
         this.result = "victory";
         return;

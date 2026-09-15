@@ -5,6 +5,37 @@ export interface SkillDef {
   classId: ClassId;
   name: string;
   manaCost: number;
+  /**
+   * Turns before this skill can be used again, starting the moment
+   * it's cast (docs/08-roadmap-phases.md Phase 7 Batch 10, on a player
+   * report: "Power Strike is strictly better than a regular attack, so
+   * why wouldn't a Warrior use it every turn?" — true of every 0-mana
+   * skill with no built-in drawback, not just that one). Ticks down by
+   * one every round (`Character.tickCooldowns`, called from the same
+   * `CombatEngine.rollInitiative(true)` round boundary that already
+   * ticks status-effect durations — the same "turns" unit Bleed/Fear/
+   * Stun already use).
+   *
+   * **Must be at least 2.** A character only ever gets one action per
+   * round, so their own next possible attempt at a skill is already
+   * the *next* round — a cooldown of 1 ticks away during that exact
+   * transition and is therefore indistinguishable from 0, a no-op
+   * that was actually shipped once here before a test caught it. 2 is
+   * the smallest value with any real effect at all ("sit out one full
+   * round"); every tier-1 skill uses exactly that, every tier-2 skill
+   * uses 3 ("sit out two"), regardless of mana cost — a mana-gated
+   * skill still gets a real cooldown, not 0, since mana alone doesn't
+   * stop a Mage with a full bar from casting Firebolt several rounds
+   * running; the mana cost and the cooldown are two independent
+   * throttles, not a reason to skip one of them. `CombatEngine.resolveAbility`
+   * checks the cooldown before mana, so `Character.knowsSkill` staying
+   * true (nothing here ever *forgets* a skill) is the only thing that
+   * doesn't gate a skill. There is deliberately no cooldown on the base
+   * Attack/Defend/Flee actions — with everything else on a timer, those
+   * stay the reliable fallback while a skill recharges, instead of
+   * every turn boiling down to "spam the one best skill."
+   */
+  cooldown: number;
   /** What the skill is *for* — see the counterplay principle in docs/03-party-and-characters.md#classes. */
   description: string;
   /**
@@ -98,6 +129,14 @@ export const SKILL_POINTS_PER_LEVEL = 3;
  * reasoning `classes.ts` (this file's Phase 3 predecessor) always
  * gave — dispatched by `id`, not `classId`, since a class can know more
  * than one now.
+ *
+ * Every skill also has a `cooldown` (Batch 10) — see that field's own
+ * doc comment for why, including why it's never 1. Both sides of a
+ * fork always share the same cooldown, so choosing between them is
+ * purely about the effect, never about which one recharges faster:
+ * every tier-1 skill sits at 2 rounds, every tier-2 skill at 3,
+ * mana-gated or not — mana cost and cooldown are separate throttles
+ * layered on top of each other, not substitutes for one another.
  */
 export const SKILLS: Record<ClassId, SkillDef[]> = {
   warrior: [
@@ -106,6 +145,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "warrior",
       name: "Guard",
       manaCost: 0,
+      cooldown: 2,
       description: "Draws the enemy's next attack and lessens it.",
       unlockCost: 0,
       exclusiveWith: "warrior-powerStrike",
@@ -115,6 +155,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "warrior",
       name: "Power Strike",
       manaCost: 0,
+      cooldown: 2,
       description: "A harder physical hit than a plain Attack, with no other effect.",
       unlockCost: 0,
       exclusiveWith: "warrior-guard",
@@ -124,6 +165,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "warrior",
       name: "Second Wind",
       manaCost: 0,
+      cooldown: 3,
       description: "Restores a third of max HP to yourself.",
       unlockCost: 8,
       exclusiveWith: "warrior-rallyCry",
@@ -133,6 +175,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "warrior",
       name: "Rally Cry",
       manaCost: 0,
+      cooldown: 3,
       description: "Heals the whole party a little and clears Fear from everyone.",
       unlockCost: 8,
       exclusiveWith: "warrior-secondWind",
@@ -144,6 +187,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "rogue",
       name: "Precision Strike",
       manaCost: 0,
+      cooldown: 2,
       description: "Ignores the target's resistance and causes Bleed.",
       unlockCost: 0,
       exclusiveWith: "rogue-feint",
@@ -153,6 +197,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "rogue",
       name: "Feint",
       manaCost: 0,
+      cooldown: 2,
       description: "Creates an opening and immediately attempts to flee, at much better than usual odds.",
       unlockCost: 0,
       exclusiveWith: "rogue-precisionStrike",
@@ -162,6 +207,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "rogue",
       name: "Smoke Bomb",
       manaCost: 0,
+      cooldown: 3,
       description: "Guarantees the party escapes this fight.",
       unlockCost: 8,
       exclusiveWith: "rogue-ambush",
@@ -171,6 +217,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "rogue",
       name: "Ambush",
       manaCost: 0,
+      cooldown: 3,
       description: "A much harder hit, but only while the target hasn't taken any damage yet.",
       unlockCost: 8,
       exclusiveWith: "rogue-smokeBomb",
@@ -182,6 +229,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "mage",
       name: "Firebolt",
       manaCost: 6,
+      cooldown: 2,
       description: "Fire damage based on Focus.",
       unlockCost: 0,
       exclusiveWith: "mage-arcaneBarrier",
@@ -191,6 +239,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "mage",
       name: "Arcane Barrier",
       manaCost: 4,
+      cooldown: 2,
       description: "Shields yourself from your next hit, without spending a later turn.",
       unlockCost: 0,
       exclusiveWith: "mage-firebolt",
@@ -200,6 +249,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "mage",
       name: "Frost Lance",
       manaCost: 8,
+      cooldown: 3,
       description: "Modest damage, but stuns the enemy for its next turn.",
       unlockCost: 8,
       exclusiveWith: "mage-cinderNova",
@@ -209,6 +259,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "mage",
       name: "Cinder Nova",
       manaCost: 10,
+      cooldown: 3,
       description: "A much bigger fire hit than Firebolt, with no other effect.",
       unlockCost: 8,
       exclusiveWith: "mage-frostLance",
@@ -220,6 +271,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "cleric",
       name: "Cleanse",
       manaCost: 5,
+      cooldown: 2,
       description: "Removes all negative status effects from an ally.",
       unlockCost: 0,
       exclusiveWith: "cleric-radiantSpark",
@@ -229,6 +281,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "cleric",
       name: "Radiant Spark",
       manaCost: 4,
+      cooldown: 2,
       description: "A modest burst of Holy damage based on Focus, weaker than Smite.",
       unlockCost: 0,
       exclusiveWith: "cleric-cleanse",
@@ -238,6 +291,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "cleric",
       name: "Smite",
       manaCost: 6,
+      cooldown: 3,
       description: "Holy damage based on Focus.",
       unlockCost: 8,
       exclusiveWith: "cleric-ward",
@@ -247,6 +301,7 @@ export const SKILLS: Record<ClassId, SkillDef[]> = {
       classId: "cleric",
       name: "Ward",
       manaCost: 4,
+      cooldown: 3,
       description: "Shields an ally from their next hit, without spending their turn.",
       unlockCost: 8,
       exclusiveWith: "cleric-smite",

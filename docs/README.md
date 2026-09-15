@@ -18,7 +18,7 @@ independently as we build.
 | [10-visual-style-guide.md](10-visual-style-guide.md) | Pixel art direction: rendering pipeline, asset specs, palette, typography |
 | [11-testing-strategy.md](11-testing-strategy.md) | How every feature is verified without a human — the automated counterpart to the roadmap's playability gates |
 | [12-combat-system.md](12-combat-system.md) | **As-built reference.** Every combat formula/number exactly as implemented — companion to 05, not a replacement for it |
-| [13-skill-system.md](13-skill-system.md) | **As-built reference.** Skill points, the two-alternative-per-class build fork, and every class's exact skills |
+| [13-skill-system.md](13-skill-system.md) | **As-built reference.** Skill points, the two-alternative-per-class build fork, every class's exact skills, and cooldowns |
 | [14-asset-inventory.md](14-asset-inventory.md) | The art/VFX asset manifest system — single source of truth for what's needed, what's still procedural, and the tests that keep it honest |
 
 ## Working rule

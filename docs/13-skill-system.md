@@ -6,9 +6,11 @@ build is chosen. Companion to [12-combat-system.md](12-combat-system.md)
 (the general combat rules every skill plays inside of) and
 [03-party-and-characters.md](03-party-and-characters.md#leveling) (the
 original design ask this system fulfills). Code lives in
-`party/Skills.ts` (data), `party/Character.ts` (a character's own
-points/known-skill state), `GameLogic.ts` (spending rules), and
-`combat/CombatEngine.ts` (what each skill actually does in a fight).
+`party/Skills.ts` (data, cooldowns included), `party/Character.ts` (a
+character's own points/known-skill/cooldown state), `GameLogic.ts`
+(spending rules), and `combat/CombatEngine.ts` (what each skill
+actually does in a fight, and where its cooldown is checked and
+started).
 
 ## The shape of the system
 
@@ -71,12 +73,12 @@ started leaning the same direction.
 
 ### Warrior — tank / melee damage
 
-| | Tier | Cost | Effect |
-| --- | --- | --- | --- |
-| **Guard** | 1 (creation) | — | Draws the monster's next attack onto the Warrior, and halves it. |
-| **Power Strike** | 1 (creation) | — | `round(might × 1.5) + 1d6` Physical damage — no other effect. |
-| **Second Wind** | 2 (level-up) | 8 pts | Heals the Warrior for a third of their own max HP. |
-| **Rally Cry** | 2 (level-up) | 8 pts | Heals the *whole living party* 6 HP each, and clears Fear from everyone. |
+| | Tier | Cost | CD | Effect |
+| --- | --- | --- | --- | --- |
+| **Guard** | 1 (creation) | — | 2 | Draws the monster's next attack onto the Warrior, and halves it. |
+| **Power Strike** | 1 (creation) | — | 2 | `round(might × 1.5) + 1d6` Physical damage — no other effect. |
+| **Second Wind** | 2 (level-up) | 8 pts | 3 | Heals the Warrior for a third of their own max HP. |
+| **Rally Cry** | 2 (level-up) | 8 pts | 3 | Heals the *whole living party* 6 HP each, and clears Fear from everyone. |
 
 **Tier-1 fork:** defense (Guard — halves the next hit and pulls it onto
 the Warrior specifically, protecting whoever's behind them) vs. offense
@@ -89,12 +91,12 @@ other than Cleanse/Smelling Salts that clears Fear).
 
 ### Rogue — skirmisher / utility
 
-| | Tier | Cost | Effect |
-| --- | --- | --- | --- |
-| **Precision Strike** | 1 (creation) | — | `might + 1d4 + 2` damage, ignoring the monster's resistance entirely, and applies Bleed. |
-| **Feint** | 1 (creation) | — | Immediately attempts to flee at `30 + resolve×5 + 25`% — a real chance, not a guarantee. |
-| **Smoke Bomb** | 2 (level-up) | 8 pts | Guarantees the party escapes this fight immediately — no roll. |
-| **Ambush** | 2 (level-up) | 8 pts | `might + 1d6` damage, **+8 more** if the monster hasn't taken any damage yet this fight. |
+| | Tier | Cost | CD | Effect |
+| --- | --- | --- | --- | --- |
+| **Precision Strike** | 1 (creation) | — | 2 | `might + 1d4 + 2` damage, ignoring the monster's resistance entirely, and applies Bleed. |
+| **Feint** | 1 (creation) | — | 2 | Immediately attempts to flee at `30 + resolve×5 + 25`% — a real chance, not a guarantee. |
+| **Smoke Bomb** | 2 (level-up) | 8 pts | 3 | Guarantees the party escapes this fight immediately — no roll. |
+| **Ambush** | 2 (level-up) | 8 pts | 3 | `might + 1d6` damage, **+8 more** if the monster hasn't taken any damage yet this fight. |
 
 **Tier-1 fork:** offense (Precision Strike — resistance-piercing plus
 Bleed) vs. a taste of the escape identity Smoke Bomb later perfects
@@ -109,12 +111,12 @@ coin-flip-plus at creation, a certainty once it's paid for.
 
 ### Mage — offense caster
 
-| | Tier | Cost | Effect |
-| --- | --- | --- | --- |
-| **Firebolt** | 1 (creation) | 6 mana | `focus + 1d6` Fire damage. |
-| **Arcane Barrier** | 1 (creation) | 4 mana | Shields the Mage's *own* next hit (halved, like Defend) — without spending a later turn on it. |
-| **Frost Lance** | 2 (level-up) | 8 pts, 8 mana | `ceil(focus / 2) + 1d3` Physical damage, and **stuns the monster** for its next turn. |
-| **Cinder Nova** | 2 (level-up) | 8 pts, 10 mana | `round(focus × 1.5) + 1d8` Fire damage — no other effect. |
+| | Tier | Cost | CD | Effect |
+| --- | --- | --- | --- | --- |
+| **Firebolt** | 1 (creation) | 6 mana | 2 | `focus + 1d6` Fire damage. |
+| **Arcane Barrier** | 1 (creation) | 4 mana | 2 | Shields the Mage's *own* next hit (halved, like Defend) — without spending a later turn on it. |
+| **Frost Lance** | 2 (level-up) | 8 pts, 8 mana | 3 | `ceil(focus / 2) + 1d3` Physical damage, and **stuns the monster** for its next turn. |
+| **Cinder Nova** | 2 (level-up) | 8 pts, 10 mana | 3 | `round(focus × 1.5) + 1d8` Fire damage — no other effect. |
 
 **Tier-1 fork:** offense (Firebolt) vs. self-defense (Arcane Barrier —
 the same halving mechanism Cleric's Ward uses on an ally, reused here
@@ -127,12 +129,12 @@ at a real mana-cost premium, with nothing but the damage number).
 
 ### Cleric — support caster
 
-| | Tier | Cost | Effect |
-| --- | --- | --- | --- |
-| **Cleanse** | 1 (creation) | 5 mana | Removes every negative status effect from whichever living ally has the most active. |
-| **Radiant Spark** | 1 (creation) | 4 mana | `ceil(focus / 2) + 1d4` Holy damage — weaker than Smite. |
-| **Smite** | 2 (level-up) | 8 pts, 6 mana | `focus + 1d4` Holy damage. |
-| **Ward** | 2 (level-up) | 8 pts, 4 mana | Shields whichever living ally is proportionally lowest on HP from their next hit (halved, like Defend) — without spending *their* turn on it. |
+| | Tier | Cost | CD | Effect |
+| --- | --- | --- | --- | --- |
+| **Cleanse** | 1 (creation) | 5 mana | 2 | Removes every negative status effect from whichever living ally has the most active. |
+| **Radiant Spark** | 1 (creation) | 4 mana | 2 | `ceil(focus / 2) + 1d4` Holy damage — weaker than Smite. |
+| **Smite** | 2 (level-up) | 8 pts, 6 mana | 3 | `focus + 1d4` Holy damage. |
+| **Ward** | 2 (level-up) | 8 pts, 4 mana | 3 | Shields whichever living ally is proportionally lowest on HP from their next hit (halved, like Defend) — without spending *their* turn on it. |
 
 **Tier-1 fork:** utility (Cleanse — no damage at all) vs. a first, if
 modest, taste of offense (Radiant Spark — deliberately weaker than
@@ -143,6 +145,34 @@ weakness alongside the single-use Holy Water pickup) vs. protection
 (Ward — keeps a squishy ally like the Mage alive through a telegraphed
 heavy hit without costing that ally a turn of their own, which Defend
 can't do since it only ever protects whoever casts it).
+
+## Cooldowns
+
+Every skill (`CD` in the tables above) has to sit out a number of
+rounds after it's cast before it can be used again — tier 1 sits out 2
+rounds, tier 2 sits out 3, mana-gated or not (see
+[the history below](#why-this-exists) for why a mana cost alone wasn't
+enough). Both sides of every fork share the same cooldown, so a build
+choice is always about the *effect*, never about which option recharges
+faster.
+
+Ticks down by one at the start of every round (the same round boundary
+Bleed/Fear/Stun durations already use), regardless of whether its owner
+actually acted that round — there's no way to "save up" cooldown
+reduction by Defending instead. Attempting a skill that's still
+recharging fails outright (the turn is still consumed, same as trying
+an unaffordable spell) and the combat log says how many rounds are
+left. There is deliberately no cooldown on Attack/Defend/Flee: with
+every skill on a timer, those three stay the reliable fallback while
+one recharges, instead of every fight boiling down to "spam the one
+best skill" — which is exactly what prompted this system (see below).
+
+Cooldowns aren't reset between fights, or by a save/reload — a skill
+cast right before a fight ends still shows time left on it at the start
+of the next one, and (docs/11-testing-strategy.md's usual "not chased"
+scope for save-scumming) simply resetting via reload is an accepted
+gap, not a tracked bug, the same stance v1 already takes on saves
+elsewhere.
 
 ## Why this exists
 
@@ -172,6 +202,20 @@ the class's already-fixed signature move, every class needed a *second*
 tier-1 option to choose against — the tier-1 fork this doc's tables
 show today, built the same "everything answers something specific" way
 the tier-2 fork was, rather than as four interchangeable reskins.
+
+That second tier-1 option is what exposed the next gap: a player
+pointed directly at Power Strike — "strictly better than a regular
+attack, so why wouldn't a Warrior use it every turn?" — and the same
+was quietly true of Precision Strike since Phase 3, and really of any
+0-mana skill with no built-in drawback at all. Cooldowns are the
+answer, applied to every skill uniformly rather than patched onto just
+the offenders, so the fix reads as a real combat mechanic instead of a
+one-off nerf. One implementation trap worth naming since it actually
+shipped once here before a test caught it: a cooldown of exactly 1 has
+*no effect at all* in a turn-based engine where each character only
+acts once per round — the character's own next possible attempt is
+already next round, and the cooldown ticks away during that exact
+transition. 2 is the smallest cooldown that does anything.
 
 ## What doesn't scale with anything
 

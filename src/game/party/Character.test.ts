@@ -172,4 +172,53 @@ describe("Character", () => {
       }
     });
   });
+
+  describe("skill cooldowns (docs/08-roadmap-phases.md Phase 7 Batch 10)", () => {
+    it("a skill is ready by default, with nothing on cooldown yet", () => {
+      const character = newCharacter();
+      expect(character.isSkillReady("warrior-guard")).toBe(true);
+      expect(character.cooldownRemaining("warrior-guard")).toBe(0);
+    });
+
+    it("startCooldown makes a skill unready for exactly that many rounds", () => {
+      const character = newCharacter();
+      character.startCooldown("warrior-guard", 2);
+      expect(character.isSkillReady("warrior-guard")).toBe(false);
+      expect(character.cooldownRemaining("warrior-guard")).toBe(2);
+    });
+
+    it("tickCooldowns counts down by one, and a skill is ready again once it reaches zero", () => {
+      const character = newCharacter();
+      character.startCooldown("warrior-guard", 2);
+
+      character.tickCooldowns();
+      expect(character.isSkillReady("warrior-guard")).toBe(false);
+      expect(character.cooldownRemaining("warrior-guard")).toBe(1);
+
+      character.tickCooldowns();
+      expect(character.isSkillReady("warrior-guard")).toBe(true);
+      expect(character.cooldownRemaining("warrior-guard")).toBe(0);
+    });
+
+    it("ticking never goes negative, even past zero", () => {
+      const character = newCharacter();
+      character.startCooldown("warrior-guard", 1);
+      character.tickCooldowns();
+      character.tickCooldowns();
+      character.tickCooldowns();
+      expect(character.cooldownRemaining("warrior-guard")).toBe(0);
+    });
+
+    it("startCooldown with 0 (or fewer) turns is a no-op, not a stale zero entry", () => {
+      const character = newCharacter();
+      character.startCooldown("warrior-guard", 0);
+      expect(character.isSkillReady("warrior-guard")).toBe(true);
+    });
+
+    it("cooldowns are tracked per skill, independently", () => {
+      const character = newCharacter();
+      character.startCooldown("warrior-guard", 3);
+      expect(character.isSkillReady("warrior-secondWind")).toBe(true);
+    });
+  });
 });

@@ -223,17 +223,28 @@ describe("CombatEngine", () => {
     it("Warrior's Guard makes the monster's next attack target Bram, not a random front-rank pick", () => {
       // Grace 20 guarantees Bram wins initiative over both Ysolde (max roll 8+6=14) and the
       // monster (max roll 3+6=9), so his Guard is always active before the first monster attack.
+      // Bounded to exactly one round (each acts once), not several -- since Batch 10, Guard has
+      // a cooldown, so re-casting it every round can no longer be assumed; this test only ever
+      // claims what a *single* successful cast does, not that it can be kept up indefinitely.
       const warrior = new Character("Bram", "warrior", "front", { might: 8, grace: 20, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
       const rogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
       const party = new Party([warrior, rogue]);
       const monster = newMonster({ maxHp: 9999 });
       const engine = new CombatEngine(party, monster, new SeededRng(6));
 
+      let warriorActed = false;
+      let rogueActed = false;
       let guard = 0;
-      while (engine.result === "ongoing" && guard < 8) {
+      while (engine.result === "ongoing" && !(warriorActed && rogueActed) && guard < 4) {
         if (engine.isPartyTurn) {
           const actor = engine.currentActor as Character;
-          engine.submitAction(actor === warrior ? "ability" : "defend");
+          if (actor === warrior) {
+            engine.submitAction("ability");
+            warriorActed = true;
+          } else {
+            engine.submitAction("defend");
+            rogueActed = true;
+          }
         }
         guard++;
       }
@@ -286,6 +297,60 @@ describe("CombatEngine", () => {
 
       expect(monster.hp).toBe(9999); // nothing happened -- Second Wind isn't known yet, so it never even ran
       expect(engine.log.some((line) => line.includes("hasn't learned"))).toBe(true);
+    });
+
+    describe("cooldowns (docs/08-roadmap-phases.md Phase 7 Batch 10)", () => {
+      it("a skill goes on cooldown the instant it resolves, refusing an immediate repeat", () => {
+        const warrior = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+        const party = new Party([warrior]);
+        const monster = newMonster({ maxHp: 9999 });
+        const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+        expect(warrior.isSkillReady("warrior-guard")).toBe(true);
+        if (engine.isPartyTurn) engine.submitAction("ability"); // Guard -- Bram's default tier-1 skill
+        expect(warrior.isSkillReady("warrior-guard")).toBe(false);
+
+        const dealtBefore = 9999 - monster.hp;
+        if (engine.isPartyTurn) engine.submitAction("ability"); // same skill, still on cooldown
+
+        expect(9999 - monster.hp).toBe(dealtBefore); // second attempt did nothing at all
+        expect(engine.log.some((line) => line.includes("can't use") && line.includes("yet"))).toBe(true);
+      });
+
+      it("doesn't spend mana on a refused, still-on-cooldown attempt", () => {
+        const mage = new Character("Corvin", "mage", "back", { might: 2, grace: 20, vitality: 5, focus: 9, resolve: 4 }, 14, 20);
+        const party = new Party([mage]);
+        const monster = newMonster({ maxHp: 9999 });
+        const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+        if (engine.isPartyTurn) engine.submitAction("ability"); // Firebolt, 6 mana
+        const manaAfterFirstCast = mage.mana;
+        expect(manaAfterFirstCast).toBe(14); // 20 - 6
+
+        if (engine.isPartyTurn) engine.submitAction("ability"); // still on cooldown
+
+        expect(mage.mana).toBe(manaAfterFirstCast); // unchanged -- refused before the mana deduction
+      });
+
+      it("becomes usable again once its cooldown has fully ticked down", () => {
+        // A solo party means each submitAction call here already runs
+        // a full round (the actor's own turn, then the monster's,
+        // auto-resolved within that same call) before control returns
+        // -- so by the time the *second* call returns, Guard's 2-round
+        // cooldown (Skills.ts) has already ticked all the way down:
+        // started at 2 when cast, 1 by the end of that same call (the
+        // round it was cast in ending), and 0 by the end of the next.
+        const warrior = new Character("Bram", "warrior", "front", { might: 8, grace: 20, vitality: 30, focus: 1, resolve: 6 }, 60, 0);
+        const party = new Party([warrior]);
+        const monster = newMonster({ maxHp: 9999, might: 1 });
+        const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+        if (engine.isPartyTurn) engine.submitAction("ability"); // Guard, starts a 2-round cooldown
+        expect(warrior.isSkillReady("warrior-guard")).toBe(false);
+
+        if (engine.isPartyTurn) engine.submitAction("defend"); // cooldown finishes ticking down during this round
+        expect(warrior.isSkillReady("warrior-guard")).toBe(true);
+      });
     });
   });
 

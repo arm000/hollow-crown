@@ -144,12 +144,19 @@ export class CombatUI {
     const known = new Set(actor.listKnownSkillIds());
     for (const skill of SKILLS[actor.classId]) {
       if (!known.has(skill.id)) continue;
+      const onCooldown = !actor.isSkillReady(skill.id);
       const button = document.createElement("button");
       button.type = "button";
       button.className = "combat-action-btn combat-skill-btn";
-      button.textContent = skill.manaCost > 0 ? `${skill.name} (${skill.manaCost} MP)` : skill.name;
-      button.title = skill.description;
-      button.disabled = actor.mana < skill.manaCost;
+      button.textContent = onCooldown
+        ? `${skill.name} (${actor.cooldownRemaining(skill.id)}↻)`
+        : skill.manaCost > 0
+          ? `${skill.name} (${skill.manaCost} MP)`
+          : skill.name;
+      button.title = onCooldown
+        ? `${skill.description} -- recharging, ${actor.cooldownRemaining(skill.id)} more turn${actor.cooldownRemaining(skill.id) === 1 ? "" : "s"}.`
+        : skill.description;
+      button.disabled = onCooldown || actor.mana < skill.manaCost;
       button.addEventListener("pointerdown", (event) => {
         event.preventDefault();
         if (button.disabled) return;

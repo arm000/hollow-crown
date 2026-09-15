@@ -141,7 +141,7 @@ source of truth for every real art/VFX asset the game will need once it
 moves off today's procedural placeholders — every skill, monster,
 class, and item is cross-checked against it by a test, so a new one
 shipping with no art entry fails loudly instead of quietly falling
-through the cracks. Most recently, character creation shrank from four
+through the cracks. Character creation shrank from four
 slots to one: the run now starts with a single player-built character
 (name, class, color-swatch portrait), and the other three classic
 roster members (Bram/Ysolde/Corvin/Maren, minus whichever class was
@@ -151,15 +151,23 @@ every time so there's no accept/decline choice to make of it, growing
 the party from 1 to 4 by level 4's boss fight if every offer is taken.
 Which companion shows up where isn't hardcoded per level; it's resolved
 live against whichever class the player started as, so the same three
-level spawns work correctly no matter what was picked at creation. Most
-recently, that same creation screen gained the "full point-buy
-attribute creation" its own docs used to flag as a stretch goal (a
-small one): 5 bonus attribute points to freely allocate on top of the
-chosen class's base stats — the exact +1-per-point mechanic the
-level-up screen already uses, so anything left unspent just carries
-over as ordinary skill points for that first level-up instead of being
-lost — plus the new tier-1 skill fork above, picked right there rather
-than defaulted. Playable now: a one-time party-creation screen (name
+level spawns work correctly no matter what was picked at creation. That
+same creation screen gained the "full point-buy attribute creation" its
+own docs used to flag as a stretch goal (a small one): 5 bonus
+attribute points to freely allocate on top of the chosen class's base
+stats — the exact +1-per-point mechanic the level-up screen already
+uses, so anything left unspent just carries over as ordinary skill
+points for that first level-up instead of being lost — plus the new
+tier-1 skill fork above, picked right there rather than defaulted, with
+tooltips on every stat and skill in both that screen and Level Up
+explaining what each one actually does. Most recently: every skill —
+tier-1 and tier-2, mana-gated or not — now has a cooldown (2 rounds for
+tier 1, 3 for tier 2), so a skill that used to be strictly better than
+a plain Attack with nothing to weigh against it (Power Strike, say) is
+no longer just the obvious pick every single turn; Attack itself still
+has no cooldown at all, staying the reliable fallback while something
+recharges. A skill still cooling down shows exactly how many turns are
+left, right on its button. Playable now: a one-time party-creation screen (name
 your character, pick a class, allocate a few bonus attribute points, choose
 a starting skill, and pick a color-swatch portrait — placeholder art,
 real pixel art is still ahead), then grid movement (keyboard or touch)

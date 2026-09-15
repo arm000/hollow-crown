@@ -62,8 +62,8 @@ the player) picks exactly one of:
 
 | Action | What it does |
 | --- | --- |
-| **Attack** | `effectiveStats.might + 1d4` Physical damage, resistance-adjusted. Always available, no cost. |
-| **Ability** | Casts one of the character's known skills — see [13-skill-system.md](13-skill-system.md) for every skill's exact effect and cost. |
+| **Attack** | `effectiveStats.might + 1d4` Physical damage, resistance-adjusted. Always available, no cost, no cooldown — the reliable fallback while a skill is recharging. |
+| **Ability** | Casts one of the character's known skills — see [13-skill-system.md](13-skill-system.md) for every skill's exact effect, cost, and cooldown. |
 | **Item** | Uses a consumable from the shared party inventory (see [Items in combat](#items-in-combat) below). |
 | **Defend** | Halves the damage of the *next* hit this character takes, until their own next turn. No cost, always available. |
 | **Flee** | `30 + effectiveStats.resolve × 5` percent chance to end the fight immediately. A failed attempt still consumes the turn. Some classes have a skill that guarantees this instead of rolling it (see the skill doc). |

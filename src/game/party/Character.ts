@@ -78,6 +78,19 @@ export class Character {
   skillPoints = 0;
   /** Every skill id this character can currently use in combat — starts with just the class's default (see the constructor), grows only through `unlockSkill`. A `Set` rather than a fixed pair since nothing here assumes exactly two will ever exist. */
   private readonly knownSkillIds: Set<string>;
+  /**
+   * Rounds left before a skill (keyed by id) can be used again
+   * (docs/08-roadmap-phases.md Phase 7 Batch 10) — absent or <= 0
+   * means ready. Only ever holds skills this character actually knows;
+   * `startCooldown`/`tickCooldowns` are the only writers. Not
+   * round-tripped by `SaveGame.ts`, same "no scumming prevention
+   * chased" acceptance the rest of v1 already applies elsewhere —
+   * saving mid-combat isn't possible anyway (see `Game.ts`'s menu
+   * guards), so any cooldown a save could catch mid-decay is already
+   * between fights, and resetting it there is a minor, accepted gap,
+   * not a silent bug.
+   */
+  private readonly skillCooldowns = new Map<string, number>();
 
   constructor(
     public readonly name: string,
@@ -233,5 +246,27 @@ export class Character {
   restoreKnownSkillIds(skillIds: Iterable<string>): void {
     this.knownSkillIds.clear();
     for (const id of skillIds) this.knownSkillIds.add(id);
+  }
+
+  /** Rounds left before `skillId` is usable again -- 0 means ready right now. Never negative, so a caller can put this straight into a "N turns left" message without an extra clamp. */
+  cooldownRemaining(skillId: string): number {
+    return Math.max(0, this.skillCooldowns.get(skillId) ?? 0);
+  }
+
+  isSkillReady(skillId: string): boolean {
+    return this.cooldownRemaining(skillId) <= 0;
+  }
+
+  /** Puts `skillId` on cooldown for `turns` rounds -- called by `CombatEngine.resolveAbility` the instant a skill actually resolves, never on a refused attempt. A `turns` of 0 (there are none today, but nothing stops a future skill from having one) is simply a no-op rather than leaving a stale 0 entry sitting in the map. */
+  startCooldown(skillId: string, turns: number): void {
+    if (turns > 0) this.skillCooldowns.set(skillId, turns);
+  }
+
+  /** Decrements every active cooldown by one round, dropping any that reach zero -- called once per round for every living party member, the same round boundary `StatusEffectSet.tick()` already uses (`CombatEngine.rollInitiative(true)`), so a skill's cooldown counts in the exact same "turns" unit Bleed/Fear/Stun durations already do. */
+  tickCooldowns(): void {
+    for (const [skillId, remaining] of this.skillCooldowns) {
+      if (remaining <= 1) this.skillCooldowns.delete(skillId);
+      else this.skillCooldowns.set(skillId, remaining - 1);
+    }
   }
 }

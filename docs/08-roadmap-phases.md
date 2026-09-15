@@ -1785,6 +1785,57 @@ true before shipping.
   - 421 tests passing (unchanged — `PartyCreationUI` has no test file,
     untested DOM glue per docs/11-testing-strategy.md, and the
     exported constants' values didn't change, just their visibility).
+- ✅ Batch 10 — Skill cooldowns (player report: "Skills should have a
+  cooldown. For example Power Strike is strictly better than a regular
+  attack, so why wouldn't a Warrior use it every turn?" — true of
+  every 0-mana skill with no built-in drawback, not just that one, and
+  really of Precision Strike since Phase 3). Scoped by a follow-up
+  answer: every skill gets a cooldown, not just the free offense ones
+  that most obviously outclass Attack.
+  - `Skills.ts`: every `SkillDef` gained a `cooldown` (rounds before
+    reuse). Both sides of a fork always share the same value, so a
+    build choice stays about the effect, never about recharge speed —
+    every tier-1 skill sits at 2 rounds, every tier-2 skill at 3,
+    mana-gated or not (mana cost and cooldown are separate throttles,
+    not substitutes for one another).
+  - `Character.ts` gained `skillCooldowns` (a `Map<skillId, roundsLeft>`)
+    and four methods: `cooldownRemaining`/`isSkillReady` (read),
+    `startCooldown` (write, called only by `CombatEngine` the instant a
+    skill actually resolves), and `tickCooldowns` (decrements every
+    active entry by one, dropping any that reach zero). Not
+    round-tripped by `SaveGame.ts` — same "no scumming prevention
+    chased" acceptance v1 already applies elsewhere, and saving
+    mid-combat isn't possible anyway.
+  - `CombatEngine.resolveAbility` checks `isSkillReady` right after the
+    known-skill check (before silence/mana), refusing with a "can't
+    use X again yet (N turns left)" log line and spending nothing if
+    it fails; `startCooldown` fires right after the mana deduction, so
+    only a skill that actually resolves ever starts recharging.
+    `rollInitiative(true)` — the same round boundary that already
+    ticks status-effect durations — now also calls `tickCooldowns` on
+    every living party member.
+  - A real implementation trap surfaced during testing, not just
+    design: a cooldown of exactly 1 has **no effect at all** in this
+    turn-based engine. A character only ever acts once per round, so
+    their own next possible attempt at a skill is already the *next*
+    round — and a cooldown of 1 ticks down to 0 during that exact
+    round transition, before the character could ever attempt a
+    repeat. Four skills shipped with `cooldown: 1` initially (the
+    mana-gated tier-1 caster skills) and a test written to prove the
+    mechanic caught it immediately — corrected to 2, the smallest
+    value that does anything, and `Skills.test.ts` now asserts every
+    skill is at least 2 directly so this can't silently regress.
+  - `CombatUI.renderSkills`: a skill still on cooldown shows its
+    remaining turns right on the button (`Name (N↻)` instead of its
+    mana cost) and in its tooltip, and is disabled the same way an
+    unaffordable skill already was.
+  - `CombatEngine.test.ts`'s existing Guard test had to change, not
+    just gain new tests alongside it: it previously re-cast Guard every
+    round across a whole fight to prove the monster always retargeted
+    onto the Warrior, which is no longer true now that Guard has a
+    cooldown — narrowed to proving what a *single* successful cast
+    does, which is still exactly true.
+  - 433 tests passing.
 
 ---
 
