@@ -345,10 +345,15 @@ export class CombatEngine {
     if (item.effect.kind === "cure") {
       const hadEffect = actor.statusEffects.has(item.effect.status);
       actor.statusEffects.remove(item.effect.status);
+      // Always names the status, "nothing to cure" outcome included --
+      // player request: an item's real properties should be learnable
+      // "from then on" once used, and a use that happens to land on
+      // someone without the status would otherwise never actually say
+      // what the item is *for*.
       this.log.push(
         hadEffect
           ? `${actor.name} uses ${item.name} — the ${item.effect.status} fades.`
-          : `${actor.name} uses ${item.name}, but there was nothing to cure.`,
+          : `${actor.name} uses ${item.name}, but there's no ${item.effect.status} to cure.`,
       );
     } else {
       const damage = applyResistance(item.effect.amount, this.monster.resistances, item.effect.damageType);

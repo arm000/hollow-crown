@@ -734,6 +734,18 @@ describe("CombatEngine", () => {
       expect(bram.statusEffects.has("poison")).toBe(false);
     });
 
+    it("names what a cure item treats even when there was nothing to cure (player request: an item's properties should be learnable from its use)", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      const party = new Party([bram]);
+      const inventory = new Inventory();
+      inventory.add("antidote", "an Antidote", 1);
+      const engine = new CombatEngine(party, newMonster({ maxHp: 9999 }), new SeededRng(1), inventory);
+
+      if (engine.isPartyTurn) engine.submitAction("item", "antidote");
+
+      expect(engine.log.some((line) => line.includes("no poison to cure"))).toBe(true);
+    });
+
     it("using an item identifies it, so an unidentified consumable's inventory listing reveals its true name from then on", () => {
       const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
       const party = new Party([bram]);
@@ -746,6 +758,9 @@ describe("CombatEngine", () => {
       if (engine.isPartyTurn) engine.submitAction("item", "oil-flask");
 
       expect(inventory.entries()[0].name).toBe("an Oil Flask"); // identified by use, even with one still held
+      // Same moment InventoryUI starts showing this item's description
+      // as a tooltip (player request: learnable "from then on").
+      expect(inventory.isIdentified("oil-flask")).toBe(true);
     });
 
     it("using an item the party doesn't have does nothing and doesn't throw", () => {

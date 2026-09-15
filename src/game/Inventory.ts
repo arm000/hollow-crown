@@ -59,6 +59,11 @@ export class Inventory {
     this.identified.add(itemId);
   }
 
+  /** Whether `itemId` has ever actually been used (docs/08-roadmap-phases.md Phase 7, on a player request that an item's real properties become knowable "from then on") — `InventoryUI` reads this to decide whether a carried consumable gets a tooltip describing its effect yet. Always false for anything never `identify`d, equipment/key items included, same as the mystery-name substitution itself. */
+  isIdentified(itemId: string): boolean {
+    return this.identified.has(itemId);
+  }
+
   /** Display names in collection order (with a "xN" suffix once count > 1), for the placeholder HUD list. */
   list(): string[] {
     return this.entries().map(({ name, count }) => (count > 1 ? `${name} x${count}` : name));

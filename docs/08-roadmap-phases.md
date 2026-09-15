@@ -1948,6 +1948,34 @@ true before shipping.
     second screen needs it too.
   - 445 tests passing (2 new — `classLabel` itself; `LevelUpUI` stays
     untested DOM glue per docs/11-testing-strategy.md).
+- ✅ Batch 15 — Learn an item's properties from using it (player
+  request: "When an items properties have been activated in combat the
+  player should learn more about what it does. It should print in the
+  combat log the effect it had and from then on it when you hover over
+  it in inventory a tooltip should describe it's properties"). The
+  combat log already stated a use's concrete outcome (exact damage
+  dealt, or which status faded) — the two real gaps were a "nothing to
+  cure" use never naming *what* it would have cured, and no tooltip
+  anywhere once an item's effect actually was known.
+  - `ConsumableItem` gained `description` (`Consumable.ts`) — the
+    mechanical-effect text, deliberately never shown before an item is
+    identified, per docs/06-items-and-equipment.md#discovery-not-explanation
+    (updated to carve out this exact case: the principle governs
+    *ahead-of-time* explanation, not repeating what a use already
+    revealed once).
+  - `Inventory.isIdentified(itemId)` (new): the query half of the
+    existing `identify` write, so `InventoryUI` doesn't need its own
+    copy of that state.
+  - `InventoryUI.buildCarriedSection`: a carried consumable gets
+    `title = description` once `isIdentified` — a damage item too
+    (Holy Water, Oil Flask), even though it's not *usable* from this
+    screen, since it's still something the player has learned about.
+  - `CombatEngine.resolveItem`/`GameLogic.useConsumable`'s "nothing to
+    cure" branch now names the status either way ("but there's no
+    poison to cure," not just "nothing to cure") — a use that happens
+    to land on someone already healthy previously taught the player
+    nothing about what the item is actually *for*.
+  - 453 tests passing (8 new).
 
 ---
 

@@ -88,7 +88,14 @@ effect from the user) or a **damage** item (a flat amount of one damage
 type, thrown at the monster, resistance-adjusted the same as a spell).
 Using an item is also the moment it gets identified — an unidentified
 "bubbling amber vial" becomes "an Oil Flask" in every list the instant
-it's used once, win or lose. A cure item can also be used from the
+it's used once, win or lose — and, from that same moment, the Inventory
+screen's carried-item tooltip states its real effect on hover
+(`ConsumableItem.description`, `Inventory.isIdentified`). The combat
+log line for a cure item always names the status it treats, even on a
+use that finds nothing to cure ("but there's no poison to cure") — so
+the item's purpose is learnable from a single use regardless of whether
+that particular use actually did anything. A cure item can also be used
+from the
 Inventory screen while exploring (`GameLogic.useConsumable`, docs/08-roadmap-phases.md
 Phase 7) — *unlike* mid-combat use, that path does let the player pick
 which party member it targets (select the item, then tap a character),

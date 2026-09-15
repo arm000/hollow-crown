@@ -100,5 +100,28 @@ describe("Inventory", () => {
       inventory.add("rusted-key", "a Rusted Key");
       expect(inventory.list()).toEqual(["a Rusted Key"]);
     });
+
+    describe("isIdentified", () => {
+      it("is false before an item has ever been identified", () => {
+        const inventory = new Inventory();
+        inventory.add("antidote", "an Antidote");
+        expect(inventory.isIdentified("antidote")).toBe(false);
+      });
+
+      it("is true from then on, once identified", () => {
+        const inventory = new Inventory();
+        inventory.add("antidote", "an Antidote");
+        inventory.identify("antidote");
+        expect(inventory.isIdentified("antidote")).toBe(true);
+      });
+
+      it("is false for a different item id, even once another is identified", () => {
+        const inventory = new Inventory();
+        inventory.add("antidote", "an Antidote");
+        inventory.add("oil-flask", "an Oil Flask");
+        inventory.identify("antidote");
+        expect(inventory.isIdentified("oil-flask")).toBe(false);
+      });
+    });
   });
 });

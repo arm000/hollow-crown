@@ -159,14 +159,14 @@ describe("useConsumable (docs/08-roadmap-phases.md Phase 7, on a player request 
     expect(world.inventory.entries()[0].name).toBe("an Antidote");
   });
 
-  it("still succeeds, with a different message, if there was nothing to cure", () => {
+  it("still succeeds, naming the status even though there was nothing to cure -- player request: an item's properties should be learnable from its use", () => {
     const world = newWorld();
     world.inventory.add("antidote", "an Antidote");
 
     const result = useConsumable(world, "Bram", "antidote");
 
     expect(result.success).toBe(true);
-    expect(result.message).toContain("nothing to cure");
+    expect(result.message).toContain("no poison to cure");
     expect(world.inventory.has("antidote")).toBe(false); // still used up
   });
 

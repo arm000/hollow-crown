@@ -259,11 +259,15 @@ export function useConsumable(world: WorldState, characterName: string, itemId: 
 
   const hadEffect = character.statusEffects.has(item.effect.status);
   character.statusEffects.remove(item.effect.status);
+  // Always names the status, "nothing to cure" outcome included -- same
+  // reasoning as CombatEngine.resolveItem's matching branch: a use that
+  // happens to land on someone without the status should still say what
+  // the item is actually for.
   return {
     success: true,
     message: hadEffect
       ? `${character.name} uses ${item.name} — the ${item.effect.status} fades.`
-      : `${character.name} uses ${item.name}, but there was nothing to cure.`,
+      : `${character.name} uses ${item.name}, but there's no ${item.effect.status} to cure.`,
   };
 }
 

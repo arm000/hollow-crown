@@ -9,6 +9,19 @@ export interface ConsumableItem {
   id: string;
   name: string;
   effect: ConsumableEffect;
+  /**
+   * What the item actually does, in plain terms — never shown up
+   * front (docs/06-items-and-equipment.md#discovery-not-explanation),
+   * only once `Inventory.isIdentified` is true for this item.
+   * `InventoryUI` uses this as a carried-item tooltip once that's the
+   * case (docs/08-roadmap-phases.md Phase 7, on a player request that
+   * an item's properties, once "activated in combat," should be
+   * learnable from then on) — the same moment `CombatEngine.resolveItem`/
+   * `GameLogic.useConsumable` already print the concrete outcome
+   * (exact damage dealt, or whether there was anything to cure) to the
+   * combat log for that specific use.
+   */
+  description: string;
 }
 
 /**
@@ -22,9 +35,34 @@ export interface ConsumableItem {
  * still fully answers "no Mage in the party, Physical-resistant enemy".
  */
 export const CONSUMABLE_ITEMS: Record<string, ConsumableItem> = {
-  antidote: { id: "antidote", name: "an Antidote", effect: { kind: "cure", status: "poison" } },
-  bandages: { id: "bandages", name: "Bandages", effect: { kind: "cure", status: "bleed" } },
-  "smelling-salts": { id: "smelling-salts", name: "Smelling Salts", effect: { kind: "cure", status: "fear" } },
-  "holy-water": { id: "holy-water", name: "Holy Water", effect: { kind: "damage", damageType: "holy", amount: 8 } },
-  "oil-flask": { id: "oil-flask", name: "an Oil Flask", effect: { kind: "damage", damageType: "fire", amount: 6 } },
+  antidote: {
+    id: "antidote",
+    name: "an Antidote",
+    effect: { kind: "cure", status: "poison" },
+    description: "Cures Poison.",
+  },
+  bandages: {
+    id: "bandages",
+    name: "Bandages",
+    effect: { kind: "cure", status: "bleed" },
+    description: "Cures Bleed.",
+  },
+  "smelling-salts": {
+    id: "smelling-salts",
+    name: "Smelling Salts",
+    effect: { kind: "cure", status: "fear" },
+    description: "Cures Fear.",
+  },
+  "holy-water": {
+    id: "holy-water",
+    name: "Holy Water",
+    effect: { kind: "damage", damageType: "holy", amount: 8 },
+    description: "Thrown at the monster for 8 Holy damage, resistance-adjusted.",
+  },
+  "oil-flask": {
+    id: "oil-flask",
+    name: "an Oil Flask",
+    effect: { kind: "damage", damageType: "fire", amount: 6 },
+    description: "Thrown at the monster for 6 Fire damage, resistance-adjusted.",
+  },
 };

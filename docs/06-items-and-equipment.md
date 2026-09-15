@@ -49,13 +49,25 @@ later content phases, not v1 — see
 ## Discovery, not explanation
 
 **Core principle, not a Phase 5 polish pass: the game never tells the
-player what an item does.** No tooltip stating a mechanical effect, no
-"cures Poison" label, no numeric readout on pickup. An item's true
-effect is learned by using it and reading the *consequence* — the combat
-log narrates what happened ("the bleeding stops," "the flask bursts into
-flame on impact") — never by the UI narrating the item itself ahead of
-time. This holds from the moment items exist at all (Phase 1 pickups
-onward), not just once a full identification system is built.
+player what an item does *ahead of time*.** No tooltip stating a
+mechanical effect, no "cures Poison" label, no numeric readout on
+pickup. An item's true effect is learned by using it and reading the
+*consequence* — the combat log narrates what happened ("the bleeding
+stops," "the flask bursts into flame on impact") — never by the UI
+narrating the item itself ahead of time. This holds from the moment
+items exist at all (Phase 1 pickups onward), not just once a full
+identification system is built.
+
+**Once that consequence has actually been read at least once, the
+principle stops applying** (docs/08-roadmap-phases.md Phase 7, on a
+player request that an item's properties, once "activated in combat,"
+become learnable "from then on"): a consumable's carried-item tooltip
+in the Inventory screen (`InventoryUI`, reading `Inventory.isIdentified`)
+states its real mechanical effect, but only after the player has
+already discovered it firsthand — the same moment the mystery name
+itself resolves to the true one. This isn't the UI explaining the item
+ahead of the player; it's not making them re-derive or memorize what
+the log already told them once, every single time after.
 
 This changes how to read the rest of this document, including the table
 below: **every mechanical mapping here is our internal design
