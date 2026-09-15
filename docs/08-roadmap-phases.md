@@ -1644,6 +1644,20 @@ true before shipping.
     decline, so a companion that genuinely couldn't join yet stays
     findable rather than silently vanishing.
   - 404 tests passing.
+  - **Follow-up (player report): "when a new companion joins the party
+    they don't show up in the status on the top right until the next
+    combat starts."** `Game.ts`'s `handleInteract` never called
+    `hud.updateParty` — only `startCombat`/`checkCombatEnd`/level-up/
+    etc. did, none of which run on an ordinary interact, so a freshly
+    recruited companion was invisible in the HUD until something
+    unrelated happened to refresh it. Added `hud.updateParty` to
+    `handleInteract`, right alongside the `hud.updateInventory` call
+    that already ran unconditionally on every interact for the same
+    reason (cheap, and there's no cheaper way to know which interact
+    just changed the party). `Game.ts` has no test file (untested
+    DOM/rendering glue per docs/11-testing-strategy.md); the party
+    mutation this surfaces was already covered by
+    `RescueEncounter.test.ts`.
 
 ---
 

@@ -480,6 +480,13 @@ export class Game {
     if (outcome.message) this.hud.showMessage(outcome.message);
     if (outcome.targetTile) {
       this.hud.updateInventory(this.world.inventory.list());
+      // Cheap to refresh unconditionally, same as updateInventory above
+      // -- most interacts don't touch the party, but a `RescueEncounter`
+      // does, and there's no cheaper way to know which one just did.
+      // Without this, a freshly recruited companion was missing from
+      // the top-right party status until something else (starting a
+      // fight, leveling up) happened to refresh it next.
+      this.hud.updateParty(this.world.party.members);
       this.refreshEntityVisual(outcome.targetTile.x, outcome.targetTile.z);
     }
     // An interact can change what blocks sight anywhere on the level --
