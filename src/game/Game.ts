@@ -870,6 +870,13 @@ export class Game {
 
     const result = this.combatEngine.result;
     const monster = this.combatMonster;
+    // Grabbed before combatUI.hide()/combatEngine is cleared below --
+    // a defeat needs to carry its last several lines onto the defeat
+    // screen itself (player report: "When the party dies I can't read
+    // the combat log to see what happened"), since the combat overlay
+    // this log actually lives in is about to be torn down along with
+    // everything else here, win, lose, or flee alike.
+    const finalLog = this.combatEngine.log.slice(-14);
     this.combatUI.hide();
     this.mode = "explore";
     this.input.clear(); // drop anything queued during combat -- see InputManager.clear()
@@ -901,7 +908,7 @@ export class Game {
       this.audio.playFleeStinger();
     } else if (result === "defeat") {
       this.runEnded = true; // stub per docs/08-roadmap-phases.md Phase 2 -- freezes input, no revive system yet
-      this.hud.showDefeatScreen();
+      this.hud.showDefeatScreen(finalLog);
       this.audio.playDefeatStinger();
     }
   }

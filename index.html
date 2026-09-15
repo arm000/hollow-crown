@@ -264,17 +264,45 @@
         position: fixed;
         inset: 0;
         display: none; /* see the #win-screen comment above for why this default has to be explicit */
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 20px;
+        padding: 32px;
         background: rgba(20, 3, 3, 0.88);
         color: #d8b3a3;
         text-shadow: 0 1px 3px #000;
-        font-size: 32px;
-        letter-spacing: 0.1em;
+        text-align: center;
         z-index: 10;
       }
       #defeat-screen:not([hidden]) {
         display: flex;
+      }
+      #defeat-screen-title {
+        font-size: 30px;
+        letter-spacing: 0.1em;
+      }
+      /* The fight's last several log lines (Game.checkCombatEnd,
+         player report: "When the party dies I can't read the combat
+         log to see what happened" -- CombatEngine.hide() used to yank
+         the whole combat overlay, log included, the instant defeat
+         was detected). Left-aligned, unlike #combat-log's centered
+         short excerpt -- several lines read better ragged than
+         centered -- and scrollable so a long fight never pushes the
+         title off a short phone screen. */
+      #defeat-screen-log {
+        font-size: 14px;
+        line-height: 1.5;
+        white-space: pre-line;
+        text-align: left;
+        max-width: 480px;
+        max-height: 40vh;
+        overflow-y: auto;
+        width: 90%;
+        background: rgba(5, 4, 2, 0.4);
+        border-radius: 8px;
+        padding: 12px 16px;
+        opacity: 0.9;
       }
 
       /* Combat overlay: mounted by CombatUI.ts. Same "spell out display:none
@@ -973,7 +1001,10 @@
       <div id="win-screen-title">THE WARDS ARE QUIET</div>
       <div id="win-screen-epilogue"></div>
     </div>
-    <div id="defeat-screen" hidden>THE PARTY HAS FALLEN</div>
+    <div id="defeat-screen" hidden>
+      <div id="defeat-screen-title">THE PARTY HAS FALLEN</div>
+      <div id="defeat-screen-log"></div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -202,7 +202,12 @@ skips its turn entirely instead of acting.
 - **Victory**: the monster's HP hits 0. The party gains its `xpReward`,
   applying every level-up that triggers.
 - **Defeat**: every party member is downed. Freezes input and shows the
-  defeat screen — there's no revive/retry system in v1.
+  defeat screen, carrying the fight's last 14 log lines onto the screen
+  itself (`Game.checkCombatEnd` grabs `CombatEngine.log` before tearing
+  the combat overlay down, `Hud.showDefeatScreen`) so what actually
+  killed the party is still readable, rather than disappearing the
+  instant the fight ends along with everything else in that overlay.
+  There's no revive/retry system in v1.
 - **Fled**: an ordinary Flee roll succeeds, or a skill (Rogue's Smoke
   Bomb) guarantees it outright. The monster disengages — clears its
   alert state and starts a 5-world-turn cooldown

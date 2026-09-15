@@ -30,6 +30,7 @@ export class Hud {
   private readonly winScreenEl: HTMLElement;
   private readonly winScreenEpilogueEl: HTMLElement;
   private readonly defeatScreenEl: HTMLElement;
+  private readonly defeatScreenLogEl: HTMLElement;
   private readonly inventoryToggleEl: HTMLElement;
   private readonly muteToggleEl: HTMLElement;
   private readonly bestiaryToggleEl: HTMLElement;
@@ -45,6 +46,7 @@ export class Hud {
     this.winScreenEl = getRequiredElement(doc, "win-screen");
     this.winScreenEpilogueEl = getRequiredElement(doc, "win-screen-epilogue");
     this.defeatScreenEl = getRequiredElement(doc, "defeat-screen");
+    this.defeatScreenLogEl = getRequiredElement(doc, "defeat-screen-log");
     this.inventoryToggleEl = getRequiredElement(doc, "inventory-toggle");
     this.muteToggleEl = getRequiredElement(doc, "mute-toggle");
     this.bestiaryToggleEl = getRequiredElement(doc, "bestiary-toggle");
@@ -81,8 +83,19 @@ export class Hud {
     this.winScreenEl.hidden = false;
   }
 
-  /** Phase 2's defeat stub (docs/08-roadmap-phases.md#phase-2--party--turn-based-combat) — ends the run, no revive system yet. */
-  showDefeatScreen(): void {
+  /**
+   * Phase 2's defeat stub (docs/08-roadmap-phases.md#phase-2--party--turn-based-combat)
+   * — ends the run, no revive system yet. `finalLog`, when given
+   * (player report: "When the party dies I can't read the combat log
+   * to see what happened"), is the fight's last several lines, shown
+   * directly on the screen itself rather than depending on whatever's
+   * still visible underneath — `CombatUI.hide()` (called by
+   * `Game.checkCombatEnd` right before this) tears down the whole
+   * combat overlay, log included, the instant a fight ends, win or
+   * lose.
+   */
+  showDefeatScreen(finalLog: string[] = []): void {
+    this.defeatScreenLogEl.textContent = finalLog.join("\n");
     this.defeatScreenEl.hidden = false;
   }
 

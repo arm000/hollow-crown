@@ -1858,6 +1858,30 @@ true before shipping.
       reachable from a *fresh* character this screen builds.
   - 433 tests passing (unchanged — `PartyCreationUI` has no test file,
     untested DOM glue per docs/11-testing-strategy.md).
+- ✅ Batch 11 — Fix: the combat log disappeared the instant the party
+  died (player report: "When the party dies I can't read the combat
+  log to see what happened"). `Game.checkCombatEnd` calls
+  `combatUI.hide()` unconditionally, for every fight outcome, before
+  even checking which one it was — the whole combat overlay, log
+  included, was already gone by the time `hud.showDefeatScreen()` drew
+  the defeat screen over it, whether or not that overlay would have
+  still been visible underneath anyway (it wouldn't have been: `#defeat-screen`
+  is a near-opaque full-screen layer).
+  - `Game.checkCombatEnd` now grabs `this.combatEngine.log.slice(-14)`
+    before clearing `combatEngine`/hiding the combat overlay, and hands
+    it to `hud.showDefeatScreen(finalLog)` on the defeat branch only —
+    victory and flee don't need it, both already show their own
+    one-line summary via `hud.showMessage`.
+  - `Hud.showDefeatScreen` gained an optional `finalLog` param, written
+    into a new `#defeat-screen-log` element added directly to the
+    defeat screen's own markup — shown on the screen itself rather
+    than depending on anything still being visible underneath it,
+    scrollable (`max-height: 40vh`) so a long fight's tail never pushes
+    the title off a short phone screen.
+  - 433 tests passing (unchanged — `Game.ts`/`Hud.ts` are untested DOM/
+    rendering glue per docs/11-testing-strategy.md; `CombatEngine.log`
+    itself, the data being surfaced, was already covered everywhere
+    else it's used).
 
 ---
 
