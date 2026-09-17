@@ -558,7 +558,15 @@ export class CombatEngine {
     }
   }
 
-  /** Melee targets whoever's taunting it, else the front rank while any front-rank member stands, per docs/05-combat.md#targeting--rank. */
+  /**
+   * Melee targets whoever's taunting it, else the front rank while any
+   * front-rank member stands, per docs/05-combat.md#targeting--rank.
+   * A reach monster (`Monster.hasReach` — the Armored Sentinel) ignores
+   * rank entirely and draws from the whole living party instead, front
+   * or back — Guard/taunt still works against it exactly the same as
+   * any other monster, since that's a defensive class mechanic, not a
+   * rank one; only the *default* untaunted pick changes.
+   */
   private pickTarget(): Character {
     if (this.tauntedBy && !this.tauntedBy.isDown) {
       const target = this.tauntedBy;
@@ -566,7 +574,7 @@ export class CombatEngine {
       return target;
     }
     const front = this.party.livingFrontRank();
-    const pool = front.length > 0 ? front : this.party.livingMembers();
+    const pool = this.monster.hasReach || front.length === 0 ? this.party.livingMembers() : front;
     return pool[Math.floor(this.rng.next() * pool.length)];
   }
 }

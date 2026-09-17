@@ -85,6 +85,32 @@ monster-court-alchemist:
   links:
     - kind: monster
       id: courtAlchemist
+monster-bound-servant:
+  id: monster-bound-servant
+  category: monster-sprite
+  name: Bound Servant
+  description: >-
+    No resistance or status of its own -- its telegraphed heavy strike, turned up, is the whole
+    lesson. Should read as restrained/chained, visibly straining before the heavy hit lands.
+  status: procedural
+  size: 64×64 px/frame
+  placeholderNotes: 'Game.ts''s MONSTER_COLORS: dull iron grey (0x6b6b6b) on the placeholder capsule.'
+  links:
+    - kind: monster
+      id: boundServant
+monster-armored-sentinel:
+  id: monster-armored-sentinel
+  category: monster-sprite
+  name: Armored Sentinel
+  description: >-
+    Physical-resistant with a reach weapon that can strike the back rank -- should silhouette a long
+    polearm clearly, since a player needs to see the reach coming, not just learn it the hard way.
+  status: procedural
+  size: 64×64 px/frame
+  placeholderNotes: 'Game.ts''s MONSTER_COLORS: cold steel-blue (0x4a5a6b) on the placeholder capsule.'
+  links:
+    - kind: monster
+      id: armoredSentinel
 monster-steward-marrow:
   id: monster-steward-marrow
   category: monster-sprite
@@ -219,6 +245,48 @@ icon-tarnished-talisman:
   links:
     - kind: equipment
       id: tarnished-talisman
+icon-iron-halberd:
+  id: icon-iron-halberd
+  category: item-icon
+  name: an Iron Halberd (icon)
+  description: Weapon slot, +Might (tier 2 -- strictly ahead of the Rusted Sword). A longer, heavier polearm silhouette.
+  status: needed
+  size: 16×16 px
+  links:
+    - kind: equipment
+      id: iron-halberd
+icon-steel-cuirass:
+  id: icon-steel-cuirass
+  category: item-icon
+  name: a Steel Cuirass (icon)
+  description: Armor slot, Physical resistance (tier 2 -- strictly ahead of Hardened Leather). A plated breastplate silhouette.
+  status: needed
+  size: 16×16 px
+  links:
+    - kind: equipment
+      id: steel-cuirass
+icon-crown-shard-pendant:
+  id: icon-crown-shard-pendant
+  category: item-icon
+  name: a Crown Shard Pendant (icon)
+  description: >-
+    Accessory slot, +Might and +Focus -- the first dual-stat item. A jagged sliver of gold-inlaid
+    crown, still faintly warm.
+  status: needed
+  size: 16×16 px
+  links:
+    - kind: equipment
+      id: crown-shard-pendant
+icon-reinforced-kite-shield:
+  id: icon-reinforced-kite-shield
+  category: item-icon
+  name: a Reinforced Kite Shield (icon)
+  description: Off-hand slot, Physical resistance. A larger, iron-rimmed shield silhouette, distinct from the Old Buckler's small round one.
+  status: needed
+  size: 16×16 px
+  links:
+    - kind: equipment
+      id: reinforced-kite-shield
 icon-antidote:
   id: icon-antidote
   category: item-icon

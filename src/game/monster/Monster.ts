@@ -55,6 +55,17 @@ export interface MonsterOptions {
    * getting at).
    */
   healsOnHeavyTurn?: number;
+  /**
+   * The Armored Sentinel's signature mechanic
+   * (docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content):
+   * a reach weapon that ignores rank entirely, so `CombatEngine.pickTarget`
+   * draws from every living party member instead of preferring the front
+   * rank — "rank alone doesn't guarantee safety," the specific lesson a
+   * back-rank caster tucked safely behind a Warrior needs to learn at
+   * least once. Defaults to `false` for every other monster, which still
+   * respect rank exactly as before.
+   */
+  hasReach?: boolean;
 }
 
 export interface MonsterCombatTurn {
@@ -92,6 +103,7 @@ export class Monster implements Tickable {
   /** Public (unlike `flavor`) — the bestiary/codex screen (docs/05-combat.md#the-bestiary) reads these once a type has been encountered, to describe its signature mechanic without a separate, hand-maintained data table duplicating what the monster already knows about itself. */
   readonly heavyStatusEffect: StatusEffectInstance | undefined;
   readonly healsOnHeavyTurn: number | undefined;
+  readonly hasReach: boolean;
   private patrolIndex = 0;
   private alerted = false;
   private telegraphed = false;
@@ -130,6 +142,7 @@ export class Monster implements Tickable {
     this.flavor = options.flavor ?? DEFAULT_FLAVOR;
     this.heavyStatusEffect = options.heavyStatusEffect;
     this.healsOnHeavyTurn = options.healsOnHeavyTurn;
+    this.hasReach = options.hasReach ?? false;
   }
 
   get isDown(): boolean {

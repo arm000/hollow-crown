@@ -967,4 +967,75 @@ describe("CombatEngine", () => {
       );
     });
   });
+
+  describe("reach (docs/05-combat.md#targeting--rank's Armored Sentinel exception)", () => {
+    it("a reach monster can target the back rank even while the front rank still stands", () => {
+      const front = new Character("Front", "warrior", "front", { might: 8, grace: 4, vitality: 100, focus: 1, resolve: 6 }, 100, 0);
+      const back = new Character("Back", "mage", "back", { might: 2, grace: 5, vitality: 100, focus: 9, resolve: 4 }, 100, 20);
+      const party = new Party([front, back]);
+      const monster = new Monster(
+        { name: "Reach", x: 1, z: 1, patrolPoints: [{ x: 1, z: 1 }], detectionRadius: 0, maxHp: 9999, might: 2, initiativeStat: -10, hasReach: true },
+        OPEN_MAP,
+        new Player(1, 1, 1, 2, 1),
+      );
+      // Verified directly against SeededRng(1) rather than assumed: the
+      // monster's very first (light) turn targets Back, with Front —
+      // the front rank, still fully alive — never touched at all. Only
+      // round 1's two party turns run, on purpose: past round 1, reach
+      // targeting could just as easily land on Front too (it draws from
+      // the whole party every time), which would make a stronger-looking
+      // "front never touched" claim actually wrong.
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+      for (let i = 0; i < 2 && engine.isPartyTurn; i++) engine.submitAction("defend");
+
+      expect(front.hp).toBe(100);
+      expect(back.hp).toBeLessThan(100);
+    });
+
+    it("a non-reach monster never touches the back rank while the front rank still stands", () => {
+      const front = new Character("Front", "warrior", "front", { might: 8, grace: 4, vitality: 100, focus: 1, resolve: 6 }, 100, 0);
+      const back = new Character("Back", "mage", "back", { might: 2, grace: 5, vitality: 100, focus: 9, resolve: 4 }, 100, 20);
+      const party = new Party([front, back]);
+      const monster = new Monster(
+        { name: "Ordinary", x: 1, z: 1, patrolPoints: [{ x: 1, z: 1 }], detectionRadius: 0, maxHp: 9999, might: 2, initiativeStat: -10 },
+        OPEN_MAP,
+        new Player(1, 1, 1, 2, 1),
+      );
+      const engine = new CombatEngine(party, monster, new SeededRng(1)); // same seed as the reach test above
+
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 10 && back.hp === 100) {
+        if (engine.isPartyTurn) engine.submitAction("defend");
+        guard++;
+      }
+
+      expect(back.hp).toBe(100); // never reached -- rank protected it as usual
+      expect(front.hp).toBeLessThan(100);
+    });
+
+    it("taunt still overrides reach -- Guard protects the party from a reach monster exactly like any other", () => {
+      const bram = new Character("Bram", "warrior", "front", { might: 8, grace: 4, vitality: 30, focus: 1, resolve: 6 }, 30, 0, "🔴", "warrior-guard");
+      const corvin = new Character("Corvin", "mage", "back", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 14, 20);
+      const party = new Party([bram, corvin]);
+      const monster = new Monster(
+        { name: "Reach", x: 1, z: 1, patrolPoints: [{ x: 1, z: 1 }], detectionRadius: 0, maxHp: 9999, might: 2, initiativeStat: -10, hasReach: true },
+        OPEN_MAP,
+        new Player(1, 1, 1, 2, 1),
+      );
+      const engine = new CombatEngine(party, monster, new SeededRng(1));
+
+      // Exactly the two round-1 party turns, in whichever order initiative
+      // gave them -- stopping here means the monster's one taunted attack
+      // (triggered automatically once both have acted) is still covered
+      // by round 1's Guard, before it's consumed and taunt would no
+      // longer be shielding anyone.
+      for (let i = 0; i < 2 && engine.isPartyTurn; i++) {
+        if (engine.currentActor === bram) engine.submitAction("ability", undefined, "warrior-guard");
+        else engine.submitAction("defend");
+      }
+
+      expect(corvin.hp).toBe(14); // taunted onto Bram instead, despite the monster's reach
+      expect(bram.hp).toBeLessThan(30);
+    });
+  });
 });

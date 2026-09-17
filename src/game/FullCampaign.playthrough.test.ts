@@ -98,53 +98,60 @@ describe("Full campaign playthrough (headless release smoke test)", () => {
     const world = newWorld();
     const rng = new SeededRng(7);
 
-    // Level 1: fetch the key, grab the sword and charm, unlock the
-    // door, take the stairs down. Skips the optional lever/plate/
-    // secret-wall/class-gate content -- this is the mandatory path,
-    // not a completionist run.
-    move(world, 1, 0, rng); // (1,1) -> (2,1): the Gaunt Steward's tile
-    move(world, 1, 0, rng); // (2,1) -> (3,1)
+    // Level 1: dodge the trap, fetch the key, unlock the door, take the
+    // stairs down. Skips the optional block/lever/plate/secret-wall/
+    // class-gate content (including the sword and shadow-ring hiding
+    // there) -- this is the mandatory path, not a completionist run.
+    move(world, 1, 0, rng); // (1,1) -> (2,1): the trap, disarmed (default roster includes a Rogue)
+    move(world, 1, 0, rng); // (2,1) -> (3,1) -- the Rot-thing patrols right here
     move(world, 0, 1, rng); // (3,1) -> (3,2): the key
     expect(world.inventory.has("rusted-key")).toBe(true);
     move(world, 0, -1, rng); // back to (3,1)
-    move(world, 1, 0, rng); // (3,1) -> (4,1) -- the Rot-thing patrols right here
+    move(world, 1, 0, rng); // (3,1) -> (4,1): the Oil Flask
     move(world, 1, 0, rng); // (4,1) -> (5,1)
+    move(world, 1, 0, rng); // (5,1) -> (6,1), facing the door at (7,1)
     expect(attemptInteract(world).message).toBe("You unlock the door.");
-    move(world, 1, 0, rng); // (5,1) -> (6,1), now open
+    move(world, 1, 0, rng); // (6,1) -> (7,1), now open
 
-    const toLevel2 = move(world, 1, 0, rng); // (6,1) -> (7,1): stairs down
+    const toLevel2 = move(world, 1, 0, rng); // (7,1) -> (8,1): stairs down
     expect(toLevel2.levelTransition).toBe("level-2");
     expect(world.party.isDefeated).toBe(false);
 
-    // Level 2: a different key, a different door, the Screeching Wraith
-    // patrolling the one corridor between them.
-    move(world, 1, 0, rng); // (1,1) -> (2,1): the old-buckler, right at the entrance
+    // Level 2: two traps (disarmed by the default roster's Rogue), a
+    // different key, a different door, and now two mandatory fights back
+    // to back on the same corridor -- the Screeching Wraith, then the
+    // Bound Servant (docs/08-roadmap-phases.md Phase 8's difficulty-curve
+    // pass).
+    move(world, 1, 0, rng); // (1,1) -> (2,1): trap 1, disarmed
+    move(world, 1, 0, rng); // (2,1) -> (3,1): the Old Buckler, right at the entrance -- the Wraith patrols right here
     equipItem(world, "Bram", "old-buckler");
-    move(world, 1, 0, rng); // (2,1) -> (3,1)
     move(world, 0, 1, rng); // (3,1) -> (3,2): the key
     expect(world.inventory.has("iron-key")).toBe(true);
     move(world, 0, -1, rng); // back to (3,1)
-    move(world, 1, 0, rng); // (3,1) -> (4,1) -- the Wraith patrols right here
+    move(world, 1, 0, rng); // (3,1) -> (4,1): trap 2, disarmed
     move(world, 1, 0, rng); // (4,1) -> (5,1)
+    move(world, 1, 0, rng); // (5,1) -> (6,1) -- the Bound Servant patrols right here
     expect(attemptInteract(world).message).toBe("You unlock the door.");
-    move(world, 1, 0, rng); // (5,1) -> (6,1), now open
+    move(world, 1, 0, rng); // (6,1) -> (7,1), now open
 
-    const toLevel3 = move(world, 1, 0, rng); // (6,1) -> (7,1): stairs down
+    const toLevel3 = move(world, 1, 0, rng); // (7,1) -> (8,1): stairs down
     expect(toLevel3.levelTransition).toBe("level-3");
     expect(world.party.isDefeated).toBe(false);
 
-    // Level 3: a straight corridor, no key needed -- the Court Alchemist
-    // then the Cinder Wretch, back to back, plus a defensive breather
-    // pickup between the two fights.
-    move(world, 1, 0, rng); // (1,1) -> (2,1): the sentry's tile
-    move(world, 1, 0, rng); // (2,1) -> (3,1) -- the Court Alchemist patrols here
-    move(world, 1, 0, rng); // (3,1) -> (4,1)
-    move(world, 1, 0, rng); // (4,1) -> (5,1)
-    move(world, 1, 0, rng); // (5,1) -> (6,1) -- the Cinder Wretch patrols here
-    move(world, 1, 0, rng); // (6,1) -> (7,1)
-    move(world, 1, 0, rng); // (7,1) -> (8,1)
+    // Level 3: a straight gauntlet corridor, no key needed -- the Court
+    // Alchemist, the Armored Sentinel (docs/08-roadmap-phases.md Phase
+    // 8's reach-weapon newcomer), then the Cinder Wretch, all three
+    // mandatory and back to back, plus a Holy Water pickup along the way
+    // (Steward Marrow's own weakness, waiting one level down).
+    move(world, 1, 0, rng); // (1,1) -> (2,1): trap 1, disarmed -- the Court Alchemist patrols right here
+    move(world, 1, 0, rng); // (2,1) -> (3,1)
+    move(world, 1, 0, rng); // (3,1) -> (4,1): Holy Water
+    expect(world.inventory.has("holy-water")).toBe(true);
+    move(world, 1, 0, rng); // (4,1) -> (5,1): trap 2, disarmed -- the Armored Sentinel patrols right here
+    move(world, 1, 0, rng); // (5,1) -> (6,1) -- the Cinder Wretch patrols right here
+    move(world, 1, 0, rng); // (6,1) -> (7,1): the Old Sentry's tile
 
-    const toLevel4 = move(world, 1, 0, rng); // (8,1) -> (9,1): stairs down
+    const toLevel4 = move(world, 1, 0, rng); // (7,1) -> (8,1): stairs down
     expect(toLevel4.levelTransition).toBe("level-4");
     expect(world.party.isDefeated).toBe(false);
 

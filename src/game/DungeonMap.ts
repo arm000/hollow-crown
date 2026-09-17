@@ -44,44 +44,46 @@ export class DungeonMap {
 }
 
 /**
- * The opening level: a single main corridor from start to exit, with a
- * one-tile side room holding a key needed further down the corridor.
- * Several further branches are entirely optional, not required to win:
- * a lever-and-plate room (either mechanism unlocks the same bonus
- * alcove door); past that alcove, a secret wall hiding one more hidden
- * pocket; a pushable block that itself stands on the only tile hiding a
- * one-tile pocket at (1, 4) — pushing it out of the way (onto the
- * plate at (2, 5), which also still arms the shared bonus door) is what
- * makes that tile standable at all, so solving the puzzle always turns
- * up something the party couldn't have reached any other way, not just
- * a second route to a door the lever already opens; and, off the same
- * room, a class-gated passage (row 4, columns 7-9) that only opens for
- * a party with a Rogue along, guarding one more equipment pickup.
- * Entity placements (keys, doors, lever, plate, block, secret wall,
- * class gate, exit, lore) live in `Level.ts`, layered on top of this
- * pure geometry.
+ * The opening level: exactly 10×10 (player request: "each dungeon level
+ * should be 10x10"), a single main corridor along row 1 from start to
+ * exit, with a one-tile side room holding a key needed further down the
+ * corridor, and a dart trap early in that same corridor (docs/08-roadmap-phases.md
+ * Phase 8, on a player request for "increasingly difficult monsters and
+ * traps") — level 1's is the mildest in the whole descent, a single
+ * modest hit, exactly where the mechanic should be gentlest.
+ *
+ * Everything past the mandatory corridor is optional, not required to
+ * win: a pushable-block spur whose block, once pushed south onto a
+ * plate, both arms a bonus door remotely *and* clears the one tile
+ * leading to a hidden pocket the block itself used to stand on; a
+ * separate lever a few columns over that unlocks that exact same bonus
+ * door too (either mechanism alone is enough — a deliberate
+ * simplification, same as it's always been); past that door, a lore
+ * alcove, then a secret wall hiding a second one; and, off the lever's
+ * own room, a class-gated passage that only opens for a party with a
+ * Rogue along, guarding one more equipment pickup. Entity placements
+ * (keys, doors, lever, plate, block, secret wall, class gate, trap,
+ * exit, lore) live in `Level.ts`, layered on top of this pure geometry.
  *
  * Note for `DungeonMap.test.ts`'s connectivity check: the tile behind
  * the secret wall at (6, 7) is deliberately *not* reachable by raw
  * wall/floor adjacency alone — that's what makes it a secret. See that
- * test for how it accounts for known secret walls. The class-gated
- * passage, unlike the secret wall, sits on ordinary floor tiles (a
- * `ClassGate` interactable controls whether it blocks movement, the
- * same way a `Door` does) — no special-casing needed for it there. The
- * pocket at (1, 4) needs no such accounting either: it's ordinary floor
- * too, gated purely by the `PushableBlock` sitting on the one tile that
- * leads to it (see `Level.ts`), the same mechanism as a `Door`/
- * `ClassGate` rather than a raw-adjacency trick like the secret wall.
+ * test for how it accounts for known secret walls. Every other gated
+ * tile here (the class-gated passage, the trap, the pocket the pushable
+ * block guards) sits on ordinary floor — a `ClassGate`/`Trap`/
+ * `PushableBlock` controls whether or how it affects the party the same
+ * way a `Door` does, not a raw-adjacency trick like the secret wall, so
+ * none of them need special-casing in that check.
  */
 export const STARTING_LEVEL = new DungeonMap([
-  "###########",
-  "#S......###",
-  "##..#.#####",
-  "##.##.#####",
-  "#..#......#",
-  "##.###.####",
-  "######.####",
-  "###########",
-  "######.####",
-  "###########",
+  "##########",
+  "#S.......#",
+  "###.#..###",
+  "#####..###",
+  "####.....#",
+  "#####..###",
+  "######.###",
+  "##########",
+  "######.###",
+  "##########",
 ]);

@@ -41,6 +41,12 @@ export function createInteractableMesh(entity: Interactable, tileSize: number): 
       // ordinary wall faces, indistinguishable from any other wall until
       // revealed (see Game.refreshEntityVisual -> hideWallFace).
       return undefined;
+    case "sequenceRune":
+      return buildSequenceRune(entity, tileSize);
+    case "trap":
+      // Deliberately no mesh at all -- a trap you can see coming isn't a
+      // trap (see Trap.ts's own doc comment). Falls through to `default`.
+      return undefined;
     default:
       return undefined;
   }
@@ -190,6 +196,24 @@ function buildPressurePlate(entity: Interactable, tileSize: number): THREE.Objec
     new THREE.MeshStandardMaterial({ color: 0x4a6a7a, roughness: 0.8, metalness: 0.2 }),
   );
   mesh.position.set(entity.x * tileSize, 0.02, entity.z * tileSize);
+  return mesh;
+}
+
+function buildSequenceRune(entity: Interactable, tileSize: number): THREE.Object3D {
+  // A low glowing disc, distinct from a pressure plate's flat dull
+  // rectangle -- this is meant to visibly invite interaction (it's a
+  // puzzle piece, not scenery), where a plate is meant to look like
+  // ordinary floor construction.
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(tileSize * 0.28, tileSize * 0.28, 0.05, 16),
+    new THREE.MeshStandardMaterial({
+      color: 0xb99fe0,
+      emissive: 0x6a3fa0,
+      emissiveIntensity: 0.6,
+      roughness: 0.6,
+    }),
+  );
+  mesh.position.set(entity.x * tileSize, 0.025, entity.z * tileSize);
   return mesh;
 }
 

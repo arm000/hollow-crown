@@ -64,18 +64,19 @@ describe("Multi-level descent playthrough (headless)", () => {
   it("descends from level 1 through level 4 and reaches the real exit", () => {
     const world = newWorld();
 
-    // Level 1: fetch the key, unlock the door, take the stairs down.
-    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
+    // Level 1: dodge the trap, fetch the key, unlock the door, take the stairs down.
+    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1): the trap, disarmed (default roster includes a Rogue)
     expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1)
     expect(move(world, 0, 1).moved).toBe(true); // (3,1) -> (3,2): the key
     expect(world.inventory.has("rusted-key")).toBe(true);
     expect(move(world, 0, -1).moved).toBe(true); // back to (3,1)
-    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1): the Oil Flask
     expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (5,1) -> (6,1), facing the door at (7,1)
     expect(attemptInteract(world).message).toBe("You unlock the door.");
-    expect(move(world, 1, 0).moved).toBe(true); // (5,1) -> (6,1), now open
+    expect(move(world, 1, 0).moved).toBe(true); // (6,1) -> (7,1), now open
 
-    const toLevel2 = move(world, 1, 0); // (6,1) -> (7,1): stairs down
+    const toLevel2 = move(world, 1, 0); // (7,1) -> (8,1): stairs down
     expect(toLevel2.won).toBe(false);
     expect(toLevel2.levelTransition).toBe("level-2");
 
@@ -84,18 +85,20 @@ describe("Multi-level descent playthrough (headless)", () => {
     expect(world.player.gridZ).toBe(1);
     expect(world.dungeon).toBe(getLevel("level-2").dungeon);
 
-    // Level 2: a different key, a different door, same shape.
-    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1)
-    expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1)
+    // Level 2: two traps (disarmed -- the default roster has a Rogue), a
+    // different key, a different door.
+    expect(move(world, 1, 0).moved).toBe(true); // (1,1) -> (2,1): trap 1
+    expect(move(world, 1, 0).moved).toBe(true); // (2,1) -> (3,1): the Old Buckler
     expect(move(world, 0, 1).moved).toBe(true); // (3,1) -> (3,2): the key
     expect(world.inventory.has("iron-key")).toBe(true);
     expect(move(world, 0, -1).moved).toBe(true); // back to (3,1)
-    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (3,1) -> (4,1): trap 2
     expect(move(world, 1, 0).moved).toBe(true); // (4,1) -> (5,1)
+    expect(move(world, 1, 0).moved).toBe(true); // (5,1) -> (6,1), facing the door at (7,1)
     expect(attemptInteract(world).message).toBe("You unlock the door.");
-    expect(move(world, 1, 0).moved).toBe(true); // (5,1) -> (6,1), now open
+    expect(move(world, 1, 0).moved).toBe(true); // (6,1) -> (7,1), now open
 
-    const toLevel3 = move(world, 1, 0); // (6,1) -> (7,1): stairs down
+    const toLevel3 = move(world, 1, 0); // (7,1) -> (8,1): stairs down
     expect(toLevel3.won).toBe(false);
     expect(toLevel3.levelTransition).toBe("level-3");
     expect(world.player.gridX).toBe(1);
@@ -103,10 +106,10 @@ describe("Multi-level descent playthrough (headless)", () => {
     expect(world.dungeon).toBe(getLevel("level-3").dungeon);
 
     // Level 3: a straight corridor to the stairs down -- no key needed.
-    for (let step = 0; step < 7; step++) {
+    for (let step = 0; step < 6; step++) {
       expect(move(world, 1, 0).moved).toBe(true);
     }
-    const toLevel4 = move(world, 1, 0); // (8,1) -> (9,1): stairs down
+    const toLevel4 = move(world, 1, 0); // (7,1) -> (8,1): stairs down
     expect(toLevel4.won).toBe(false);
     expect(toLevel4.levelTransition).toBe("level-4");
     expect(world.player.gridX).toBe(1);

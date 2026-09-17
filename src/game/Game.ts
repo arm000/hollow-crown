@@ -1000,6 +1000,8 @@ const MONSTER_COLORS: Record<string, number> = {
   "Cinder Wretch": 0x8a3f2a,
   "Screeching Wraith": 0xd8d8e8,
   "Court Alchemist": 0x6a4a7a,
+  "Bound Servant": 0x6b6b6b, // dull iron -- chains, not flesh, are the point
+  "Armored Sentinel": 0x4a5a6b, // cold steel-blue, distinct from the Alchemist's violet or the Wraith's pale ghost-white
 };
 
 /**

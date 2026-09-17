@@ -181,15 +181,100 @@ export function createStewardMarrow(
   );
 }
 
-/** Every monster type a level's data can spawn — adding a new one here is one line, not a change to `Game.ts`. */
-export type MonsterTypeId = "rotThing" | "cinderWretch" | "screechingWraith" | "courtAlchemist" | "stewardMarrow";
+/**
+ * The Bound Servant (docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content):
+ * no resistance, no status effect — its whole identity *is* the
+ * telegraph every monster already has, isolated and turned up. Much
+ * higher might than the Rot-thing, so ignoring the "raises an arm"
+ * warning and eating the heavy strike unguarded actually hurts, where
+ * the Rot-thing's own heavy hit rarely feels urgent enough to teach the
+ * lesson on its own.
+ */
+export function createBoundServant(
+  x: number,
+  z: number,
+  patrolPoints: GridPoint[],
+  dungeon: DungeonMap,
+  player: Player,
+): Monster {
+  return new Monster(
+    {
+      name: "Bound Servant",
+      x,
+      z,
+      patrolPoints,
+      detectionRadius: 3,
+      maxHp: 26,
+      might: 6,
+      initiativeStat: 3,
+      flavor: {
+        light: "strains against unseen chains, one arm slowly rising!",
+        heavy: "wrenches free and brings its arm down like a falling gate!",
+      },
+      xpReward: 28,
+    },
+    dungeon,
+    player,
+  );
+}
 
-/** Every `MonsterTypeId`, for anything that needs to iterate all five rather than hardcode the union — `AssetManifest.test.ts`'s "every monster has a linked sprite" check. */
+/**
+ * The Armored Sentinel (docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content):
+ * a reach weapon (`hasReach`, see `Monster.ts`/`CombatEngine.pickTarget`)
+ * that can strike the back rank even while the front rank still stands —
+ * "rank alone doesn't guarantee safety," the one lesson no earlier
+ * monster teaches. Physical-resistant (the armor its name promises),
+ * but no weakness and no status effect — the reach mechanic alone is
+ * the whole point of this fight.
+ */
+export function createArmoredSentinel(
+  x: number,
+  z: number,
+  patrolPoints: GridPoint[],
+  dungeon: DungeonMap,
+  player: Player,
+): Monster {
+  return new Monster(
+    {
+      name: "Armored Sentinel",
+      x,
+      z,
+      patrolPoints,
+      detectionRadius: 3,
+      maxHp: 24,
+      might: 4,
+      initiativeStat: 3,
+      resistances: { physical: 0.7 },
+      hasReach: true,
+      flavor: {
+        light: "levels a long, cruel-looking pike, testing the room's reach!",
+        heavy: "drives the pike clean past the front line!",
+      },
+      xpReward: 30,
+    },
+    dungeon,
+    player,
+  );
+}
+
+/** Every monster type a level's data can spawn — adding a new one here is one line, not a change to `Game.ts`. */
+export type MonsterTypeId =
+  | "rotThing"
+  | "cinderWretch"
+  | "screechingWraith"
+  | "courtAlchemist"
+  | "boundServant"
+  | "armoredSentinel"
+  | "stewardMarrow";
+
+/** Every `MonsterTypeId`, for anything that needs to iterate all seven rather than hardcode the union — `AssetManifest.test.ts`'s "every monster has a linked sprite" check. */
 export const ALL_MONSTER_TYPE_IDS: MonsterTypeId[] = [
   "rotThing",
   "cinderWretch",
   "screechingWraith",
   "courtAlchemist",
+  "boundServant",
+  "armoredSentinel",
   "stewardMarrow",
 ];
 
@@ -213,6 +298,10 @@ export function buildMonsters(spawns: MonsterSpawn[], dungeon: DungeonMap, playe
         return createScreechingWraith(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
       case "courtAlchemist":
         return createCourtAlchemist(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
+      case "boundServant":
+        return createBoundServant(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
+      case "armoredSentinel":
+        return createArmoredSentinel(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
       case "stewardMarrow":
         return createStewardMarrow(spawn.x, spawn.z, spawn.patrolPoints, dungeon, player);
     }

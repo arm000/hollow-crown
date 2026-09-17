@@ -71,6 +71,35 @@ export const EQUIPMENT_ITEMS: Record<string, EquipmentItem> = {
     slot: "accessory",
     statBonus: { focus: 2 }, // the level 1 pushable-block pocket's reward -- see Level.ts
   },
+
+  // Tier 2 -- deeper-level finds, strictly stronger than anything above
+  // (player request: "increasingly more powerful loot"). Not a new
+  // mechanic, just bigger numbers and, starting with the pendant below,
+  // the first item to bonus more than one stat at once.
+  "iron-halberd": {
+    id: "iron-halberd",
+    name: "an Iron Halberd",
+    slot: "weapon",
+    statBonus: { might: 3 }, // strictly ahead of the Rusted Sword's +2
+  },
+  "steel-cuirass": {
+    id: "steel-cuirass",
+    name: "a Steel Cuirass",
+    slot: "armor",
+    resistanceBonus: { physical: 0.8 }, // strictly ahead of Hardened Leather's ×0.9
+  },
+  "crown-shard-pendant": {
+    id: "crown-shard-pendant",
+    name: "a Crown Shard Pendant",
+    slot: "accessory",
+    statBonus: { might: 2, focus: 2 }, // the first dual-stat item -- the same crown shard levels 3-4's lore items describe
+  },
+  "reinforced-kite-shield": {
+    id: "reinforced-kite-shield",
+    name: "a Reinforced Kite Shield",
+    slot: "offhand",
+    resistanceBonus: { physical: 0.85 }, // the first off-hand to trade the Old Buckler's +Grace for real damage mitigation -- the level 4 pre-boss vault's reward
+  },
 };
 
 /**

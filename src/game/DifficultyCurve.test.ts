@@ -44,18 +44,27 @@ describe("descent XP pacing", () => {
   });
 
   it("skipping every optional fight and secret still reaches level 4 by the boss", () => {
-    // Optional, per Level.ts's own comments: level 1's Cinder Wretch
-    // (sits in the lever spur's room, not the main corridor) and its
-    // secret wall. Everything else is mandatory: level 1's Rot-thing,
-    // every monster in level 2/level 3 (all patrol a single-tile-wide
-    // corridor with no way around), and level 4's Steward Marrow --
-    // technically walkable-around in that open room, but the boss this
-    // whole descent builds to, not content a real playthrough skips.
+    // Optional, per each level's own comments: level 1 has no optional
+    // fight at all (its Cinder Wretch moved to level 2); level 2's
+    // Cinder Wretch sits two tiles down a side spur, deliberately deep
+    // enough to sit outside combat's adjacency trigger from the
+    // mandatory corridor (see `levels/level2.ts`), so it's skippable in
+    // practice, not just "optional" on paper; level 4's Armored
+    // Sentinel guards a bonus item in the open hall's far corner, not
+    // the exit itself, so a playthrough can reach the exit without ever
+    // approaching it. Everything else here is mandatory: level 1's
+    // Rot-thing, level 2's Screeching Wraith and Bound Servant, every
+    // monster in level 3 (all three patrol a single-tile-wide corridor
+    // with no way around), and level 4's Steward Marrow -- technically
+    // walkable-around in that open room too, but the boss this whole
+    // descent builds to, not content a real playthrough skips.
     const mandatoryXp =
       monstersOf("level-1").find((m) => m.name === "Rot-thing")!.xpReward +
-      monstersOf("level-2").reduce((sum, m) => sum + m.xpReward, 0) +
+      monstersOf("level-2")
+        .filter((m) => m.name !== "Cinder Wretch")
+        .reduce((sum, m) => sum + m.xpReward, 0) +
       monstersOf("level-3").reduce((sum, m) => sum + m.xpReward, 0) +
-      monstersOf("level-4").reduce((sum, m) => sum + m.xpReward, 0);
+      monstersOf("level-4").find((m) => m.name === "Steward Marrow")!.xpReward;
 
     const character = newTestCharacter();
     gainXp(character, mandatoryXp);

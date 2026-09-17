@@ -2226,6 +2226,150 @@ true before shipping.
 
 ---
 
+## Phase 8 — World Content Expansion
+
+**Scope:** a single, large player request, not a chain of small
+follow-ups like Phase 7's batches — "Add more content, each dungeon
+level should be 10x10 and be fully connected (sometimes by secret
+passage) and have increasingly difficult monsters and traps and
+increasingly more powerful loot. Add some innovative puzzles." Every
+one of the 4 Act 1 levels is rebuilt to that spec; nothing about the
+descent's *shape* (4 levels, level 1 the puzzle showcase, level 4 the
+boss arena) changes, only what fills each one.
+
+**New tech:**
+
+- `Trap.ts` (new interactable): docs/04-exploration-and-world.md's
+  long-planned "Pit / hazard tile," finally built — invisible until it
+  fires, single-target (deliberately: there's no exploration-time
+  `Party.isDefeated` check anywhere, only `CombatEngine` ever resolves
+  one, so an all-party-at-once trap could theoretically soft-lock a run
+  with nothing to catch it), and disarmed outright by a living Rogue —
+  docs/03-party-and-characters.md's "handles ... trap disarm out of
+  combat," made literal the same deterministic way `ClassGate` already
+  makes "Rogue handles lockpicking" literal (no roll — exploration stays
+  fully deterministic end to end, same as every other tile in the game).
+- `SequenceRune.ts` (new interactable, the "innovative puzzle"): a group
+  of unmarked floor runes sharing a `RuneSequenceState`, unlocking a
+  linked door once trodden in the exact order a nearby `LoreItem`
+  actually spells out — reading the level *is* the puzzle. Stepping an
+  already-passed rune is a harmless no-op (real level geometry often
+  forces backtracking over one); stepping a genuinely out-of-turn rune
+  resets the whole group. `buildEntities.ts` groups raw spawns by
+  `params.sequenceId` before building, since siblings need to share one
+  mutable progress counter, not just a common linked door the way
+  `Lever`/`PressurePlate` already do.
+- `Monster.hasReach` + `CombatEngine.pickTarget` (see
+  docs/05-combat.md#targeting--rank): a reach monster draws its default
+  target from the whole living party, front or back, instead of
+  preferring the front rank — Guard/taunt still overrides it exactly
+  like any other monster, only the untaunted default changes.
+- Two new monster types, both drawn directly from
+  docs/05-combat.md#a-teaching-ladder-illustrative-not-final-content's
+  own illustrative table, never previously built: **Bound Servant** (no
+  resistance or status at all — the ordinary telegraph mechanic every
+  monster already has, isolated and turned up, might high enough that
+  ignoring "Defend" actually hurts) and **Armored Sentinel** (Physical-
+  resistant, `hasReach: true` — "rank alone doesn't guarantee safety,"
+  the one lesson no earlier monster teaches).
+- Four tier-2 equipment items in `Equipment.ts` (player request:
+  "increasingly more powerful loot"), each strictly ahead of an
+  existing tier-1 item in the same slot: `iron-halberd` (weapon,
+  +3 Might vs. the Rusted Sword's +2), `steel-cuirass` (armor, Physical
+  ×0.8 vs. Hardened Leather's ×0.9), `reinforced-kite-shield` (off-hand,
+  Physical ×0.85, the first off-hand to trade the Old Buckler's +Grace
+  for real mitigation), and `crown-shard-pendant` (accessory, +2 Might
+  **and** +2 Focus — the first item to bonus more than one stat at
+  once).
+
+**Playable when:** the same 4-level Act 1 descent, now with every level
+exactly 10×10, fully connected (including through a secret passage,
+same as level 1 always had), a real difficulty curve in both monsters
+and traps across the four levels, and a genuinely new puzzle mechanic
+alongside the lever/plate/block/class-gate/secret-wall vocabulary
+Phase 1-3 already shipped.
+
+**Automated verification:** every level's connectivity is already
+covered generically by `levels/index.test.ts`'s BFS (secret walls
+whitelisted, same as always) — no per-level opt-in needed, it just runs
+against whatever `LEVELS` currently contains. Each level also gets its
+own headless scripted playthrough
+(`StartingLevel`/`Level2`/`Level3`/`Level4.playthrough.test.ts`,
+mirroring the existing pattern) proving every puzzle, trap, and optional
+spur is actually reachable and solvable, not just geometrically
+connected — including a dedicated wrong-order-resets-the-sequence case
+for both rune puzzles, and a with/without-Rogue case for every trap.
+`MultiLevelDescent`/`FullCampaign.playthrough.test.ts` (existing files)
+had their level 1-3 sections' move scripts updated to the new geometry;
+`DifficultyCurve.test.ts`'s mandatory-XP accounting was updated to
+reflect which fights are genuinely mandatory vs. skippable under the
+new layouts (see that batch's own note below on why two monsters that
+read as "optional" needed a real, checked distance from the mandatory
+path, not just an intent stated in a comment).
+
+**Status:**
+
+- ✅ Batch 1 — The full world content expansion (player request: "Add
+  more content, each dungeon level should be 10x10 and be fully
+  connected (sometimes by secret passage) and have increasingly
+  difficult monsters and traps and increasingly more powerful loot. Add
+  some innovative puzzles.").
+  - **Level 1** ("The Sunken Wards"): resized from an irregular
+    11×10 to a true 10×10. Keeps its whole established puzzle
+    vocabulary (key/door, lever+plate dual-unlock bonus door, a
+    pushable block whose own hidden pocket is only reachable once
+    pushed aside, a secret wall past that, a Rogue-gated vault) —
+    unchanged in kind, just re-laid-out to fit — plus one new,
+    deliberately gentle trap early on the mandatory corridor: the
+    softest hazard in the whole descent, exactly where a first trap
+    should be. The Cinder Wretch moved out entirely (to level 2, see
+    below) — level 1 is now pure baseline: one Rot-thing, full stop,
+    matching its role as the easiest rung of the ladder rather than
+    front-loading a resistance/weakness lesson before the basics are
+    even taught.
+  - **Level 2** ("Deeper Cellars"): a longer main corridor carrying
+    *two* mandatory fights back to back — the returning Screeching
+    Wraith and the new Bound Servant — plus two traps (one plain, one
+    inflicting Poison). Debuts the rune-sequence puzzle: a lore item
+    names a 3-rune solve order in plain language, guarding the first
+    tier-2 item, a Steel Cuirass. The Cinder Wretch returns here,
+    optional, guarding an Ember Charm two tiles down its own side
+    spur — deliberately two tiles, not one: a one-tile-deep spur would
+    put the monster adjacent to the mandatory corridor and make the
+    fight unavoidable in practice (`CombatEngine`'s combat trigger is a
+    flat distance ≤ 1 check, independent of a monster's own alert
+    state), silently turning "optional" into "optional in name only."
+  - **Level 3** ("Old Foundations"): still the no-branch gauntlet
+    corridor it's always been — every fight mandatory, no way around
+    any of them — now three fights instead of two (Court Alchemist,
+    the new Armored Sentinel, Cinder Wretch), plus two traps (one
+    plain, one inflicting Bleed). Two optional side alcoves break up
+    the corridor: the returning Hardened Leather breather pickup, and a
+    second, shorter rune-sequence puzzle (2 sigils instead of 3)
+    guarding the first dual-stat item, a Crown Shard Pendant — tied to
+    the level's existing "shard of the crown" lore. Still carries the
+    Holy Water pickup Phase 6's automated playthrough found missing
+    from earlier cuts of this level.
+  - **Level 4** ("The Warden's Hall"): kept its "open arena, not a
+    maze" identity — the story beat needs somewhere to actually *see*
+    a boss standing where an empty hall was expected, not another
+    squeeze-through gate. The 10×10 resize's extra floor stays part of
+    the same open hall: the descent's single strongest trap sits right
+    at the threshold (the only one to also inflict Fear, foreshadowing
+    Marrow's own signature strike), and an Armored Sentinel guards the
+    strongest defensive item in the game, a Reinforced Kite Shield, in
+    the open far corner — visible and optional the moment the room
+    opens, gated by a monster rather than one more lock or puzzle, a
+    deliberate change of pace right before the boss.
+  - 515 tests passing (44 new): `Trap.ts`/`SequenceRune.ts` unit
+    coverage, `buildEntities.test.ts` additions for both, `bestiary.test.ts`/
+    `BestiaryEntry.test.ts` coverage for both new monster types and
+    `hasReach`, `CombatEngine.test.ts` reach-targeting coverage,
+    `Equipment.test.ts` coverage for the four tier-2 items, and four new
+    per-level playthrough files.
+
+---
+
 ## Notes on sequencing
 
 - Phases are ordered so each new system has the smallest possible

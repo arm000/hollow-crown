@@ -81,7 +81,8 @@ and pressing an interact key.
 | **Pressure plate** | Triggers while a party occupies (or a pushed block occupies) the tile; can gate a door open only while held, or fire once |
 | **Pushable block** | Moves one tile in the push direction if that tile is free; used to hold pressure plates or fill pits |
 | **Secret wall** | Visually identical to a normal wall; revealed by a "search" interaction when facing it, or automatically at low probability per turn adjacent to it (tuned later) |
-| **Pit / hazard tile** | Blocks or damages on entry unless bridged/disarmed |
+| **Trap** | Damages (or applies a status effect to) whoever's leading the party on first entry, invisible until it fires; a living Rogue disarms it outright — docs/08-roadmap-phases.md Phase 8, the "Pit / hazard tile" entry this table originally specced |
+| **Sequence rune** | Unmarked floor tile, one of a group; treading the whole group in the order a nearby lore item spells out unlocks a linked door, any wrong tile resetting the group — docs/08-roadmap-phases.md Phase 8's "innovative puzzle" |
 | **Stairs** | Transitions to another level ([Phase 4](08-roadmap-phases.md#phase-4--multi-level-descent--persistence)) |
 | **Lore item / readable** | Non-blocking; interacting shows its text in the HUD, no gameplay effect |
 

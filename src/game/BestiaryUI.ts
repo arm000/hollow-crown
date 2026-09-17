@@ -84,6 +84,9 @@ export class BestiaryUI {
     if (entry.healsOnHeavyTurn) {
       lines.push(`Heals itself instead of attacking every other turn`);
     }
+    if (entry.hasReach) {
+      lines.push(`Its reach can strike the back rank even while the front rank still stands`);
+    }
     if (lines.length === 0) {
       lines.push("No known resistances or special mechanics — a straightforward fight.");
     }

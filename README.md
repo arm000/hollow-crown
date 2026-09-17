@@ -189,7 +189,7 @@ player can see exactly what a stat point, a skill unlock, or a piece
 of gear actually does to that character's numbers without bouncing
 between two separate screens to check; the Level Up HUD button opens
 that same sheet with its `+1`/`Unlock` controls already toggled on
-instead of a screen of its own. Most recently, gear stopped
+instead of a screen of its own. Gear also stopped
 identifying itself the moment it's worn at all — a player report that
 this was too early, since wearing something and it actually mattering
 in a fight aren't the same moment — and the combat log started saying
@@ -202,26 +202,44 @@ one-time party-creation screen (name
 your character, pick a class, allocate every bonus attribute point, choose
 a starting skill, and pick a color-swatch portrait — placeholder art,
 real pixel art is still ahead), then grid movement (keyboard or touch)
-through a 4-level descent, all of it Act 1 ("The Sunken Wards"): level
-1's hand-authored puzzle box (a mandatory key-and-door gate, an optional
-lever/plate/block bonus alcove, a secret wall, and a passage that only
-opens for a party with a Rogue along), two smaller, more linear levels
-proving the descent mechanic itself — a `StairsDown` tile carries the
-party to the next level's own start tile — and a final open boss arena.
+through a 4-level descent, all of it Act 1 ("The Sunken Wards"), every
+level a hand-authored, exactly-10×10 map, fully connected (level 1's
+own hidden pocket only reachable through a secret passage) and each
+harder than the last: level 1's puzzle box (a mandatory key-and-door
+gate, an optional lever/plate/block bonus alcove, a secret wall, and a
+passage that only opens for a party with a Rogue along) plus a first,
+gentle trap; level 2 doubles the mandatory fights on its one corridor
+and debuts a rune-sequence puzzle — three unmarked floor sigils that
+only unlock their vault once trodden in the order a nearby inscription
+actually spells out, any wrong tile resetting the whole sequence; level
+3 is a no-branch gauntlet of three fights back to back plus a second,
+shorter rune puzzle; level 4 is the final open boss arena, its own
+strongest trap waiting right at the threshold. A `StairsDown` tile
+carries the party to the next level's own start tile between them all.
 Two sparse, non-recruitable NPC encounters (a steward, a sentry naming
 the boss ahead) punctuate the corridors alongside the three rescue
 encounters above, and the current level's name shows in the HUD.
-Five monster types along the way, all with real turn-based combat: a
-Rot-thing (telegraphed heavy strike), a Cinder Wretch (resistant to
-Physical, weak to Fire — melee alone goes badly, the Mage's Firebolt
-turns it around), a Screeching Wraith (its heavy strike inflicts Fear,
-forcing a Defend next turn — the Resolve stat and Cleric's Cleanse
-finally have something to answer), a Court Alchemist (heals itself
-instead of attacking on its telegraphed turn — burst it down or watch it
-undo your work), and Steward Marrow, Act 1's boss — a "final exam"
-combining the Rot-thing's telegraph, the Wraith's Fear, and a
-Cinder-Wretch-shaped resistance profile (Physical-resistant, Holy-weak
-this time — Holy Water is the answer). Attack/Defend/Ability/Flee/Item,
+Seven monster types along the way, all with real turn-based combat: a
+Rot-thing (telegraphed heavy strike), a Bound Servant (that same
+telegraph turned up — ignore "Defend" and the heavy strike actually
+hurts), a Cinder Wretch (resistant to Physical, weak to Fire — melee
+alone goes badly, the Mage's Firebolt turns it around), a Screeching
+Wraith (its heavy strike inflicts Fear, forcing a Defend next turn —
+the Resolve stat and Cleric's Cleanse finally have something to
+answer), a Court Alchemist (heals itself instead of attacking on its
+telegraphed turn — burst it down or watch it undo your work), an
+Armored Sentinel (a reach weapon that hits the back rank even while the
+front rank stands — rank alone doesn't guarantee safety), and Steward
+Marrow, Act 1's boss — a "final exam" combining the Rot-thing's
+telegraph, the Wraith's Fear, and a Cinder-Wretch-shaped resistance
+profile (Physical-resistant, Holy-weak this time — Holy Water is the
+answer). Traps are scattered across every level too, invisible until
+they fire and each one harder than the last (small physical hits at
+first, then ones that also inflict Poison or Bleed, then the boss
+level's own strongest one, which also inflicts Fear) — a living Rogue
+disarms any of them outright, no roll, the same deterministic "handles
+trap disarm out of combat" job the class has always had on paper.
+Attack/Defend/Ability/Flee/Item,
 status effects (Bleed, Fear, and Stun — the Mage's Frost Lance, a Phase
 7 skill — are all live now; Poison/Silence are mechanically real but
 still await a source), victory/defeat/flee all handled. The monster
@@ -237,17 +255,24 @@ tracker above the monster's HP line shows the
 whole round's turn order at a glance — dimmed for who's already acted,
 highlighted for whoever's turn it is, struck through for anyone downed
 — so the party can see the monster's turn coming and plan around it.
-Six equipment pickups are spread across the descent (a sword,
-a fire-resisting charm, a ring behind level 1's class-gated passage, and
-a Focus-boosting talisman in a one-tile pocket a pushable block sits on
-top of until it's shoved onto its pressure plate; a Grace-boosting
-buckler right at level 2's entrance; Physical-resisting armor in a
-breather alcove between level 3's two finale fights) and two
+Ten equipment pickups are spread across the descent, getting
+strictly stronger the deeper the run goes: level 1 has a sword, a ring
+behind its class-gated passage, and a Focus-boosting talisman in a
+one-tile pocket a pushable block sits on top of until it's shoved onto
+its pressure plate; level 2 has a Grace-boosting buckler right at the
+entrance, a fire-resisting charm guarding an optional fight, and the
+first tier-2 item, a sturdier Steel Cuirass, behind its rune puzzle;
+level 3 has a Physical-resisting armor breather between two of its
+three finale fights and the first item to bonus two stats at once, a
+Crown Shard Pendant, behind its own rune puzzle; level 4 has a cursed
+ring with a real Might bonus and no way to take it back off, plus the
+descent's single strongest piece of defensive gear, a Reinforced Kite
+Shield, guarded by a monster rather than a lock in the boss arena's
+open far corner. Two
 consumables (an Oil Flask, an Antidote) are findable in level 1 — shown
 under a mystery name (e.g. "a bubbling amber vial") until actually used
 once in combat, per the "discovery, not explanation" principle taken to
-its stretch tier. A cursed ring (a real Might bonus, and no way to take
-it back off) waits in the boss arena too. Gear
+its stretch tier. Gear
 lands in the shared inventory unequipped — tap the always-visible
 "Inventory" button (or press `I`) to open a real inventory screen and
 choose who wears what, swapping gear freely between party members.
@@ -280,8 +305,9 @@ skill points actually get spent, on any of the five stats or toward
 one side of a class's two-skill fork. Bestiary
 opens a codex of every monster type encountered so far (win, lose, or
 flee all count), listing its resistances/weaknesses, any status effect
-its heavy strike inflicts, and whether it heals instead of attacking —
-so a repeat fight can be won on memory, not luck. A small minimap in
+its heavy strike inflicts, whether it heals instead of attacking, and
+whether its reach lets it strike the back rank — so a repeat fight can
+be won on memory, not luck. A small minimap in
 the top-left corner fills in via real line of sight — a corridor you can
 see straight down is revealed even before you've walked it, stopping at
 whatever actually blocks sight (a wall, a closed door, an unrevealed
@@ -294,7 +320,18 @@ low-resolution, nearest-neighbor-upscaled pipeline rather than full-
 screen-resolution flat colors, per the pixel-art style guide. Footsteps,
 combat hits, encounter/victory/defeat stings, and a low ambient drone
 are all synthesized live via the Web Audio API (no sound files either)
-— a "🔊"/"🔇" button next to Inventory mutes it all.
+— a "🔊"/"🔇" button next to Inventory mutes it all. Most recently, the
+whole Act 1 descent got a full content pass: every level resized to a
+true 10×10 and re-laid-out around its existing puzzle vocabulary plus a
+genuinely new one (an unmarked floor-rune sequence, its solve order
+readable only from a nearby inscription, wrong guesses resetting the
+whole thing), two new monster types drawn straight from the
+long-standing "teaching ladder" design doc (a heavier telegraph-only
+fight, and the first monster whose reach can hit the back rank), a
+trap mechanic that had been speced but never built (invisible until it
+fires, a living Rogue disarming it outright, no roll), and four
+strictly-stronger tier-2 equipment items woven into the deeper levels
+so gear keeps escalating alongside the monsters guarding it.
 
 ## Scripts
 

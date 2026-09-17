@@ -11,6 +11,8 @@ export interface BestiaryEntry {
   inflicts?: string;
   /** Set if its telegraphed turn heals itself instead of attacking. */
   healsOnHeavyTurn?: number;
+  /** Set if this monster's attacks ignore rank (the Armored Sentinel) — see `Monster.hasReach`. */
+  hasReach?: boolean;
 }
 
 /**
@@ -31,5 +33,6 @@ export function describeMonster(monster: Monster): BestiaryEntry {
     resistances,
     inflicts: monster.heavyStatusEffect?.type,
     healsOnHeavyTurn: monster.healsOnHeavyTurn,
+    hasReach: monster.hasReach || undefined, // omit rather than carry an explicit `false` -- BestiaryUI treats presence as the signal
   };
 }

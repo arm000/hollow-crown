@@ -55,6 +55,13 @@ Each combatant gets one action on their turn:
 - This is the main lever for party-building tactics: a Warrior in front
   absorbs melee targeting so the back-rank Mage/Cleric stay safe, until
   the front rank is downed and the back rank becomes exposed.
+- **Reach is the one exception** (the Armored Sentinel,
+  docs/08-roadmap-phases.md Phase 8: "reach weapon hits the back rank —
+  rank alone doesn't guarantee safety"): a monster with `hasReach` set
+  targets any living party member, front or back, exactly like a ranged
+  attack does. Guard/taunt still overrides it the same as any other
+  monster — reach only changes who it picks *by default*, not whether a
+  Warrior can still step in front of the blow.
 
 ## Resolution
 
@@ -155,6 +162,11 @@ final bestiary content — exact monsters are an
 [Act](02-setting-and-story.md#structure)-by-Act content decision made
 when those levels are actually built. The shape to keep, though: each
 new type teaches one specific new thing.
+
+Every row below has actually shipped as of docs/08-roadmap-phases.md
+Phase 8, Bound Servant and Armored Sentinel included — this table
+stopped being purely illustrative once the full 4-level descent's
+monster roster was built out to match it.
 
 | Monster (example) | New lesson it teaches |
 | --- | --- |

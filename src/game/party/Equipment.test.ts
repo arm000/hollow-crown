@@ -143,6 +143,10 @@ describe("describeEquipmentEffect (docs/08-roadmap-phases.md Phase 7, on a playe
     expect(describeEquipmentEffect(item)).toBe("No mechanical effect.");
   });
 
+  it("describes the first dual-stat item (tier 2 loot) the same way as any hand-built multi-stat item", () => {
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["crown-shard-pendant"])).toBe("Might +2, Focus +2.");
+  });
+
   it("every real equipment item produces a non-empty description", () => {
     for (const item of Object.values(EQUIPMENT_ITEMS)) {
       expect(describeEquipmentEffect(item).length, item.id).toBeGreaterThan(0);

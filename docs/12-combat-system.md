@@ -204,6 +204,8 @@ skips its turn entirely instead of acting.
 | Cinder Wretch | 20 | 4 | 4 | Physical ×0.5, Fire ×2 | Melee alone goes badly; Firebolt/Precision Strike/Oil Flask all answer it | 25 |
 | Screeching Wraith | 16 | 2 | 6 | none | Heavy strike inflicts Fear | 22 |
 | Court Alchemist | 22 | 3 | 4 | none | Heals itself for 9 instead of attacking on its heavy turn | 25 |
+| Bound Servant | 26 | 6 | 3 | none | The telegraph itself, turned up — no resistance or status, just a heavy strike big enough that ignoring "Defend" actually hurts | 28 |
+| Armored Sentinel | 24 | 4 | 3 | Physical ×0.7 | Reach: ignores rank entirely, can hit the back rank even while the front rank stands | 30 |
 | Steward Marrow (Act 1 boss) | 40 | 5 | 5 | Physical ×0.6, Holy ×1.5 | Combines the Rot-thing's telegraph, the Wraith's Fear, and a resistance profile — Holy Water or Cleric's Smite are the repeatable answers | 50 |
 
 ## HP, Mana, and leveling
