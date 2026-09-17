@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Character } from "./Character";
-import { describeEquipmentEffect, EQUIPMENT_ITEMS, type EquipmentItem } from "./Equipment";
+import { Character, type CharacterStats } from "./Character";
+import { describeEquipmentEffect, describeRequirement, EQUIPMENT_ITEMS, meetsRequirement, type EquipmentItem } from "./Equipment";
 
 function newCharacter(): Character {
   return new Character("Test", "warrior", "front", { might: 5, grace: 5, vitality: 5, focus: 5, resolve: 5 }, 20, 0);
@@ -122,11 +122,13 @@ describe("Character equipment", () => {
 
 describe("describeEquipmentEffect (docs/08-roadmap-phases.md Phase 7, on a player request: \"I want non consumable inventory items to show their effect once identified also\")", () => {
   it("describes a flat stat bonus", () => {
-    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["rusted-sword"])).toBe("Might +2.");
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["rusted-sword"])).toBe("Might +2. Requires 5 Might.");
   });
 
   it("describes a resistance bonus", () => {
-    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["hardened-leather"])).toBe("Physical damage taken ×0.9.");
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["hardened-leather"])).toBe(
+      "Physical damage taken ×0.9. Requires 5 Vitality.",
+    );
   });
 
   it("lists multiple stat bonuses together", () => {
@@ -134,8 +136,10 @@ describe("describeEquipmentEffect (docs/08-roadmap-phases.md Phase 7, on a playe
     expect(describeEquipmentEffect(item)).toBe("Might +1, Grace +2.");
   });
 
-  it("appends a note for cursed gear", () => {
-    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["ambition-ring"])).toBe("Might +3. Cannot be removed once worn.");
+  it("appends a requirement note, then a cursed note, in that order", () => {
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["ambition-ring"])).toBe(
+      "Might +3. Requires 8 Might. Cannot be removed once worn.",
+    );
   });
 
   it("names an item with no bonus at all, rather than an empty string", () => {
@@ -143,13 +147,78 @@ describe("describeEquipmentEffect (docs/08-roadmap-phases.md Phase 7, on a playe
     expect(describeEquipmentEffect(item)).toBe("No mechanical effect.");
   });
 
-  it("describes the first dual-stat item (tier 2 loot) the same way as any hand-built multi-stat item", () => {
-    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["crown-shard-pendant"])).toBe("Might +2, Focus +2.");
+  it("describes the first dual-stat item (tier 2 loot) the same way as any hand-built multi-stat item, requirement included", () => {
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["crown-shard-pendant"])).toBe(
+      "Might +2, Focus +2. Requires 6 Might and 6 Focus.",
+    );
   });
 
   it("every real equipment item produces a non-empty description", () => {
     for (const item of Object.values(EQUIPMENT_ITEMS)) {
       expect(describeEquipmentEffect(item).length, item.id).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("meetsRequirement/describeRequirement (player request: \"Items should have minimum attribute requirements to be equipped that is thematic with the type of item and what is does. More powerful items should have larger requirements\")", () => {
+  it("an item with no requirement always passes", () => {
+    const item: EquipmentItem = { id: "test", name: "Test Item", slot: "accessory" };
+    expect(meetsRequirement({ might: 0, grace: 0, vitality: 0, focus: 0, resolve: 0 }, item)).toBe(true);
+  });
+
+  it("passes when every listed stat meets its threshold exactly", () => {
+    const item: EquipmentItem = { id: "test", name: "Test Item", slot: "weapon", statRequirement: { might: 5 } };
+    expect(meetsRequirement({ might: 5, grace: 0, vitality: 0, focus: 0, resolve: 0 }, item)).toBe(true);
+  });
+
+  it("fails when even one stat falls short", () => {
+    const item: EquipmentItem = { id: "test", name: "Test Item", slot: "accessory", statRequirement: { might: 6, focus: 6 } };
+    expect(meetsRequirement({ might: 6, grace: 0, vitality: 0, focus: 5, resolve: 0 }, item)).toBe(false);
+  });
+
+  it("describeRequirement joins multiple stats with \"and\"", () => {
+    expect(describeRequirement(EQUIPMENT_ITEMS["crown-shard-pendant"])).toBe("6 Might and 6 Focus");
+  });
+
+  it("every real equipment item has a requirement, thematic to its slot/effect", () => {
+    // Weapons and the one heavy off-hand shield: Might (the stat that
+    // already means "carry capacity"). The one light off-hand shield:
+    // Grace. Body armor: Vitality. Accessories: whichever stat(s) they
+    // actually boost, or Focus for an elemental-resistance charm.
+    const expectedStat: Record<string, (keyof CharacterStats)[]> = {
+      "rusted-sword": ["might"],
+      "iron-halberd": ["might"],
+      "old-buckler": ["grace"],
+      "reinforced-kite-shield": ["might"],
+      "hardened-leather": ["vitality"],
+      "steel-cuirass": ["vitality"],
+      "ember-charm": ["focus"],
+      "shadow-ring": ["grace"],
+      "ambition-ring": ["might"],
+      "tarnished-talisman": ["focus"],
+      "crown-shard-pendant": ["might", "focus"],
+    };
+
+    for (const [id, stats] of Object.entries(expectedStat)) {
+      const item = EQUIPMENT_ITEMS[id];
+      expect(item.statRequirement, id).toBeDefined();
+      expect(Object.keys(item.statRequirement!).sort(), id).toEqual([...stats].sort());
+    }
+  });
+
+  it("every tier-2 item's requirement is strictly higher than its tier-1 counterpart in the same slot", () => {
+    expect(EQUIPMENT_ITEMS["iron-halberd"].statRequirement!.might!).toBeGreaterThan(
+      EQUIPMENT_ITEMS["rusted-sword"].statRequirement!.might!,
+    );
+    expect(EQUIPMENT_ITEMS["steel-cuirass"].statRequirement!.vitality!).toBeGreaterThan(
+      EQUIPMENT_ITEMS["hardened-leather"].statRequirement!.vitality!,
+    );
+  });
+
+  it("the one cursed item carries the single highest requirement in the game -- strong enough to seize it, not disciplined enough to resist what comes with it", () => {
+    const highest = Math.max(
+      ...Object.values(EQUIPMENT_ITEMS).flatMap((item) => Object.values(item.statRequirement ?? {})),
+    );
+    expect(EQUIPMENT_ITEMS["ambition-ring"].statRequirement!.might).toBe(highest);
   });
 });

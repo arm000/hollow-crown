@@ -268,7 +268,13 @@ Crown Shard Pendant, behind its own rune puzzle; level 4 has a cursed
 ring with a real Might bonus and no way to take it back off, plus the
 descent's single strongest piece of defensive gear, a Reinforced Kite
 Shield, guarded by a monster rather than a lock in the boss arena's
-open far corner. Two
+open far corner. Every piece of equipment also has a minimum attribute
+requirement now, thematic to what it is (Might for a weapon or a heavy
+shield, Grace for a light one, Vitality for body armor, an accessory's
+own boosted stat or Focus for an elemental charm) — a tier-2 item
+always demands more than its tier-1 counterpart in the same slot, and
+the cursed ring carries the single highest requirement of anything, a
+last real cost on top of the curse itself. Two
 consumables (an Oil Flask, an Antidote) are findable in level 1 — shown
 under a mystery name (e.g. "a bubbling amber vial") until actually used
 once in combat, per the "discovery, not explanation" principle taken to
@@ -320,18 +326,27 @@ low-resolution, nearest-neighbor-upscaled pipeline rather than full-
 screen-resolution flat colors, per the pixel-art style guide. Footsteps,
 combat hits, encounter/victory/defeat stings, and a low ambient drone
 are all synthesized live via the Web Audio API (no sound files either)
-— a "🔊"/"🔇" button next to Inventory mutes it all. Most recently, the
-whole Act 1 descent got a full content pass: every level resized to a
-true 10×10 and re-laid-out around its existing puzzle vocabulary plus a
-genuinely new one (an unmarked floor-rune sequence, its solve order
-readable only from a nearby inscription, wrong guesses resetting the
-whole thing), two new monster types drawn straight from the
+— a "🔊"/"🔇" button next to Inventory mutes it all. The
+whole Act 1 descent then got a full content pass: every level resized
+to a true 10×10 and re-laid-out around its existing puzzle vocabulary
+plus a genuinely new one (an unmarked floor-rune sequence, its solve
+order readable only from a nearby inscription, wrong guesses resetting
+the whole thing), two new monster types drawn straight from the
 long-standing "teaching ladder" design doc (a heavier telegraph-only
 fight, and the first monster whose reach can hit the back rank), a
 trap mechanic that had been speced but never built (invisible until it
 fires, a living Rogue disarming it outright, no roll), and four
 strictly-stronger tier-2 equipment items woven into the deeper levels
-so gear keeps escalating alongside the monsters guarding it.
+so gear keeps escalating alongside the monsters guarding it. Most
+recently, every one of those items — old and new — gained a minimum
+attribute requirement to actually put on, thematic to what the item is
+(a weapon or a heavy shield wants Might, body armor wants Vitality, an
+accessory wants whichever stat it boosts or Focus for a resistance
+charm), refused with a plain "isn't ready for it yet" message rather
+than stated up front, and scaled the same way the loot itself already
+was — a tier-2 item always demands more than its tier-1 counterpart in
+the same slot, and the one cursed ring in the game carries the single
+highest requirement of anything.
 
 ## Scripts
 

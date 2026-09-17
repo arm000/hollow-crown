@@ -2228,14 +2228,18 @@ true before shipping.
 
 ## Phase 8 — World Content Expansion
 
-**Scope:** a single, large player request, not a chain of small
-follow-ups like Phase 7's batches — "Add more content, each dungeon
-level should be 10x10 and be fully connected (sometimes by secret
-passage) and have increasingly difficult monsters and traps and
+**Scope:** Batch 1 is a single, large player request, not a chain of
+small follow-ups like Phase 7's batches — "Add more content, each
+dungeon level should be 10x10 and be fully connected (sometimes by
+secret passage) and have increasingly difficult monsters and traps and
 increasingly more powerful loot. Add some innovative puzzles." Every
 one of the 4 Act 1 levels is rebuilt to that spec; nothing about the
 descent's *shape* (4 levels, level 1 the puzzle showcase, level 4 the
-boss arena) changes, only what fills each one.
+boss arena) changes, only what fills each one. Batch 2 is a direct,
+smaller follow-up refining the loot system that batch introduced (see
+its own entry below) — the Scope/Playable when/Automated verification
+gates right below describe Batch 1 specifically, not the phase as a
+whole.
 
 **New tech:**
 
@@ -2367,6 +2371,48 @@ path, not just an intent stated in a comment).
     `hasReach`, `CombatEngine.test.ts` reach-targeting coverage,
     `Equipment.test.ts` coverage for the four tier-2 items, and four new
     per-level playthrough files.
+
+- ✅ Batch 2 — Minimum attribute requirements to equip (player request:
+  "Items should have minimum attribute requirements to be equipped that
+  is thematic with the type of item and what is does. More powerful
+  items should have larger requirements"). A direct follow-up to Batch
+  1's tier-1/tier-2 loot ladder — that batch made deeper items strictly
+  *better*; this one makes them strictly *harder to put on*, so raw
+  power always comes with a real character-building cost.
+  - `EquipmentItem.statRequirement?: Partial<CharacterStats>` (new):
+    every one of the 11 real items got one, per
+    [06-items-and-equipment.md#attribute-requirements](06-items-and-equipment.md#attribute-requirements)'s
+    table of which stat fits which slot/effect — Might for weapons and
+    heavy shields, Grace for a light shield, Vitality for body armor,
+    and an accessory's own boosted stat (or Focus for an elemental
+    charm). A dual-stat item (the Crown Shard Pendant) requires both
+    stats it boosts, not just one.
+  - `Equipment.meetsRequirement(stats, item)`/`describeRequirement(item)`
+    (new): the check itself, and the shared plain-English rendering
+    ("6 Might and 6 Focus") both `GameLogic.equipItem`'s refusal message
+    and `describeEquipmentEffect`'s always-visible-once-identified line
+    use, so the two can never disagree about what an item demands.
+  - `GameLogic.equipItem` checks it against the wearer's current
+    `effectiveStats` (everything already worn counts; the item's own
+    not-yet-applied bonus doesn't) before consuming anything from the
+    inventory — a refused attempt costs nothing and names exactly what's
+    missing ("Bram isn't ready for a Shadow Ring yet — it needs 6
+    Grace."), the same "discovery, not explanation" moment every other
+    mechanical effect on this table gets: never stated ahead of time,
+    only on an actual attempt.
+  - Every tier-2 item's requirement sits strictly above its tier-1
+    counterpart in the same slot (Iron Halberd > Rusted Sword, Steel
+    Cuirass > Hardened Leather), and the one cursed item — the
+    strongest single-stat accessory bonus in the game — carries the
+    single highest requirement of anything: strong enough to seize the
+    power, not disciplined enough to resist what comes with it.
+  - 525 tests passing (10 new): `Equipment.test.ts` coverage for
+    `meetsRequirement`/`describeRequirement`, a thematic-stat check
+    across every real item, and the tier-2-strictly-higher/cursed-
+    highest ordering guarantees; `GameLogic.test.ts` coverage for the
+    refusal path (missing one stat of a multi-stat requirement still
+    refuses, gear already worn counts toward the threshold, nothing is
+    consumed on a refusal).
 
 ---
 

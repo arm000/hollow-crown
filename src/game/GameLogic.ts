@@ -4,7 +4,7 @@ import type { InteractableManager } from "./interactables/InteractableManager";
 import type { Inventory } from "./Inventory";
 import type { Monster } from "./monster/Monster";
 import type { CharacterStats } from "./party/Character";
-import { EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
+import { describeRequirement, EQUIPMENT_ITEMS, meetsRequirement, type EquipmentSlot } from "./party/Equipment";
 import type { Party } from "./party/Party";
 import { SKILLS } from "./party/Skills";
 import type { Facing, Player } from "./Player";
@@ -200,6 +200,19 @@ export function equipItem(world: WorldState, characterName: string, itemId: stri
   const worn = character.equippedIn(item.slot);
   if (worn?.cursed) {
     return { success: false, message: `${worn.name} won't come off.` };
+  }
+
+  // Player request: "Items should have minimum attribute requirements
+  // to be equipped." Checked against the character's *current*
+  // `effectiveStats` -- everything already worn counts, this item's own
+  // not-yet-applied bonus doesn't -- and refused before anything is
+  // consumed from the inventory, so a failed attempt never costs the
+  // item. This is also the one place the requirement is ever stated:
+  // never shown up front, only on an actual attempt, the same
+  // "discovery, not explanation" principle every other mechanical
+  // effect on this table follows.
+  if (!meetsRequirement(character.effectiveStats, item)) {
+    return { success: false, message: `${character.name} isn't ready for ${item.name} yet — it needs ${describeRequirement(item)}.` };
   }
 
   if (!world.inventory.consume(itemId)) return { success: false };

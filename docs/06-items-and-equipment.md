@@ -24,6 +24,53 @@ Additional slots (helmet, boots, gloves) are an explicit stretch item for
 later content phases, not v1 — see
 [Phase 3](08-roadmap-phases.md#phase-3--character-depth--equipment).
 
+## Attribute requirements
+
+Every piece of equipment sets a minimum on one or two of the five core
+stats (docs/08-roadmap-phases.md Phase 8 Batch 2, player request:
+"Items should have minimum attribute requirements to be equipped that
+is thematic with the type of item and what is does. More powerful
+items should have larger requirements") — `Equipment.ts`'s
+`statRequirement`, checked
+against a character's current `effectiveStats` (whatever they'd have
+*without* this item — everything else already worn still counts) the
+moment `GameLogic.equipItem` is actually attempted, refusing the swap
+and naming exactly what's missing if it isn't met. Nothing in the game
+currently lowers a stat, so once worn, an item stays worn regardless of
+later changes — this is a gate on putting something on, not a check
+that's re-run continuously.
+
+The stat picked per item follows its own slot and effect, not one
+blanket rule:
+
+| Item shape | Requirement stat | Why |
+| --- | --- | --- |
+| Weapon | Might | The stat that already means "carry capacity" (docs/03-party-and-characters.md#core-stats) |
+| Off-hand, heavy (a braced shield) | Might | Same reasoning as a weapon — it's carried, not finessed |
+| Off-hand, light (a small parrying shield) | Grace | Maneuvered quickly rather than braced behind |
+| Armor | Vitality | The endurance to fight effectively in it, not just carry its weight |
+| Accessory, stat-boosting | Whichever stat it boosts | An item that amplifies Grace expects some Grace already |
+| Accessory, elemental resistance | Focus | Channeling a magical effect, not raw stat or willpower |
+
+A dual-stat item (docs/08-roadmap-phases.md Phase 8's Crown Shard
+Pendant) sets a requirement for every stat it boosts, not just one —
+clearing only one of the two still refuses the swap.
+
+**"More powerful items should have larger requirements" is an ordering
+guarantee, not just a description**: every tier-2 item's requirement is
+strictly higher than its tier-1 counterpart in the same slot (an Iron
+Halberd demands more Might than a Rusted Sword, a Steel Cuirass more
+Vitality than Hardened Leather), and the one cursed item in the game —
+the strongest single-stat bonus of any accessory — carries the single
+highest requirement of anything: strong enough to seize the power, not
+disciplined enough to resist what comes with it.
+
+Like every other mechanical effect on this page, the exact numbers are
+never stated ahead of time (docs/06-items-and-equipment.md#discovery-not-explanation) —
+a refused equip attempt is the discovery moment, naming the shortfall
+directly, the same way a monster's resistance is only ever learned by
+actually fighting it.
+
 ## Item categories
 
 - **Weapons** — dagger, sword, mace, spear (reach), bow, staff (caster

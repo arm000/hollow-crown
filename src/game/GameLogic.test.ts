@@ -120,6 +120,57 @@ describe("equipItem", () => {
 
     expect(world.inventory.isIdentified("shadow-ring")).toBe(false);
   });
+
+  describe("stat requirements (player request: \"Items should have minimum attribute requirements to be equipped\")", () => {
+    it("refuses an item a character's effectiveStats don't meet, naming what it needs, and never consumes it", () => {
+      // newBram's grace is 4; the Shadow Ring needs 6.
+      const world = newWorld();
+      world.inventory.add("shadow-ring", "a Shadow Ring");
+
+      const result = equipItem(world, "Bram", "shadow-ring");
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe("Bram isn't ready for a Shadow Ring yet — it needs 6 Grace.");
+      expect(world.inventory.has("shadow-ring")).toBe(true); // untouched
+      expect(world.party.members[0].equippedIn("accessory")).toBeUndefined();
+    });
+
+    it("succeeds once effectiveStats -- gear already worn included -- actually meet it", () => {
+      const world = newWorld();
+      // A Might-boosting item can't itself supply Grace, but stands in
+      // here for "some other piece of gear already nudges the relevant
+      // stat" without needing a second custom EquipmentItem just for
+      // this test -- old-buckler's own +1 Grace is the real mechanism
+      // under test.
+      world.inventory.add("old-buckler", "an Old Buckler");
+      equipItem(world, "Bram", "old-buckler"); // Bram's Grace: 4 -> 5 (still short of the ring's 6)
+      world.inventory.add("shadow-ring", "a Shadow Ring");
+      expect(equipItem(world, "Bram", "shadow-ring").success).toBe(false); // still short by 1
+
+      // A character built with enough Grace outright succeeds normally.
+      const nimble = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, 22, 0);
+      const world2 = newWorld([nimble]);
+      world2.inventory.add("shadow-ring", "a Shadow Ring");
+
+      const result = equipItem(world2, "Ysolde", "shadow-ring");
+
+      expect(result.success).toBe(true);
+      expect(nimble.equippedIn("accessory")?.id).toBe("shadow-ring");
+    });
+
+    it("multi-stat requirements need every listed stat met, not just one", () => {
+      // Corvin the mage: might 2, focus 9 -- clears the Crown Shard
+      // Pendant's Focus requirement (6) but not its Might requirement (6).
+      const corvin = new Character("Corvin", "mage", "back", { might: 2, grace: 5, vitality: 5, focus: 9, resolve: 4 }, 14, 20);
+      const world = newWorld([corvin]);
+      world.inventory.add("crown-shard-pendant", "a Crown Shard Pendant");
+
+      const result = equipItem(world, "Corvin", "crown-shard-pendant");
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain("6 Might and 6 Focus");
+    });
+  });
 });
 
 describe("unequipItem", () => {
