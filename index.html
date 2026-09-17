@@ -69,8 +69,21 @@
         pointer-events: none;
         z-index: 5;
       }
+      /* z-index 15, deliberately above every menu overlay this game has
+         (Inventory 12, Bestiary/Options 13) -- `position: fixed` alone
+         already makes #hud its own stacking context, so its z-index is
+         what actually decides whether #hud-message paints over those
+         screens or silently behind them, regardless of any z-index set
+         on the message element itself. Player report: attempting to
+         equip an item while the Inventory screen was open and having it
+         fail "but doesn't tell me why" -- `Game.handleEquip` was always
+         calling `hud.showMessage`, but every failure/confirmation this
+         whole HUD ever shows (equip refusals, "Game saved.", and so on)
+         was rendering behind whichever menu screen was open at the
+         time, invisible until it closed. */
       #hud {
         position: fixed;
+        z-index: 15;
         left: 12px;
         bottom: 12px;
         color: #d8c9a3;

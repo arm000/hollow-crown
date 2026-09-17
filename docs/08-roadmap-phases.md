@@ -2414,6 +2414,35 @@ path, not just an intent stated in a comment).
     refuses, gear already worn counts toward the threshold, nothing is
     consumed on a refusal).
 
+- ✅ Batch 3 — Fix: HUD messages were invisible behind every menu screen
+  (player report, surfaced by Batch 2's new equip-requirement refusals:
+  "when Wren attempts to equip the Shadow Ring it fails, but doesn't
+  tell me why"). The refusal message was always there —
+  `Game.handleEquip` has called `hud.showMessage` on every failure since
+  Phase 3 — but `#hud` (the element `#hud-message` lives inside) had no
+  `z-index` of its own, and `position: fixed` alone already makes it its
+  own stacking context, so its message painted *behind* whichever
+  full-screen menu happened to be open (Inventory z-index 12,
+  Bestiary/Options 13) — which, for an equip attempt specifically, is
+  always open at the exact moment the message appears. Not unique to
+  equip refusals either: the "Game saved." confirmation, and every
+  other `hud.showMessage` call, had the identical problem any time a
+  menu screen was up.
+  - `index.html`: `#hud` gained `z-index: 15`, above every menu overlay
+    in the game, so `#hud-message` (and the rest of the HUD alongside
+    it) now paints on top of an open screen instead of silently behind
+    it. A one-line CSS fix — no DOM restructuring, no change to
+    `Hud.ts`'s `showMessage` itself, since the element was always the
+    right one, just never given a stacking order that could compete
+    with the screens it needed to show through.
+  - No new tests: this is a rendering/stacking-order fix with no
+    testable logic of its own — `Hud.showMessage`/`Game.handleEquip`'s
+    actual behavior (which message, for which outcome) was already
+    correct and already covered; only whether the browser painted it in
+    front of or behind another element changed, which is outside what
+    docs/11-testing-strategy.md's non-goals already exclude from
+    automated coverage (CSS/visual layout).
+
 ---
 
 ## Notes on sequencing

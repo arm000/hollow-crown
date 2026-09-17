@@ -346,7 +346,14 @@ charm), refused with a plain "isn't ready for it yet" message rather
 than stated up front, and scaled the same way the loot itself already
 was — a tier-2 item always demands more than its tier-1 counterpart in
 the same slot, and the one cursed ring in the game carries the single
-highest requirement of anything.
+highest requirement of anything. Most recently, a player report that a
+failed equip attempt "doesn't tell me why" turned up a real bug behind
+it: the HUD's message line had no stacking order of its own, so it was
+painting silently *behind* whichever full-screen menu happened to be
+open — Inventory included, which is exactly where an equip attempt
+happens. One CSS layering fix later, every HUD message (equip
+refusals, "Game saved.", all of it) shows right on top of an open menu
+screen instead of hiding behind it.
 
 ## Scripts
 

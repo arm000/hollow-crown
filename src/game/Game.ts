@@ -870,9 +870,11 @@ export class Game {
 
   private handleEquip(characterName: string, itemId: string): void {
     const result = equipItem(this.world, characterName, itemId);
-    // A refusal (cursed gear already worn there) has a message worth
-    // surfacing -- shown once the inventory screen closes, same as the
-    // "Game saved." confirmation already does from behind this overlay.
+    // A refusal (cursed gear already worn there, or a stat requirement
+    // not met) has a message worth surfacing -- shown right on top of
+    // the inventory screen itself (index.html's #hud z-index), not
+    // hidden behind it, after a player report that a failed equip
+    // attempt gave no visible reason why.
     if (result.message) this.hud.showMessage(result.message);
     this.refreshInventoryUI();
     this.hud.updateParty(this.world.party.members);
