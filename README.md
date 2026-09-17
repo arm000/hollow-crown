@@ -346,14 +346,20 @@ charm), refused with a plain "isn't ready for it yet" message rather
 than stated up front, and scaled the same way the loot itself already
 was — a tier-2 item always demands more than its tier-1 counterpart in
 the same slot, and the one cursed ring in the game carries the single
-highest requirement of anything. Most recently, a player report that a
-failed equip attempt "doesn't tell me why" turned up a real bug behind
-it: the HUD's message line had no stacking order of its own, so it was
-painting silently *behind* whichever full-screen menu happened to be
-open — Inventory included, which is exactly where an equip attempt
-happens. One CSS layering fix later, every HUD message (equip
-refusals, "Game saved.", all of it) shows right on top of an open menu
-screen instead of hiding behind it.
+highest requirement of anything. A player report that a failed equip
+attempt "doesn't tell me why" turned up a real bug: the HUD's message
+line had no stacking order of its own, so it painted silently *behind*
+whichever full-screen menu happened to be open — Inventory included,
+which is exactly where an equip attempt happens. Most recently, a
+follow-up report on the fix itself ("the help text writes over the
+inventory if there are too many items... or the screen is too small
+vertically") caught the first cut's own overcorrection: raising the
+whole HUD to fix the message dragged its permanent, ever-present text
+(the control hints, the carried-item line) up with it, now
+permanently overlapping the inventory screen's own content instead.
+The real fix only elevates the HUD, and hides everything in it except
+the message itself, while a menu screen is actually open — synced
+every frame, so exploration is completely unaffected either way.
 
 ## Scripts
 

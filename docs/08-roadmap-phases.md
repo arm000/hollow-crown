@@ -2442,6 +2442,30 @@ path, not just an intent stated in a comment).
     front of or behind another element changed, which is outside what
     docs/11-testing-strategy.md's non-goals already exclude from
     automated coverage (CSS/visual layout).
+  - **Follow-up (player report): "In the inventory screen the help text
+    writes over the inventory if there are too many items in inventory
+    or the screen is too small vertically."** The flat `z-index: 15` on
+    `#hud` above raised the *whole* HUD, not just the message — its
+    ever-present ambient text (the title, level name, keyboard/touch
+    control hints, the "Carrying: ..." line) rode along with it,
+    permanently overlapping the inventory screen's own content
+    whenever the carried-item list reached that corner (or the
+    viewport was short enough that it always did). Replaced with
+    `Hud.setOverlayActive(active)`, synced every frame from
+    `Game.tick()` against whether a menu screen is currently open (the
+    same unconditional per-frame sync pattern `tick()` already used for
+    the screen-flash/projectile/monster-animation state) — it toggles
+    one class, `#hud.above-menu`, which does two things together:
+    raises `#hud`'s own z-index (still the only way for a descendant
+    message to ever compete with a menu screen's separate stacking
+    context) *and* hides every other `#hud` child, so only the
+    transient message itself shows through an open menu, never the
+    permanent ambient text beside it. Exploration is completely
+    unaffected — the class, and everything it changes, only ever
+    applies while `mode` is `"inventory"`/`"bestiary"`/`"options"`.
+  - Still 525 tests passing (unchanged — `Hud.ts`/`Game.ts` are
+    untested DOM/rendering glue per docs/11-testing-strategy.md, same
+    as the original fix above).
 
 ---
 

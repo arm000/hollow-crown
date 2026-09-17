@@ -69,21 +69,8 @@
         pointer-events: none;
         z-index: 5;
       }
-      /* z-index 15, deliberately above every menu overlay this game has
-         (Inventory 12, Bestiary/Options 13) -- `position: fixed` alone
-         already makes #hud its own stacking context, so its z-index is
-         what actually decides whether #hud-message paints over those
-         screens or silently behind them, regardless of any z-index set
-         on the message element itself. Player report: attempting to
-         equip an item while the Inventory screen was open and having it
-         fail "but doesn't tell me why" -- `Game.handleEquip` was always
-         calling `hud.showMessage`, but every failure/confirmation this
-         whole HUD ever shows (equip refusals, "Game saved.", and so on)
-         was rendering behind whichever menu screen was open at the
-         time, invisible until it closed. */
       #hud {
         position: fixed;
-        z-index: 15;
         left: 12px;
         bottom: 12px;
         color: #d8c9a3;
@@ -92,6 +79,38 @@
         user-select: none;
         font-size: 14px;
         line-height: 1.4;
+      }
+      /* `Game.tick()` keeps this class synced to whether a menu screen
+         (Inventory/Bestiary/Options) is currently open. Player report:
+         attempting to equip an item while the Inventory screen was open
+         and having it fail "but doesn't tell me why" -- `Game.handleEquip`
+         was always calling `hud.showMessage`, but `#hud` had no z-index
+         of its own, and `position: fixed` alone already makes it its own
+         stacking context, so the message painted *behind* whichever menu
+         screen was open (Inventory z-index 12, Bestiary/Options 13) --
+         which, for an equip attempt, is always open at the exact moment
+         the message appears.
+         The fix isn't just "raise #hud's z-index," though -- an earlier
+         attempt at exactly that surfaced a second player report: the
+         ever-present "help text" (the keyboard/touch control hints) and
+         the rest of #hud's ambient status text rode along with it,
+         permanently overlapping the inventory screen's own content
+         whenever the carried-item list was long enough (or the viewport
+         short enough) to reach that corner. So `.above-menu` does two
+         things at once: raises #hud's own z-index (the message's only
+         way to ever compete with a menu screen's stacking context, being
+         a descendant of it) *and* hides every other #hud child, so only
+         the transient message itself -- not the permanent ambient text
+         next to it -- ever shows through an open menu. */
+      #hud.above-menu {
+        z-index: 15;
+      }
+      #hud.above-menu .title,
+      #hud.above-menu #hud-level,
+      #hud.above-menu .keyboard-hint,
+      #hud.above-menu .touch-hint,
+      #hud.above-menu #hud-inventory {
+        display: none;
       }
       #hud .title {
         font-size: 20px;

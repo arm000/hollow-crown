@@ -23,6 +23,7 @@ const WIN_EPILOGUE =
  * Phase 1/2's state legible.
  */
 export class Hud {
+  private readonly rootEl: HTMLElement;
   private readonly messageEl: HTMLElement;
   private readonly levelEl: HTMLElement;
   private readonly inventoryEl: HTMLElement;
@@ -39,6 +40,7 @@ export class Hud {
   private readonly combatFlashEl: HTMLElement;
 
   constructor(doc: Document = document) {
+    this.rootEl = getRequiredElement(doc, "hud");
     this.messageEl = getRequiredElement(doc, "hud-message");
     this.levelEl = getRequiredElement(doc, "hud-level");
     this.inventoryEl = getRequiredElement(doc, "hud-inventory");
@@ -57,6 +59,21 @@ export class Hud {
 
   showMessage(text: string): void {
     this.messageEl.textContent = text;
+  }
+
+  /**
+   * Synced every frame from `Game.tick()` against whether a menu screen
+   * (Inventory/Bestiary/Options) is currently open — see index.html's
+   * `#hud.above-menu` for what this class actually does: raises the
+   * whole HUD above that screen's own stacking context and hides every
+   * part of it except the message line, so a refusal/confirmation
+   * (`showMessage`) is never left invisible behind an open menu, without
+   * also permanently overlapping the menu's own content with the
+   * ambient title/level/control-hint/carried-item text that isn't going
+   * anywhere otherwise.
+   */
+  setOverlayActive(active: boolean): void {
+    this.rootEl.classList.toggle("above-menu", active);
   }
 
   /** The current level's name (docs/08-roadmap-phases.md Phase 5) — environmental flavor, per docs/02-setting-and-story.md, not required reading. */

@@ -395,6 +395,10 @@ export class Game {
     }
     this.screenFlash.update(delta);
     this.hud.setScreenFlash(this.screenFlash.color, this.screenFlash.intensity);
+    // Same unconditional per-frame sync as everything else above --
+    // cheap, and correct regardless of which of the several open*/close*
+    // methods actually changed `mode` (see index.html's `#hud.above-menu`).
+    this.hud.setOverlayActive(this.mode === "inventory" || this.mode === "bestiary" || this.mode === "options");
 
     this.renderer.render(this.scene, this.player.camera);
   }
@@ -872,9 +876,9 @@ export class Game {
     const result = equipItem(this.world, characterName, itemId);
     // A refusal (cursed gear already worn there, or a stat requirement
     // not met) has a message worth surfacing -- shown right on top of
-    // the inventory screen itself (index.html's #hud z-index), not
-    // hidden behind it, after a player report that a failed equip
-    // attempt gave no visible reason why.
+    // the inventory screen itself (Hud.setOverlayActive, synced every
+    // frame from Game.tick), not hidden behind it, after a player
+    // report that a failed equip attempt gave no visible reason why.
     if (result.message) this.hud.showMessage(result.message);
     this.refreshInventoryUI();
     this.hud.updateParty(this.world.party.members);
