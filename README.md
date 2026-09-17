@@ -108,10 +108,12 @@ release smoke test, alongside balance sanity checks (XP curve,
 resistance math, level data integrity, and a reachability audit across
 all four levels). An Options screen (volume, mute, and per-action key
 rebinding, all persisted independently of a save) sits alongside
-Inventory/Bestiary/Level Up as one of four cross-linked menu screens —
-any one reachable directly from any other, and each with its own
-always-visible HUD button so none of the four requires opening
-Inventory first. The game bundle is split so Three.js loads in the
+Inventory/Bestiary as one of three cross-linked menu screens — any one
+reachable directly from any other, and each with its own always-visible
+HUD button so none of the three requires opening Inventory first (Level
+Up is a fourth always-visible HUD button, but opens that same Inventory
+screen with its "Level Up" editing controls already toggled on, rather
+than being a fourth distinct screen). The game bundle is split so Three.js loads in the
 background instead of blocking the party-creation screen's first paint
 (see "Performance" below), and `npm run package:web` produces an
 itch.io-ready zip alongside the primary GitHub Pages deploy. Since v1,
@@ -155,10 +157,10 @@ level spawns work correctly no matter what was picked at creation. That
 same creation screen gained the "full point-buy attribute creation" its
 own docs used to flag as a stretch goal (a small one): 5 bonus
 attribute points to freely allocate on top of the chosen class's base
-stats — the exact +1-per-point mechanic the level-up screen already
-uses — plus the new tier-1 skill fork above, picked right there rather
-than defaulted, with every stat and skill in both that screen and
-Level Up explaining what it actually does as always-visible text
+stats — the exact +1-per-point mechanic the character sheet's Level Up
+mode already uses — plus the new tier-1 skill fork above, picked right
+there rather than defaulted, with every stat and skill in both that
+screen and the character sheet explaining what it actually does as always-visible text
 (originally a hover tooltip, fixed once that turned out not to work on
 a touch screen at all). Descend
 stays disabled, naming how many points are left, until every one of
@@ -180,7 +182,14 @@ always-visible treatment reached equipment too: a piece of gear now
 shows its real effect (computed straight from its stat/resistance
 data, so it can never drift out of sync) once it's actually been worn
 for the first time — the same "learned by using it" moment a
-consumable's own description was already keyed to. Playable now: a
+consumable's own description was already keyed to. Most recently, the
+Inventory and Level Up screens merged into one character sheet per
+party member (tabs switch between them, the shared carried-item pool
+shows on every tab), so a player can see exactly what a stat point, a
+skill unlock, or a piece of gear actually does to that character's
+numbers without bouncing between two separate screens to check; the
+Level Up HUD button now opens that same sheet with its `+1`/`Unlock`
+controls already toggled on instead of a screen of its own. Playable now: a
 one-time party-creation screen (name
 your character, pick a class, allocate every bonus attribute point, choose
 a starting skill, and pick a color-swatch portrait — placeholder art,
@@ -246,12 +255,15 @@ Defeating a monster or
 finding a secret for the first time awards XP, and enough of it levels a
 character up (a class-flavored flat HP/Mana bump plus skill points to
 spend by hand, shown in the HUD and inventory screen as `Lv2`, etc.).
-Inventory, Bestiary, Level Up, and Options are four full-screen menus,
-each with its own always-visible HUD button (top-center: Bestiary/
-Level Up/Options, next to Inventory/Mute up in the corner) so none of
-them requires opening another first — and each also shows the same
-navigation row in its own header — Save, then every other one of the
-four, then Close — so any of them is one tap from any other too. Save
+Inventory, Bestiary, and Options are three full-screen menus, each with
+its own always-visible HUD button (top-center: Bestiary/Options, next
+to Inventory/Mute up in the corner) so none of them requires opening
+another first — and each also shows the same navigation row in its own
+header — Save, then every other one of the three, then Close — so any
+of them is one tap from any other too. A fourth HUD button, Level Up,
+opens Inventory too, but with that character's sheet already switched
+into its stat/skill "Level Up" editing mode rather than opening a
+separate screen. Save
 is a single slot capturing the party,
 inventory, current level, and exact position; relaunching the game
 offers a "Continue" button on the party-creation screen when a save

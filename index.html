@@ -434,7 +434,7 @@
          effect text right under it -- player report: hover tooltips
          "don't work on mobile touch screen because I can't hover
          over." Narrower than the general .party-creation-description/
-         .levelup-description captions since this sits in a
+         .inventory-description captions since this sits in a
          flex-wrapped row of several, not a single-column list. */
       .combat-skill-option {
         display: flex;
@@ -466,12 +466,14 @@
         opacity: 0.4;
       }
 
-      /* Inventory/equip overlay: mounted by InventoryUI.ts. Same
-         explicit "display:none by default" pattern as #win-screen and
-         #combat-ui above -- an ID selector would otherwise beat the
-         browser's own [hidden] rule. Opened from exploration only (see
-         Game.ts's toggleInventory), so unlike #combat-ui it never needs
-         to coexist with the touch move/turn pads underneath. */
+      /* Character sheet overlay: mounted by InventoryUI.ts, reachable
+         via the "Inventory" HUD button/`I` key, or the "Level Up" HUD
+         button (opens the same screen with editing pre-activated --
+         see Game.ts's toggleLevelUp). Same explicit "display:none by
+         default" pattern as #win-screen and #combat-ui above -- an ID
+         selector would otherwise beat the browser's own [hidden] rule.
+         Opened from exploration only, so unlike #combat-ui it never
+         needs to coexist with the touch move/turn pads underneath. */
       #inventory-ui {
         position: fixed;
         inset: 0;
@@ -490,19 +492,18 @@
       #inventory-ui:not([hidden]) {
         display: flex;
       }
-      /* Shared by all four menu screens' headers (Inventory/Bestiary/
-         Level Up/Options -- see MenuNav.ts's Phase 7 cross-navigation
-         row, built identically by all of them via buildMenuNav). Each
-         screen still keeps its own #foo-header id for its outer flex
-         row, but the actions row and buttons inside it are visually
-         identical everywhere, so those are classes, not per-screen ids
-         -- the one deliberate exception to this project's usual
-         per-screen-id CSS convention, since duplicating this block
-         four times over would be pure noise. */
+      /* Shared by every menu screen's header (Inventory/Bestiary/
+         Options -- see MenuNav.ts's Phase 7 cross-navigation row, built
+         identically by all of them via buildMenuNav). Each screen
+         still keeps its own #foo-header id for its outer flex row, but
+         the actions row and buttons inside it are visually identical
+         everywhere, so those are classes, not per-screen ids -- the
+         one deliberate exception to this project's usual per-screen-id
+         CSS convention, since duplicating this block three times over
+         would be pure noise. */
       #inventory-header,
       #bestiary-header,
-      #options-header,
-      #levelup-header {
+      #options-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -529,16 +530,119 @@
       .menu-nav-btn:active {
         background: rgba(216, 201, 163, 0.35);
       }
+      /* One tab per party member (InventoryUI.buildTab, player
+         request: "Focus on one character at a time with tabs to go
+         between characters") -- wraps to a second line on a narrow
+         phone with a full 4-member party rather than overflowing. */
+      #inventory-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .inventory-tab-btn {
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(216, 201, 163, 0.35);
+        background: rgba(20, 17, 13, 0.6);
+        color: #d8c9a3;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+      .inventory-tab-btn.selected {
+        border-color: #d8c9a3;
+        background: rgba(216, 201, 163, 0.25);
+      }
       #inventory-body {
         display: flex;
         flex-direction: column;
         gap: 20px;
       }
+      #inventory-sheet {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(216, 201, 163, 0.2);
+      }
+      .inventory-sheet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+      .inventory-points {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      /* Class + current HP/Mana (InventoryUI.buildMetaRow) -- sits
+         right under the name/level header, above the Stats section
+         whose Vitality/Focus rows are what actually move these two
+         numbers. */
+      .inventory-meta {
+        font-size: 12px;
+        opacity: 0.75;
+        margin-bottom: 4px;
+      }
       .inventory-heading {
         font-size: 13px;
         letter-spacing: 0.06em;
         opacity: 0.75;
-        margin-bottom: 8px;
+        margin-top: 8px;
+        margin-bottom: 6px;
+      }
+      /* A stat/skill row's label (+ its +1/Unlock button, editing
+         only -- see #inventory-ui's own "Level Up" section below) --
+         same shape `.inventory-slot-btn` uses in the Equipment
+         section, just not a tappable row itself. */
+      .inventory-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 0;
+        font-size: 13px;
+      }
+      /* Always-visible descriptive caption -- under a stat/skill row,
+         or a carried/worn item -- player report: hover tooltips "don't
+         work on mobile touch screen because I can't hover over." Same
+         role .party-creation-description plays on the creation screen. */
+      .inventory-description {
+        font-size: 12px;
+        opacity: 0.7;
+        margin: -2px 0 8px;
+      }
+      /* The "Level Up" toggle, and Cancel/Confirm once it's tapped
+         (player request: "add a 'Level Up' button that unlocks the +1
+         buttons and the skill selection. Those buttons should be
+         dismissed if someone cancels the level up action, or confirms
+         the level up choices"). */
+      .inventory-levelup-row {
+        gap: 8px;
+      }
+      .inventory-btn {
+        font-size: 12px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(216, 201, 163, 0.5);
+        background: rgba(20, 17, 13, 0.75);
+        color: #d8c9a3;
+        touch-action: none;
+      }
+      .inventory-btn:active {
+        background: rgba(216, 201, 163, 0.35);
+      }
+      .inventory-btn:disabled {
+        opacity: 0.4;
+      }
+      .inventory-btn-cancel {
+        border-color: rgba(139, 60, 60, 0.6);
+      }
+      .inventory-btn-confirm {
+        border-color: rgba(140, 200, 140, 0.6);
+        background: rgba(140, 200, 140, 0.15);
       }
       #inventory-carried {
         display: flex;
@@ -569,14 +673,6 @@
       .inventory-item-btn.not-equippable {
         opacity: 0.65;
       }
-      /* An identified consumable's effect, always visible under its
-         button -- player report: hover tooltips "don't work on mobile
-         touch screen because I can't hover over." */
-      .inventory-item-description {
-        font-size: 12px;
-        opacity: 0.7;
-        margin: -3px 0 8px;
-      }
       .inventory-item-btn.selected {
         border-color: #d8c9a3;
         background: rgba(216, 201, 163, 0.25);
@@ -584,23 +680,13 @@
       .inventory-slot-btn.match {
         border-color: rgba(140, 200, 140, 0.8);
       }
-      /* Shown per character card only while a cure consumable is
-         selected (InventoryUI.buildPartySection) -- a distinct green
-         tint, same family as .inventory-slot-btn.match above, so it
-         reads as "tap here to actually do the thing" rather than
-         blending into the plain gear-slot rows underneath it. */
+      /* Shown once a cure consumable is selected (InventoryUI.buildUseConsumableRow)
+         -- a distinct green tint, same family as .inventory-slot-btn.match
+         above, so it reads as "tap here to actually do the thing"
+         rather than blending into the plain rows around it. */
       .inventory-use-btn {
         border-color: rgba(140, 200, 140, 0.6);
         background: rgba(140, 200, 140, 0.15);
-      }
-      #inventory-party {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-      .inventory-character-name {
-        font-size: 15px;
-        margin-bottom: 6px;
       }
 
       /* Bestiary/codex overlay: mounted by BestiaryUI.ts. Same explicit
@@ -715,98 +801,6 @@
         height: 22px;
       }
 
-      /* Level-up overlay: mounted by LevelUpUI.ts. Same family/pattern
-         as #options-ui immediately above -- opened from the inventory
-         screen, same "exploration already fully stopped" precondition. */
-      #levelup-ui {
-        position: fixed;
-        inset: 0;
-        display: none;
-        flex-direction: column;
-        padding: 16px;
-        padding-top: max(16px, env(safe-area-inset-top));
-        padding-bottom: max(16px, env(safe-area-inset-bottom));
-        gap: 16px;
-        background: rgba(5, 4, 2, 0.92);
-        color: #d8c9a3;
-        pointer-events: auto;
-        overflow-y: auto;
-        z-index: 13;
-      }
-      #levelup-ui:not([hidden]) {
-        display: flex;
-      }
-      #levelup-body {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        max-width: 420px;
-      }
-      .levelup-character {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid rgba(216, 201, 163, 0.2);
-      }
-      .levelup-character-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        font-size: 15px;
-        margin-bottom: 4px;
-      }
-      .levelup-points {
-        font-size: 12px;
-        opacity: 0.8;
-      }
-      /* Class + current HP/Mana (LevelUpUI.buildMetaRow) -- sits right
-         under the name/level header, above the Stats section whose
-         Vitality/Focus rows are what actually move these two numbers. */
-      .levelup-meta {
-        font-size: 12px;
-        opacity: 0.75;
-        margin-bottom: 6px;
-      }
-      .levelup-heading {
-        font-size: 12px;
-        letter-spacing: 0.06em;
-        opacity: 0.7;
-        margin-top: 8px;
-      }
-      .levelup-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 4px 0;
-        font-size: 13px;
-      }
-      /* Always-visible descriptive caption under a stat/skill row --
-         player report: hover tooltips "don't work on mobile touch
-         screen because I can't hover over." Same role
-         .party-creation-description plays on the creation screen. */
-      .levelup-description {
-        font-size: 12px;
-        opacity: 0.7;
-        margin: -2px 0 6px;
-      }
-      .levelup-btn {
-        font-size: 12px;
-        padding: 5px 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(216, 201, 163, 0.5);
-        background: rgba(20, 17, 13, 0.75);
-        color: #d8c9a3;
-        touch-action: none;
-      }
-      .levelup-btn:active {
-        background: rgba(216, 201, 163, 0.35);
-      }
-      .levelup-btn:disabled {
-        opacity: 0.4;
-      }
-
       /* Party-creation screen: mounted by PartyCreationUI.ts, shown once
          before Game (and its WebGL context) even exists -- see main.ts.
          No [hidden]-vs-display gotcha to worry about here (unlike
@@ -893,9 +887,10 @@
          same visual language as the rest of the screen (.party-creation-row/
          .party-creation-choice-btn are reused as-is for the skill
          picker), plus a couple of small new rules for the stat rows
-         and headings, deliberately styled like LevelUpUI's own
-         .levelup-heading/.levelup-row rather than inventing a third
-         look for what's mechanically the same "+1 per point" idea. */
+         and headings, deliberately styled like the character sheet's
+         own .inventory-heading/.inventory-row rather than inventing a
+         third look for what's mechanically the same "+1 per point"
+         idea. */
       .party-creation-section {
         width: 100%;
       }

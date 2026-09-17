@@ -1,25 +1,32 @@
 /**
- * The four full-screen menu overlays (Inventory/Bestiary/Level Up/
- * Options) used to each build their own ad hoc header — Inventory had
- * Save/Bestiary/Level Up/Options/Close, but the other three only ever
- * had a lone Close button, so reaching Options or Level Up from
- * Bestiary meant closing all the way back to exploration and
- * re-opening Inventory first. Player report: "it's weird that all
- * these screens like options and levelup require going through the
- * inventory screen first." This is the shared fix: every one of the
- * four screens now shows the exact same row of "jump straight to
- * sibling screen" buttons (this screen's own destination left out —
- * no point offering a button back to yourself), so any menu is one tap
- * from any other, and the fact that Inventory happens to be the one
- * reachable from exploration's always-visible HUD button/`I` key
- * stops mattering once you're actually browsing menus.
+ * The three full-screen menu overlays (Inventory/Bestiary/Options)
+ * used to each build their own ad hoc header — Inventory had
+ * Save/Bestiary/Level Up/Options/Close, but the other two only ever
+ * had a lone Close button, so reaching Options from Bestiary meant
+ * closing all the way back to exploration and re-opening Inventory
+ * first. Player report: "it's weird that all these screens like
+ * options and levelup require going through the inventory screen
+ * first." This is the shared fix: every one of these screens now
+ * shows the exact same row of "jump straight to sibling screen"
+ * buttons (this screen's own destination left out — no point offering
+ * a button back to yourself), so any menu is one tap from any other,
+ * and the fact that Inventory happens to be the one reachable from
+ * exploration's always-visible HUD button/`I` key stops mattering
+ * once you're actually browsing menus.
+ *
+ * `"levelUp"` used to be a fourth destination here, back when Level Up
+ * was its own separate screen. It isn't anymore (docs/08-roadmap-phases.md
+ * Phase 7, on a player request to fold it into a unified character
+ * sheet) — `InventoryUI`'s own in-sheet "Level Up" button is what
+ * reaches it now, and the always-visible HUD button opens `Inventory`
+ * with that button already pre-toggled (`Game.toggleLevelUp`), so
+ * there's no longer a distinct place for this row to navigate *to*.
  */
-export type MenuDestination = "inventory" | "bestiary" | "levelUp" | "options";
+export type MenuDestination = "inventory" | "bestiary" | "options";
 
 export interface MenuNavCallbacks {
   onOpenInventory: () => void;
   onOpenBestiary: () => void;
-  onOpenLevelUp: () => void;
   onOpenOptions: () => void;
   onSave: () => void;
   /** Always returns straight to exploration, never to another menu screen — same "Close means fully done here" convention every screen in this family has always used. */
@@ -29,7 +36,6 @@ export interface MenuNavCallbacks {
 const DESTINATIONS: Array<{ id: MenuDestination; label: string }> = [
   { id: "inventory", label: "Inventory" },
   { id: "bestiary", label: "Bestiary" },
-  { id: "levelUp", label: "Level Up" },
   { id: "options", label: "Options" },
 ];
 
@@ -50,7 +56,6 @@ export function buildMenuNav(idPrefix: string, current: MenuDestination, callbac
   const openers: Record<MenuDestination, () => void> = {
     inventory: callbacks.onOpenInventory,
     bestiary: callbacks.onOpenBestiary,
-    levelUp: callbacks.onOpenLevelUp,
     options: callbacks.onOpenOptions,
   };
   for (const { id, label } of DESTINATIONS) {

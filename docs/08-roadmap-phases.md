@@ -2106,6 +2106,76 @@ true before shipping.
   - 462 tests passing (unchanged — `InventoryUI` has no test file,
     untested DOM glue per docs/11-testing-strategy.md).
 
+- ✅ Batch 20 — Inventory and Level Up merged into one character sheet
+  (player request: "I want to inspect a character's attributes and
+  skills from the inventory screen so I can see the effect of
+  inventory changes. Change the inventory screen to be a character
+  sheet with attributes, skills, and inventory all as one. Focus on
+  one character at a time with tabs to go between characters. Show the
+  shared inventory on each character sheet. Rewrite the level up
+  interface to reuse the character sheet but add a 'Level Up' button
+  that unlocks the +1 buttons and the skill selection. Those buttons
+  should be dismissed if someone cancels the level up action, or
+  confirms the level up choices."). Gear and stat/skill allocation had
+  lived on two separate screens since Phase 7 began, so a player
+  weighing "should I spend this point on Vitality or equip this
+  armor?" had to bounce between them to compare.
+  - `LevelUpUI.ts` deleted entirely; every bit of its functionality
+    (stat rows, skill rows, spending) moved into a rewritten
+    `InventoryUI.ts` — one screen, one class, same DOM id/HUD entry
+    point it already had, now showing considerably more than gear.
+  - **Tabs, one character at a time** (not the old scrolling stack of
+    every party member's card): `InventoryUI.activeCharacterIndex`
+    picks who `buildCharacterSheet` renders; `buildTab` builds one
+    button per party member, showing `(N)` next to the name when they
+    have unspent points.
+  - **The shared inventory shows on every tab**: `buildCarriedSection`
+    is appended after the active character's sheet regardless of which
+    tab is selected — it's the same one pool no matter whose tab is
+    open. Selecting a carried item and then switching tabs to target a
+    different character with it is the normal flow — `selectedItemId`
+    deliberately survives a tab switch, unlike `show()` opening the
+    screen fresh or a successful equip/use clearing it.
+  - **A "Level Up" button gates the `+1`/`Unlock` controls**:
+    `InventoryUI.editMode` (new, defaults `false`) hides every stat
+    row's `+1` and every unlockable skill row's `Unlock` button until
+    toggled on; the description text next to each stays visible either
+    way, same as it always has. "Cancel" and "Confirm" are
+    deliberately identical in effect — both just set `editMode` back
+    to `false` — because `onSpendStat`/`onUnlockSkill` still apply
+    immediately and permanently the instant a button is tapped, exactly
+    as `LevelUpUI` always did; this game has no respec, anywhere (see
+    docs/03-party-and-characters.md#leveling), so there is nothing to
+    actually revert. The player request is specifically about the
+    *buttons* being dismissed, not about game state reverting.
+  - Two HUD entry points, one screen: `Hud.ts`'s existing
+    `#inventory-toggle`/`#levelup-toggle` buttons are unchanged.
+    `Game.toggleInventory` opens the sheet in plain view
+    (`openInventory()`); `Game.toggleLevelUp` opens the same screen
+    with editing pre-activated and jumps to the first character with
+    unspent points (`openInventory(true)` →
+    `InventoryUI.show(startInEditMode)`), falling back to whichever
+    tab was already active if nobody currently has points.
+  - `MenuNav.ts`'s `MenuDestination` narrowed from four values to
+    three (`"inventory" | "bestiary" | "options"`) — Level Up was never
+    really a separate place to navigate *to* once it's just this same
+    screen's own edit mode, so the shared cross-navigation row every
+    menu screen shows no longer offers a button to it.
+  - `Game.ts`'s `Mode` type lost `"levelUp"` (five values now, not
+    six); `openLevelUp`/`closeLevelUp`/`refreshLevelUpUI` all deleted,
+    folded into `openInventory`/`refreshInventoryUI`.
+  - CSS: every `.levelup-*` class and the `#levelup-ui` block removed
+    from `index.html`; the handful still needed (stat/skill rows,
+    action buttons, descriptions) renamed into the `.inventory-*`
+    namespace and merged with the classes the old `InventoryUI`
+    already had for the same visual role (e.g. `.levelup-description`
+    and `.inventory-item-description` unified into one
+    `.inventory-description`). `#levelup-toggle.has-points`'s glow
+    animation is unchanged — that HUD button still exists.
+  - 462 tests passing (unchanged — `InventoryUI`/`Game.ts`/`MenuNav.ts`
+    have no test files, untested DOM/rendering glue per
+    docs/11-testing-strategy.md).
+
 ---
 
 ## Notes on sequencing

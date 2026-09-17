@@ -26,7 +26,6 @@ import { InteractableManager } from "./interactables/InteractableManager";
 import { createInteractableMesh } from "./interactables/InteractableMesh";
 import { Inventory } from "./Inventory";
 import { InventoryUI } from "./InventoryUI";
-import { LevelUpUI } from "./LevelUpUI";
 import type { MenuNavCallbacks } from "./MenuNav";
 import { buildMinimapGrid } from "./Minimap";
 import { MinimapUI } from "./MinimapUI";
@@ -61,7 +60,7 @@ import { WorldClock } from "./WorldClock";
 const TILE_SIZE = 2;
 const MONSTER_HEIGHT = 1.4;
 
-type Mode = "explore" | "combat" | "inventory" | "bestiary" | "options" | "levelUp";
+type Mode = "explore" | "combat" | "inventory" | "bestiary" | "options";
 
 export class Game {
   private readonly renderer: THREE.WebGLRenderer;
@@ -76,7 +75,6 @@ export class Game {
   private readonly inventoryUI: InventoryUI;
   private readonly bestiaryUI: BestiaryUI;
   private readonly optionsUI: OptionsUI;
-  private readonly levelUpUI: LevelUpUI;
   /** One representative `Monster` per encountered type name, for the bestiary screen (docs/05-combat.md#the-bestiary) to describe — recorded the moment combat starts, per "win, lose, or flee" all counting as an encounter. Not persisted across save/load, same simplification as per-level interactable/monster state (see `SaveGame.ts`). */
   private readonly encounteredMonsters = new Map<string, Monster>();
   private readonly minimapUI = new MinimapUI();
@@ -109,8 +107,9 @@ export class Game {
    * points this session has never shown the screen for, same as a
    * fresh level-up would. Set `true` again in `checkCombatEnd`'s
    * victory branch whenever `awardPartyXp` actually grants a level;
-   * set `false` in `openLevelUp`, regardless of what happens once
-   * there. `refreshLevelUpButton` is the only reader.
+   * set `false` in `toggleLevelUp`'s `openInventory(true)` call,
+   * regardless of what happens once there. `refreshLevelUpButton` is
+   * the only reader.
    */
   private levelUpNeedsAttention = true;
 
@@ -214,15 +213,16 @@ export class Game {
     this.combatUI = new CombatUI((choice, itemId, skillId) => this.handleCombatAction(choice, itemId, skillId));
 
     // One shared set of cross-navigation callbacks, identical across
-    // all four menu screens (docs/08-roadmap-phases.md Phase 7, on a
-    // player report that Options/Level Up "required going through the
+    // Inventory/Bestiary/Options (docs/08-roadmap-phases.md Phase 7, on
+    // a player report that Options "required going through the
     // inventory screen first" -- see MenuNav.ts). `onClose` reads
     // `this.mode` at call time rather than being baked to one specific
-    // screen, since the exact same button appears on all four.
+    // screen, since the exact same button appears on all three. Level
+    // Up isn't a fourth destination here anymore -- it's
+    // `InventoryUI`'s own in-sheet button now, not a separate screen.
     const menuNav: MenuNavCallbacks = {
       onOpenInventory: () => this.openInventory(),
       onOpenBestiary: () => this.openBestiary(),
-      onOpenLevelUp: () => this.openLevelUp(),
       onOpenOptions: () => this.openOptions(),
       onSave: () => this.handleSave(),
       onClose: () => this.closeCurrentMenu(),
@@ -231,6 +231,8 @@ export class Game {
       (characterName, itemId) => this.handleEquip(characterName, itemId),
       (characterName, slot) => this.handleUnequip(characterName, slot),
       (characterName, itemId) => this.handleUseConsumable(characterName, itemId),
+      (characterName, stat) => this.handleSpendStat(characterName, stat),
+      (characterName, skillId) => this.handleUnlockSkill(characterName, skillId),
       menuNav,
     );
     this.bestiaryUI = new BestiaryUI(menuNav);
@@ -238,11 +240,6 @@ export class Game {
       (percent) => this.handleVolumeChange(percent),
       (muted) => this.handleMuteToggle(muted),
       (action, key) => this.handleRebind(action, key),
-      menuNav,
-    );
-    this.levelUpUI = new LevelUpUI(
-      (characterName, stat) => this.handleSpendStat(characterName, stat),
-      (characterName, skillId) => this.handleUnlockSkill(characterName, skillId),
       menuNav,
     );
     this.hud.onInventoryToggle(() => this.toggleInventory());
@@ -259,7 +256,7 @@ export class Game {
     // listen for orientationchange explicitly.
     window.addEventListener("orientationchange", () => this.onResize());
     window.addEventListener("keydown", (event) => {
-      const inAnyMenu = this.mode === "bestiary" || this.mode === "options" || this.mode === "levelUp";
+      const inAnyMenu = this.mode === "bestiary" || this.mode === "options";
       if (event.code === "Escape" && inAnyMenu) {
         // Routed through the same shared close path the cross-navigation
         // row's own Close button uses (`closeCurrentMenu`, see
@@ -653,13 +650,15 @@ export class Game {
   }
 
   /**
-   * Shared by all four always-visible HUD buttons (`#quick-menu` in
-   * index.html, docs/08-roadmap-phases.md Phase 7 — a player report
-   * that Options/Level Up were only reachable by opening Inventory
-   * first): closes back to exploration if `targetMode` is already
-   * showing, opens it fresh if the party is currently exploring (and
-   * the run hasn't ended), and otherwise does nothing — mid-combat,
-   * none of these buttons should do anything at all.
+   * Shared by the three always-visible menu HUD buttons (`#quick-menu`
+   * in index.html — Bestiary and Options; Inventory/Level Up use
+   * `toggleInventory`/`toggleLevelUp` directly instead, since they
+   * both target the same screen now, just with a different
+   * `openInventory` argument): closes back to exploration if
+   * `targetMode` is already showing, opens it fresh if the party is
+   * currently exploring (and the run hasn't ended), and otherwise does
+   * nothing — mid-combat, none of these buttons should do anything at
+   * all.
    */
   private toggleMenu(targetMode: Mode, open: () => void): void {
     if (this.mode === targetMode) {
@@ -679,19 +678,33 @@ export class Game {
     this.toggleMenu("options", () => this.openOptions());
   }
 
+  /**
+   * The always-visible "Level Up" HUD button (docs/08-roadmap-phases.md
+   * Phase 7, on a player request to fold the old separate Level Up
+   * screen into a unified character sheet) — same "press again while
+   * already showing closes it" convention `toggleMenu` gives the other
+   * three buttons, just written out directly here since there's no
+   * separate `"levelUp"` mode to hand `toggleMenu` anymore: opening
+   * still means `openInventory`, just with edit mode pre-activated.
+   */
   private toggleLevelUp(): void {
-    this.toggleMenu("levelUp", () => this.openLevelUp());
+    if (this.mode === "inventory") {
+      this.closeCurrentMenu();
+      return;
+    }
+    if (this.mode !== "explore" || this.runEnded) return;
+    this.input.clear();
+    this.openInventory(true);
   }
 
-  /** Hides whichever of the four menu screens happens to be showing — every `open*` method below calls this first, so any one of them can be reached directly from any other (docs/08-roadmap-phases.md Phase 7's cross-navigation, see `MenuNav.ts`) without assuming a specific predecessor screen. Hiding an already-hidden screen is a harmless no-op. */
+  /** Hides whichever of the three menu screens happens to be showing — every `open*` method below calls this first, so any one of them can be reached directly from any other (docs/08-roadmap-phases.md Phase 7's cross-navigation, see `MenuNav.ts`) without assuming a specific predecessor screen. Hiding an already-hidden screen is a harmless no-op. */
   private hideAllMenus(): void {
     this.inventoryUI.hide();
     this.bestiaryUI.hide();
     this.optionsUI.hide();
-    this.levelUpUI.hide();
   }
 
-  /** The shared "Close" button every menu screen shows (`MenuNav.ts`) routes here rather than baking in one specific screen, since the exact same button renders on all four — reads `this.mode` at call time to close whichever one is actually open. */
+  /** The shared "Close" button every menu screen shows (`MenuNav.ts`) routes here rather than baking in one specific screen, since the exact same button renders on all three — reads `this.mode` at call time to close whichever one is actually open. */
   private closeCurrentMenu(): void {
     switch (this.mode) {
       case "inventory":
@@ -703,25 +716,35 @@ export class Game {
       case "options":
         this.closeOptions();
         break;
-      case "levelUp":
-        this.closeLevelUp();
-        break;
     }
-    // A stat/skill spent in the Level Up screen (or gear (un)equipped in
-    // Inventory) can change HP/Mana or equipment the HUD's party display
-    // reads -- refreshed unconditionally here, on every close, rather
-    // than only from whichever specific screen happens to trigger it,
-    // since Phase 7's cross-navigation means a player can now leave from
-    // any of the four, not just the one they actually changed something in.
+    // A stat/skill spent, or gear (un)equipped, in the character sheet
+    // can change HP/Mana or equipment the HUD's party display reads --
+    // refreshed unconditionally here, on every close, rather than only
+    // from whichever specific screen happens to trigger it, since
+    // Phase 7's cross-navigation means a player can now leave from any
+    // of the three, not just the one they actually changed something in.
     this.hud.updateParty(this.world.party.members);
   }
 
-  /** Opened from exploration (the always-visible HUD button/`I` key, via `toggleInventory`) or directly from any other menu screen (`MenuNav.ts`'s cross-navigation row). */
-  private openInventory(): void {
+  /**
+   * Opened from exploration (the always-visible HUD button/`I` key,
+   * via `toggleInventory`, or the "Level Up" HUD button, via
+   * `toggleLevelUp`) or directly from any other menu screen
+   * (`MenuNav.ts`'s cross-navigation row). `startInEditMode` (only
+   * ever `true` from `toggleLevelUp`) unlocks the sheet's `+1`/skill
+   * controls immediately and dismisses the HUD button's own glow —
+   * see `InventoryUI.show`'s doc comment for why, and `levelUpNeedsAttention`'s
+   * for the glow itself.
+   */
+  private openInventory(startInEditMode = false): void {
     this.mode = "inventory";
     this.hideAllMenus();
-    this.inventoryUI.show();
+    this.inventoryUI.show(startInEditMode);
     this.refreshInventoryUI();
+    if (startInEditMode) {
+      this.levelUpNeedsAttention = false;
+      this.refreshLevelUpButton();
+    }
   }
 
   private toggleMute(): void {
@@ -826,31 +849,7 @@ export class Game {
     saveSettings({ volume: this.audio.volumePercent, muted: this.audio.isMuted, keyBindings });
   }
 
-  /** Reachable from any menu screen's cross-navigation row — same convention as `openBestiary`/`openOptions`. */
-  private openLevelUp(): void {
-    this.mode = "levelUp";
-    this.hideAllMenus();
-    this.levelUpUI.show();
-    this.refreshLevelUpUI();
-    // The whole point of opening this screen at all -- the HUD button
-    // stops glowing the instant it's seen, whether or not anything
-    // actually gets spent once inside (player request).
-    this.levelUpNeedsAttention = false;
-    this.refreshLevelUpButton();
-  }
-
-  /** Closes straight back to exploration, not back to the inventory screen — same convention as `closeBestiary`/`closeOptions`. */
-  private closeLevelUp(): void {
-    this.mode = "explore";
-    this.levelUpUI.hide();
-    this.input.clear();
-  }
-
-  private refreshLevelUpUI(): void {
-    this.levelUpUI.render(this.world.party);
-  }
-
-  /** The always-visible "Level Up" HUD button's count/glow (player request) — reads current `this.levelUpNeedsAttention` state, which every caller that could change it (`openLevelUp`, a level-up in `checkCombatEnd`) sets first. */
+  /** The always-visible "Level Up" HUD button's count/glow (player request) — reads current `this.levelUpNeedsAttention` state, which every caller that could change it (`openInventory`'s `startInEditMode` branch, a level-up in `checkCombatEnd`) sets first. */
   private refreshLevelUpButton(): void {
     const totalPoints = this.world.party.members.reduce((sum, member) => sum + member.skillPoints, 0);
     this.hud.updateLevelUpButton(totalPoints, this.levelUpNeedsAttention);
@@ -858,14 +857,14 @@ export class Game {
 
   private handleSpendStat(characterName: string, stat: keyof CharacterStats): void {
     spendStatPoint(this.world, characterName, stat);
-    this.refreshLevelUpUI();
+    this.refreshInventoryUI();
     this.refreshLevelUpButton(); // the count shown there should always be exact, screen open or not (player request)
   }
 
   private handleUnlockSkill(characterName: string, skillId: string): void {
     const result = unlockSkill(this.world, characterName, skillId);
     if (result.message) this.hud.showMessage(result.message);
-    this.refreshLevelUpUI();
+    this.refreshInventoryUI();
     this.refreshLevelUpButton();
   }
 

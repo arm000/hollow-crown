@@ -32,8 +32,10 @@ same as before this fork existed.
 
 **Tier 2** is the original level-up fork. Leveling up grants **skill
 points** (3 per level, uniform across every class) that the player
-spends by hand, on the **Level Up** screen (reachable directly from
-exploration, or from any of the other menu screens), on either:
+spends by hand, via the **Level Up** button on a character's sheet
+(the Inventory screen's `editMode`, reachable directly from exploration
+via the always-visible Level Up HUD button, or by tapping "Level Up"
+from any character's sheet already open), on either:
 
 - **+1 to a stat.** Every point raised on Vitality or Focus also nudges
   max HP/Mana respectively (+3 each) — those two stats' whole job is
@@ -42,7 +44,7 @@ exploration, or from any of the other menu screens), on either:
   straight from `effectiveStats` wherever combat math needs them.
 - **Unlocking the tier-2 skill**, at a flat cost of 8 points.
 
-The Level Up screen shows whichever side of *either* fork you didn't
+The character sheet shows whichever side of *either* fork you didn't
 pick as **"unavailable (chose the other one)"** — tier-1's alternative
 included, even though there was never a skill-point cost to intercept
 there — so both forks stay visible, not a surprise, and there's no

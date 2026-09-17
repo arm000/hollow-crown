@@ -81,8 +81,9 @@ working before the full roster is built out.
   skill points the player spends by hand — either +1 to a stat, or
   toward unlocking one of a class's two alternative second skills. See
   [08-roadmap-phases.md](08-roadmap-phases.md#phase-7--post-v1-enhancements)
-  Phase 7 for how this actually shipped (`LevelUpUI.ts`,
-  `party/Skills.ts`) — v1 itself shipped the simpler "grows
+  Phase 7 for how this actually shipped (originally `LevelUpUI.ts`,
+  later merged into `InventoryUI.ts` as a character sheet's own
+  "Level Up" edit mode; `party/Skills.ts`) — v1 itself shipped the simpler "grows
   automatically" version this section originally asked for, before two
   rounds of post-release player feedback built the real allocation
   screen and then turned its one optional skill into a real fork.
@@ -118,7 +119,7 @@ To avoid blocking early combat/UI work on a full character creator:
   the line above used to flag as a stretch goal — a small one, not the
   whole stat sheet: `CREATION_ATTRIBUTE_POINTS` (5) freely allocated
   on top of the class's base stats, one +1 at a time, the same
-  mechanic `LevelUpUI` already uses for stat points earned by leveling
+  mechanic `InventoryUI` already uses for stat points earned by leveling
   (Vitality/Focus also nudge max HP/Mana). Alongside it, a real choice
   between the class's two tier-1 skills (see the Leveling section
   above) — permanent, same "no respec" rule the tier-2 fork already
@@ -129,7 +130,7 @@ To avoid blocking early combat/UI work on a full character creator:
   points"), since nothing originally stopped starting the run having
   never touched the allocator at all. The underlying mechanism (any
   points left over "bank" as ordinary unspent `skillPoints`, spendable
-  at the first Level Up screen instead of being lost) still exists in
+  at the first Level Up, via the in-sheet button, instead of being lost) still exists in
   `roster.createCharacterFromSpec` — it's just no longer reachable from
   this screen specifically, and still applies as-is to an old save
   written before any of this existed.
