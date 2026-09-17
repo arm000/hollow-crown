@@ -3,6 +3,7 @@ import {
   classLabel,
   FOCUS_MANA_PER_POINT,
   STAT_DESCRIPTIONS,
+  STAT_LABELS,
   VITALITY_HP_PER_POINT,
   type CharacterStats,
   type ClassId,
@@ -14,13 +15,6 @@ import { CLASS_BASE_STATS, CREATION_ATTRIBUTE_POINTS, PORTRAIT_OPTIONS, type Par
 const DEFAULT_STARTER_SPEC: PartyMemberSpec = { name: "Wren", classId: "warrior", portrait: PORTRAIT_OPTIONS[0] };
 
 const STAT_ORDER: Array<keyof CharacterStats> = ["might", "grace", "vitality", "focus", "resolve"];
-const STAT_LABELS: Record<keyof CharacterStats, string> = {
-  might: "Might",
-  grace: "Grace",
-  vitality: "Vitality",
-  focus: "Focus",
-  resolve: "Resolve",
-};
 
 /**
  * The Phase 3 "minimal creation/naming screen" from

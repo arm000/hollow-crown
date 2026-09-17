@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALL_CLASS_IDS, Character, classLabel, STAT_DESCRIPTIONS, type CharacterStats } from "./Character";
+import { ALL_CLASS_IDS, Character, classLabel, STAT_DESCRIPTIONS, STAT_LABELS, type CharacterStats } from "./Character";
 
 const ALL_STATS: Array<keyof CharacterStats> = ["might", "grace", "vitality", "focus", "resolve"];
 
@@ -165,10 +165,18 @@ describe("Character", () => {
     });
   });
 
-  describe("STAT_DESCRIPTIONS (tooltip text shared by PartyCreationUI and LevelUpUI)", () => {
+  describe("STAT_DESCRIPTIONS (always-visible caption text shared by PartyCreationUI and LevelUpUI)", () => {
     it("covers every stat with a non-empty description", () => {
       for (const stat of ALL_STATS) {
         expect(STAT_DESCRIPTIONS[stat].length, stat).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  describe("STAT_LABELS (shared by PartyCreationUI, LevelUpUI, and Equipment.describeEquipmentEffect)", () => {
+    it("covers every stat with a non-empty label", () => {
+      for (const stat of ALL_STATS) {
+        expect(STAT_LABELS[stat].length, stat).toBeGreaterThan(0);
       }
     });
   });

@@ -1,5 +1,5 @@
 import type { ResistanceMap } from "../combat/DamageType";
-import type { CharacterStats } from "./Character";
+import { STAT_LABELS, type CharacterStats } from "./Character";
 
 /**
  * Four slots, kept small on purpose (docs/06-items-and-equipment.md#equipment-slots).
@@ -72,3 +72,42 @@ export const EQUIPMENT_ITEMS: Record<string, EquipmentItem> = {
     statBonus: { focus: 2 }, // the level 1 pushable-block pocket's reward -- see Level.ts
   },
 };
+
+/**
+ * What a piece of gear actually does, in plain terms — computed from
+ * its real `statBonus`/`resistanceBonus`/`cursed` data rather than a
+ * hand-written string per item, so it can never drift from what
+ * equipping it actually does (unlike `ConsumableItem.description`,
+ * which is hand-written since a consumable's effect isn't just a flat
+ * list of bonuses).
+ *
+ * Never shown up front (docs/06-items-and-equipment.md#discovery-not-explanation)
+ * — only once `Inventory.isIdentified` is true for this item, the same
+ * moment a consumable's own description becomes visible. Equipment has
+ * no mystery *name* to resolve (only consumables ship unidentified —
+ * see `Inventory.ts`'s `UNIDENTIFIED_NAMES`), so "identified" here
+ * means something narrower and still true to "learned by using it":
+ * `GameLogic.equipItem` marks an item identified the moment it's
+ * actually worn for the first time (player request: "I want non
+ * consumable inventory items to show their effect once identified
+ * also").
+ */
+export function describeEquipmentEffect(item: EquipmentItem): string {
+  const parts: string[] = [];
+  if (item.statBonus) {
+    for (const [stat, amount] of Object.entries(item.statBonus) as Array<[keyof CharacterStats, number]>) {
+      parts.push(`${STAT_LABELS[stat]} ${amount >= 0 ? "+" : ""}${amount}`);
+    }
+  }
+  if (item.resistanceBonus) {
+    for (const [damageType, multiplier] of Object.entries(item.resistanceBonus)) {
+      parts.push(`${capitalize(damageType)} damage taken ×${multiplier}`);
+    }
+  }
+  const effect = parts.length > 0 ? `${parts.join(", ")}.` : "No mechanical effect.";
+  return item.cursed ? `${effect} Cannot be removed once worn.` : effect;
+}
+
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}

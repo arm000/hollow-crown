@@ -1,16 +1,9 @@
 import { buildMenuNav, type MenuNavCallbacks } from "./MenuNav";
-import { classLabel, STAT_DESCRIPTIONS, type Character, type CharacterStats } from "./party/Character";
+import { classLabel, STAT_DESCRIPTIONS, STAT_LABELS, type Character, type CharacterStats } from "./party/Character";
 import type { Party } from "./party/Party";
 import { SKILLS } from "./party/Skills";
 
 const STAT_ORDER: Array<keyof CharacterStats> = ["might", "grace", "vitality", "focus", "resolve"];
-const STAT_LABELS: Record<keyof CharacterStats, string> = {
-  might: "Might",
-  grace: "Grace",
-  vitality: "Vitality",
-  focus: "Focus",
-  resolve: "Resolve",
-};
 
 /**
  * The level-up allocation screen (docs/08-roadmap-phases.md Phase 7,

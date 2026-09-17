@@ -203,6 +203,12 @@ export function equipItem(world: WorldState, characterName: string, itemId: stri
   }
 
   if (!world.inventory.consume(itemId)) return { success: false };
+  // Equipping it *is* the identification moment for gear, same
+  // "learned by using it" principle a consumable's own use already
+  // follows (player request: "I want non consumable inventory items
+  // to show their effect once identified also") -- see
+  // `Equipment.describeEquipmentEffect` for what that then reveals.
+  world.inventory.identify(itemId);
 
   const previous = character.equip(item);
   if (previous) world.inventory.add(previous.id, previous.name);

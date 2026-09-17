@@ -98,6 +98,27 @@ describe("equipItem", () => {
     expect(world.party.members[0].equippedIn("accessory")?.id).toBe("ambition-ring"); // still stuck
     expect(world.inventory.has("shadow-ring")).toBe(true); // never consumed
   });
+
+  it("identifies the item -- player request: \"I want non consumable inventory items to show their effect once identified also\"", () => {
+    const world = newWorld();
+    world.inventory.add("rusted-sword", "a Rusted Sword");
+    expect(world.inventory.isIdentified("rusted-sword")).toBe(false);
+
+    equipItem(world, "Bram", "rusted-sword");
+
+    expect(world.inventory.isIdentified("rusted-sword")).toBe(true);
+  });
+
+  it("doesn't identify anything on a refused equip attempt", () => {
+    const world = newWorld();
+    world.inventory.add("ambition-ring", "a Ring of Old Ambition");
+    equipItem(world, "Bram", "ambition-ring");
+    world.inventory.add("shadow-ring", "a Shadow Ring");
+
+    equipItem(world, "Bram", "shadow-ring"); // refused -- ambition-ring is cursed, still worn
+
+    expect(world.inventory.isIdentified("shadow-ring")).toBe(false);
+  });
 });
 
 describe("unequipItem", () => {

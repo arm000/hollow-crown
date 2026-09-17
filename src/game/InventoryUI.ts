@@ -1,5 +1,5 @@
 import { CONSUMABLE_ITEMS } from "./combat/Consumable";
-import { EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
+import { describeEquipmentEffect, EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
 import type { Character } from "./party/Character";
 import type { Party } from "./party/Party";
 import type { Inventory } from "./Inventory";
@@ -162,12 +162,17 @@ export class InventoryUI {
       // mobile touch screen because I can't hover over"). A damage
       // consumable gets this too, not just a cure one: it's not
       // *usable* here (nothing to throw it at outside combat), but
-      // it's still something the player has learned about.
-      if (consumable && inventory.isIdentified(id)) {
-        const description = document.createElement("div");
-        description.className = "inventory-item-description";
-        description.textContent = consumable.description;
-        section.appendChild(description);
+      // it's still something the player has learned about. A piece of
+      // gear gets the exact same treatment once it's actually been
+      // worn (player request: "I want non consumable inventory items
+      // to show their effect once identified also") --
+      // `GameLogic.equipItem` is what marks it identified.
+      const description = consumable?.description ?? (gearItem ? describeEquipmentEffect(gearItem) : undefined);
+      if (description && inventory.isIdentified(id)) {
+        const descriptionEl = document.createElement("div");
+        descriptionEl.className = "inventory-item-description";
+        descriptionEl.textContent = description;
+        section.appendChild(descriptionEl);
       }
     }
     return section;

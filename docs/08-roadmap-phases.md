@@ -2066,6 +2066,31 @@ true before shipping.
     "recharging, N more turns" note while on cooldown) rather than a
     bare row of buttons.
   - 453 tests passing (unchanged — all four are untested DOM glue).
+- ✅ Batch 19 — Equipment shows its effect once identified too (player
+  request: "I want non consumable inventory items to show their effect
+  once identified also"). Batch 18's always-visible descriptions only
+  covered consumables; gear had never shown its mechanical effect
+  anywhere, at any point — not even after being worn.
+  - `Equipment.describeEquipmentEffect(item)` (new): a plain-English
+    rendering computed from `statBonus`/`resistanceBonus`/`cursed`
+    directly ("Might +2.", "Physical damage taken ×0.9.", "...Cannot
+    be removed once worn.") — unlike `ConsumableItem.description`
+    (hand-written, since a consumable's effect isn't just a flat list
+    of bonuses), this can never drift from what equipping the item
+    actually does.
+  - `GameLogic.equipItem` now calls `Inventory.identify` the moment a
+    piece of gear is actually worn for the first time — gear has no
+    mystery *name* to resolve (only consumables ship unidentified), so
+    "identified" means something narrower here, but still the same
+    "learned by using it" principle.
+  - `InventoryUI.buildCarriedSection` shows the description for either
+    kind once identified, sharing the one `.inventory-item-description`
+    line/class both already use.
+  - `Character.ts` gained `STAT_LABELS` (stat id → display label,
+    e.g. "might" → "Might") — pulled out of matching local copies in
+    `PartyCreationUI`/`LevelUpUI` into one shared place, now that
+    `describeEquipmentEffect` needs the exact same labels too.
+  - 462 tests passing (9 new).
 
 ---
 

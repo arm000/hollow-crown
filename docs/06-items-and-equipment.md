@@ -68,10 +68,23 @@ under it — not a hover tooltip, which doesn't exist as a concept on a
 touch screen at all (a later player report: "The tooltips don't work
 on mobile touch screen because I can't hover over") — but only after
 the player has already discovered it firsthand, the same moment the
-mystery name
-itself resolves to the true one. This isn't the UI explaining the item
-ahead of the player; it's not making them re-derive or memorize what
-the log already told them once, every single time after.
+mystery name itself resolves to the true one. This isn't the UI
+explaining the item ahead of the player; it's not making them re-derive
+or memorize what the log already told them once, every single time
+after.
+
+A later player request extended the exact same rule to equipment:
+"I want non consumable inventory items to show their effect once
+identified also." Gear has no mystery *name* to resolve — only
+consumables ship unidentified (`Inventory.ts`'s `UNIDENTIFIED_NAMES`)
+— so "identified" means something narrower there, but still true to
+"learned by using it": `GameLogic.equipItem` marks a piece of gear
+identified the moment it's actually worn for the first time, and from
+then on its Inventory entry shows `Equipment.describeEquipmentEffect`'s
+plain-English rendering of its real `statBonus`/`resistanceBonus`/
+`cursed` data — computed from that data directly, unlike a
+consumable's hand-written `description`, so it can never drift from
+what equipping the item actually does.
 
 This changes how to read the rest of this document, including the table
 below: **every mechanical mapping here is our internal design

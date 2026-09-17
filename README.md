@@ -170,13 +170,18 @@ with nothing to weigh against it (Power Strike, say) is no longer just
 the obvious pick every single turn; Attack itself still has no cooldown
 at all, staying the reliable fallback while something recharges. A
 skill still cooling down shows exactly how many turns are left, right
-on its button. Most recently: the on-screen move/turn pads now hide
-for the duration of a fight (they never did anything mid-combat
-anyway, and used to sit right where the log/action buttons are also
-pinned on a small phone screen), and every one of those stat/skill/item
-descriptions above switched from a hover tooltip to always-visible
-text once it turned out hovering isn't a thing a touch screen can even
-do. Playable now: a one-time party-creation screen (name
+on its button. The on-screen move/turn pads hide for the duration of a
+fight (they never did anything mid-combat anyway, and used to sit
+right where the log/action buttons are also pinned on a small phone
+screen), and every stat/skill/item description switched from a hover
+tooltip to always-visible text once it turned out hovering isn't a
+thing a touch screen can even do. Most recently, that same
+always-visible treatment reached equipment too: a piece of gear now
+shows its real effect (computed straight from its stat/resistance
+data, so it can never drift out of sync) once it's actually been worn
+for the first time — the same "learned by using it" moment a
+consumable's own description was already keyed to. Playable now: a
+one-time party-creation screen (name
 your character, pick a class, allocate every bonus attribute point, choose
 a starting skill, and pick a color-swatch portrait — placeholder art,
 real pixel art is still ahead), then grid movement (keyboard or touch)

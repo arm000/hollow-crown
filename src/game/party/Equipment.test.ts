@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Character } from "./Character";
-import { EQUIPMENT_ITEMS } from "./Equipment";
+import { describeEquipmentEffect, EQUIPMENT_ITEMS, type EquipmentItem } from "./Equipment";
 
 function newCharacter(): Character {
   return new Character("Test", "warrior", "front", { might: 5, grace: 5, vitality: 5, focus: 5, resolve: 5 }, 20, 0);
@@ -80,5 +80,35 @@ describe("Character equipment", () => {
     const before = character.initiativeStat;
     character.equip(EQUIPMENT_ITEMS["old-buckler"]); // +1 grace
     expect(character.initiativeStat).toBe(before + 1);
+  });
+});
+
+describe("describeEquipmentEffect (docs/08-roadmap-phases.md Phase 7, on a player request: \"I want non consumable inventory items to show their effect once identified also\")", () => {
+  it("describes a flat stat bonus", () => {
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["rusted-sword"])).toBe("Might +2.");
+  });
+
+  it("describes a resistance bonus", () => {
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["hardened-leather"])).toBe("Physical damage taken ×0.9.");
+  });
+
+  it("lists multiple stat bonuses together", () => {
+    const item: EquipmentItem = { id: "test", name: "Test Item", slot: "accessory", statBonus: { might: 1, grace: 2 } };
+    expect(describeEquipmentEffect(item)).toBe("Might +1, Grace +2.");
+  });
+
+  it("appends a note for cursed gear", () => {
+    expect(describeEquipmentEffect(EQUIPMENT_ITEMS["ambition-ring"])).toBe("Might +3. Cannot be removed once worn.");
+  });
+
+  it("names an item with no bonus at all, rather than an empty string", () => {
+    const item: EquipmentItem = { id: "test", name: "Test Item", slot: "accessory" };
+    expect(describeEquipmentEffect(item)).toBe("No mechanical effect.");
+  });
+
+  it("every real equipment item produces a non-empty description", () => {
+    for (const item of Object.values(EQUIPMENT_ITEMS)) {
+      expect(describeEquipmentEffect(item).length, item.id).toBeGreaterThan(0);
+    }
   });
 });

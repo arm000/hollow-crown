@@ -45,10 +45,12 @@ export interface CharacterStats {
 /**
  * One line per stat, exactly matching docs/03-party-and-characters.md#core-stats'
  * "Drives" column — the single source of truth for what a stat does,
- * shared as tooltip text by both `PartyCreationUI` (allocating bonus
- * points at creation) and `LevelUpUI` (spending points from leveling),
- * so a player sees the same explanation in both places rather than two
- * screens quietly drifting apart on the wording.
+ * shown as always-visible caption text by both `PartyCreationUI`
+ * (allocating bonus points at creation) and `LevelUpUI` (spending
+ * points from leveling), so a player sees the same explanation in both
+ * places rather than two screens quietly drifting apart on the wording
+ * (originally a hover tooltip; moved to plain text once that turned
+ * out not to work on a touch screen at all).
  */
 export const STAT_DESCRIPTIONS: Record<keyof CharacterStats, string> = {
   might: "Melee damage, carry capacity.",
@@ -56,6 +58,15 @@ export const STAT_DESCRIPTIONS: Record<keyof CharacterStats, string> = {
   vitality: "Max HP.",
   focus: "Max Mana, spell/ability effect strength.",
   resolve: "Resistance to debuffs/fear effects, flee chance.",
+};
+
+/** Every stat's display label ("might" -> "Might") — shared by `PartyCreationUI`, `LevelUpUI`, and `Equipment.describeEquipmentEffect` rather than each keeping its own copy of the same capitalization. */
+export const STAT_LABELS: Record<keyof CharacterStats, string> = {
+  might: "Might",
+  grace: "Grace",
+  vitality: "Vitality",
+  focus: "Focus",
+  resolve: "Resolve",
 };
 
 /**
