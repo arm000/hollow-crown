@@ -2176,6 +2176,54 @@ true before shipping.
     have no test files, untested DOM/rendering glue per
     docs/11-testing-strategy.md).
 
+- ✅ Batch 21 — Equipment identifies on use, not on equip, and the
+  combat log names what it did (player report: "The items are showing
+  their effects as soon as they are equipped. I only want to show the
+  effect of the item once it has been triggered in combat. Make sure
+  the combat log shows the effect of the item as well, for example if
+  a sword gives a bonus to damage, show how much extra damage came
+  from the sword. If an armor reduces incoming physical damage, show
+  how much reduction there was in the combat log."). Batch 19 had
+  identified gear the moment it was worn — too early, since "worn" and
+  "actually mattered in a fight" aren't the same moment, and a player
+  had no way to see the bonus playing out even once it did identify.
+  - `GameLogic.equipItem` no longer calls `Inventory.identify` at all
+    — identification moved entirely into `CombatEngine`.
+  - `Character.equipmentBonusFor(stat)` (new): every currently-equipped
+    item bonusing `stat`, with the amount each contributes — lets a
+    caller attribute part of a stat-based roll to the specific piece
+    of gear responsible instead of only reading the pre-summed
+    `effectiveStats` total. `Character.equipmentResistanceFor(damageType)`
+    (new): the same idea for the resistance side.
+  - `CombatEngine.describeStatBonus(actor, stat)` (new, private): used
+    by every might/focus-based Attack and skill (Attack, Power Strike,
+    Precision Strike, Ambush, Firebolt, Frost Lance, Cinder Nova,
+    Radiant Spark, Smite) — appends `" (+2 from a Rusted Sword)"` to
+    that action's own log line when equipped gear contributed to the
+    roll, and identifies each contributing item in the same call.
+  - `CombatEngine.describeResistanceMitigation(target, baseDamage, dealt, type)`
+    (new, private): used by the monster's own attack — appends
+    `" (3 blocked by Hardened Leather)"` to the "takes N damage" line
+    by comparing what the hit would have dealt with none of the
+    target's equipment resistance bonus factored in (base
+    `resistances` still counted) against what it actually dealt, so
+    only equipment's own share of the reduction is named; identifies
+    the contributing item(s) the same way.
+  - Grace has no damage number of its own to attach an identification
+    moment to (it only ever affects initiative order) — `rollInitiative`
+    identifies any equipped grace-bonus item for every living party
+    member each time it runs instead, since that's the actual moment
+    the bonus does something, log line or not.
+  - Every one of the above no-ops safely (renders the log text, skips
+    identifying) when `CombatEngine` is built without an `Inventory` —
+    the same optional-fourth-argument pattern its consumable handling
+    already used.
+  - 471 tests passing (9 new: `Character.equipmentBonusFor`/
+    `equipmentResistanceFor` unit coverage in `Equipment.test.ts`, plus
+    `CombatEngine.test.ts` coverage for the weapon/armor/grace
+    identification-timing and log-attribution behavior, including the
+    no-`Inventory`-passed case).
+
 ---
 
 ## Notes on sequencing

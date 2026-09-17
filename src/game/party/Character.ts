@@ -191,6 +191,34 @@ export class Character {
     return this.effectiveStats.grace;
   }
 
+  /**
+   * Every currently-equipped item that adds to `stat`, with how much
+   * each one contributes — so a combat log can attribute a chunk of a
+   * damage roll to the specific piece of gear responsible ("+2 from a
+   * Rusted Sword") instead of only ever showing it silently baked into
+   * `effectiveStats` (docs/06-items-and-equipment.md#discovery-not-explanation:
+   * a player report that gear was showing its effect "as soon as they
+   * are equipped" rather than once actually used).
+   */
+  equipmentBonusFor(stat: keyof CharacterStats): Array<{ item: EquipmentItem; amount: number }> {
+    const contributions: Array<{ item: EquipmentItem; amount: number }> = [];
+    for (const item of Object.values(this.equipment)) {
+      const amount = item?.statBonus?.[stat];
+      if (item && amount) contributions.push({ item, amount });
+    }
+    return contributions;
+  }
+
+  /** Same idea as `equipmentBonusFor`, for the resistance side — every equipped item currently changing this character's resistance to `damageType`, so a combat log can name what actually blocked part of a hit. */
+  equipmentResistanceFor(damageType: keyof ResistanceMap): Array<{ item: EquipmentItem; multiplier: number }> {
+    const contributions: Array<{ item: EquipmentItem; multiplier: number }> = [];
+    for (const item of Object.values(this.equipment)) {
+      const multiplier = item?.resistanceBonus?.[damageType];
+      if (item && multiplier !== undefined) contributions.push({ item, multiplier });
+    }
+    return contributions;
+  }
+
   get isDown(): boolean {
     return this.hp <= 0;
   }

@@ -87,10 +87,13 @@ export const EQUIPMENT_ITEMS: Record<string, EquipmentItem> = {
  * no mystery *name* to resolve (only consumables ship unidentified —
  * see `Inventory.ts`'s `UNIDENTIFIED_NAMES`), so "identified" here
  * means something narrower and still true to "learned by using it":
- * `GameLogic.equipItem` marks an item identified the moment it's
- * actually worn for the first time (player request: "I want non
- * consumable inventory items to show their effect once identified
- * also").
+ * `CombatEngine` marks an item identified the moment its bonus actually
+ * factors into a fight — a might/focus bonus landing a hit, a
+ * resistance bonus blocking part of one, or a grace bonus changing
+ * initiative order — not merely once worn (player report: "The items
+ * are showing their effects as soon as they are equipped. I only want
+ * to show the effect of the item once it has been triggered in
+ * combat.").
  */
 export function describeEquipmentEffect(item: EquipmentItem): string {
   const parts: string[] = [];

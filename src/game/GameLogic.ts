@@ -203,12 +203,13 @@ export function equipItem(world: WorldState, characterName: string, itemId: stri
   }
 
   if (!world.inventory.consume(itemId)) return { success: false };
-  // Equipping it *is* the identification moment for gear, same
-  // "learned by using it" principle a consumable's own use already
-  // follows (player request: "I want non consumable inventory items
-  // to show their effect once identified also") -- see
-  // `Equipment.describeEquipmentEffect` for what that then reveals.
-  world.inventory.identify(itemId);
+  // Identification no longer happens here -- player report: "The items
+  // are showing their effects as soon as they are equipped. I only
+  // want to show the effect of the item once it has been triggered in
+  // combat." `CombatEngine`'s `describeStatBonus`/
+  // `describeResistanceMitigation`/the grace-on-initiative hook now
+  // own that moment instead, identifying a piece of gear the instant
+  // its bonus actually factors into a fight, not merely once worn.
 
   const previous = character.equip(item);
   if (previous) world.inventory.add(previous.id, previous.name);

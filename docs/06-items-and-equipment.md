@@ -78,13 +78,12 @@ A later player request extended the exact same rule to equipment:
 identified also." Gear has no mystery *name* to resolve — only
 consumables ship unidentified (`Inventory.ts`'s `UNIDENTIFIED_NAMES`)
 — so "identified" means something narrower there, but still true to
-"learned by using it": `GameLogic.equipItem` marks a piece of gear
-identified the moment it's actually worn for the first time, and from
-then on `InventoryUI` shows `Equipment.describeEquipmentEffect`'s
-plain-English rendering of its real `statBonus`/`resistanceBonus`/
-`cursed` data — computed from that data directly, unlike a
-consumable's hand-written `description`, so it can never drift from
-what equipping the item actually does.
+"learned by using it": `InventoryUI` shows
+`Equipment.describeEquipmentEffect`'s plain-English rendering of an
+item's real `statBonus`/`resistanceBonus`/`cursed` data once
+`Inventory.isIdentified` is true — computed from that data directly,
+unlike a consumable's hand-written `description`, so it can never
+drift from what equipping the item actually does.
 
 That description follows the item wherever it's currently sitting —
 its slot row while worn, its `Carried` entry once taken back off —
@@ -93,6 +92,30 @@ not just one or the other. The first cut of this only handled
 again left its description with nowhere to show up at all (player
 report, after using a Rusted Sword: "it's effect still doesn't show" —
 a worn item has no `Carried` row left to attach one to).
+
+**Merely equipping something is not the identification moment either**
+— a later player report: "The items are showing their effects as soon
+as they are equipped. I only want to show the effect of the item once
+it has been triggered in combat." Wearing a Rusted Sword doesn't teach
+a player it adds Might; landing a hit with it while it does does.
+`CombatEngine` is what identifies gear now, the instant its bonus
+actually factors into a fight: a `statBonus` the moment it lands a hit
+or lands on a caster's spell, a `resistanceBonus` the moment it
+actually blocks part of an incoming hit — `GameLogic.equipItem` no
+longer identifies anything itself. Grace is the one stat with no
+damage number of its own (it only ever affects initiative order,
+docs/05-combat.md#initiative) — its gear still identifies, just at the
+next initiative roll rather than a hit landing, since there's no
+"blocked/bonused" log line for it to piggyback on. The same request
+asked for the reverse to be true too: **the combat log now says what
+the effect actually was**, not just that gear is equipped somewhere —
+"Bram attacks for 7 damage (+2 from a Rusted Sword)" on the dealing
+side, "Bram takes 4 damage (3 blocked by Hardened Leather) — 26/30 HP
+left" on the taking side, computed by comparing what the hit would
+have done with none of the wearer's equipment resistance factored in
+against what it actually did, so only equipment's own share of the
+mitigation is named (a character's base resistance, if any exists
+later, wouldn't be included).
 
 This changes how to read the rest of this document, including the table
 below: **every mechanical mapping here is our internal design

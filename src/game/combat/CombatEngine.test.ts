@@ -193,6 +193,63 @@ describe("CombatEngine", () => {
     expect(armedDamage).toBeGreaterThan(bareDamage);
   });
 
+  describe("equipment effects only show once triggered in combat, not merely once worn (player report: \"The items are showing their effects as soon as they are equipped. I only want to show the effect of the item once it has been triggered in combat.\")", () => {
+    it("names the weapon responsible for a landed hit's damage bonus, and identifies it only then", () => {
+      const inventory = new Inventory();
+      inventory.add("rusted-sword", "a Rusted Sword");
+      const armed = new Character("Bram", "warrior", "front", { might: 5, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      armed.equip(EQUIPMENT_ITEMS["rusted-sword"]); // +2 might
+      expect(inventory.isIdentified("rusted-sword")).toBe(false); // equipping alone no longer identifies it
+
+      const engine = new CombatEngine(new Party([armed]), newMonster({ maxHp: 9999 }), new SeededRng(2), inventory);
+      if (engine.isPartyTurn) engine.submitAction("attack");
+
+      expect(engine.log.some((line) => line.includes("attacks for") && line.includes("+2 from a Rusted Sword"))).toBe(true);
+      expect(inventory.isIdentified("rusted-sword")).toBe(true);
+    });
+
+    it("names the armor that blocked part of an incoming hit, and identifies it only then", () => {
+      const inventory = new Inventory();
+      inventory.add("hardened-leather", "Hardened Leather");
+      const armored = new Character("Bram", "warrior", "front", { might: 5, grace: 4, vitality: 200, focus: 1, resolve: 6 }, 200, 0);
+      armored.equip(EQUIPMENT_ITEMS["hardened-leather"]); // physical resistance ×0.9
+      const monster = newMonster({ might: 50 });
+      const engine = new CombatEngine(new Party([armored]), monster, new SeededRng(3), inventory);
+      expect(inventory.isIdentified("hardened-leather")).toBe(false);
+
+      let guard = 0;
+      while (engine.result === "ongoing" && guard < 6 && armored.hp === 200) {
+        if (engine.isPartyTurn) engine.submitAction("defend");
+        guard++;
+      }
+
+      expect(armored.hp).toBeLessThan(200);
+      expect(engine.log.some((line) => line.includes("blocked by Hardened Leather"))).toBe(true);
+      expect(inventory.isIdentified("hardened-leather")).toBe(true);
+    });
+
+    it("identifies grace-boosting gear once initiative is actually rolled while equipped, since it has no damage number of its own to attach to", () => {
+      const inventory = new Inventory();
+      inventory.add("old-buckler", "an Old Buckler");
+      const armed = new Character("Bram", "warrior", "front", { might: 5, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      armed.equip(EQUIPMENT_ITEMS["old-buckler"]); // +1 grace
+
+      new CombatEngine(new Party([armed]), newMonster(), new SeededRng(1), inventory); // rolls initiative in its own constructor
+
+      expect(inventory.isIdentified("old-buckler")).toBe(true);
+    });
+
+    it("without an inventory passed in (a bare engine, same as most other tests here), nothing crashes and the log line still renders", () => {
+      const armed = new Character("Bram", "warrior", "front", { might: 5, grace: 4, vitality: 10, focus: 1, resolve: 6 }, 30, 0);
+      armed.equip(EQUIPMENT_ITEMS["rusted-sword"]);
+      const engine = new CombatEngine(new Party([armed]), newMonster({ maxHp: 9999 }), new SeededRng(2)); // no inventory
+
+      if (engine.isPartyTurn) engine.submitAction("attack");
+
+      expect(engine.log.some((line) => line.includes("attacks for") && line.includes("+2 from a Rusted Sword"))).toBe(true);
+    });
+  });
+
   describe("abilities", () => {
     it("Rogue's Precision Strike ignores Physical resistance and applies Bleed", () => {
       const rogue = new Character("Ysolde", "rogue", "front", { might: 6, grace: 8, vitality: 7, focus: 2, resolve: 5 }, 22, 0);

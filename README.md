@@ -177,19 +177,27 @@ fight (they never did anything mid-combat anyway, and used to sit
 right where the log/action buttons are also pinned on a small phone
 screen), and every stat/skill/item description switched from a hover
 tooltip to always-visible text once it turned out hovering isn't a
-thing a touch screen can even do. Most recently, that same
-always-visible treatment reached equipment too: a piece of gear now
-shows its real effect (computed straight from its stat/resistance
-data, so it can never drift out of sync) once it's actually been worn
-for the first time — the same "learned by using it" moment a
-consumable's own description was already keyed to. Most recently, the
-Inventory and Level Up screens merged into one character sheet per
-party member (tabs switch between them, the shared carried-item pool
-shows on every tab), so a player can see exactly what a stat point, a
-skill unlock, or a piece of gear actually does to that character's
-numbers without bouncing between two separate screens to check; the
-Level Up HUD button now opens that same sheet with its `+1`/`Unlock`
-controls already toggled on instead of a screen of its own. Playable now: a
+thing a touch screen can even do. That same always-visible treatment
+then reached equipment too: a piece of gear shows its real effect
+(computed straight from its stat/resistance data, so it can never
+drift out of sync) on its Inventory/character-sheet row once
+identified — the same "learned by using it" moment a consumable's own
+description was already keyed to. The Inventory and Level Up screens
+also merged into one character sheet per party member (tabs switch
+between them, the shared carried-item pool shows on every tab), so a
+player can see exactly what a stat point, a skill unlock, or a piece
+of gear actually does to that character's numbers without bouncing
+between two separate screens to check; the Level Up HUD button opens
+that same sheet with its `+1`/`Unlock` controls already toggled on
+instead of a screen of its own. Most recently, gear stopped
+identifying itself the moment it's worn at all — a player report that
+this was too early, since wearing something and it actually mattering
+in a fight aren't the same moment — and the combat log started saying
+exactly what an identified item's effect was doing, hit by hit: a
+weapon's bonus damage ("Bram attacks for 7 damage (+2 from a Rusted
+Sword)"), or how much of an incoming hit a piece of armor blocked
+("Bram takes 4 damage (3 blocked by Hardened Leather)"), the same
+moment the item actually identifies. Playable now: a
 one-time party-creation screen (name
 your character, pick a class, allocate every bonus attribute point, choose
 a starting skill, and pick a color-swatch portrait — placeholder art,

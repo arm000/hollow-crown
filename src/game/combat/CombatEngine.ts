@@ -1,11 +1,11 @@
 import type { Inventory } from "../Inventory";
 import type { Monster } from "../monster/Monster";
-import type { Character } from "../party/Character";
+import type { Character, CharacterStats } from "../party/Character";
 import type { Party } from "../party/Party";
 import { defaultSkillId, SKILLS } from "../party/Skills";
 import { rollInt, type Rng } from "../Rng";
 import { CONSUMABLE_ITEMS } from "./Consumable";
-import { applyResistance } from "./DamageType";
+import { applyResistance, type DamageType } from "./DamageType";
 
 export type CombatActionChoice = "attack" | "defend" | "flee" | "ability" | "item";
 export type CombatResult = "ongoing" | "victory" | "defeat" | "fled";
@@ -116,7 +116,7 @@ export class CombatEngine {
         const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 4);
         const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
         this.monster.takeDamage(damage);
-        this.log.push(`${actor.name} attacks for ${damage} damage.`);
+        this.log.push(`${actor.name} attacks for ${damage} damage${this.describeStatBonus(actor, "might")}.`);
         break;
       }
       case "defend": {
@@ -226,14 +226,16 @@ export class CombatEngine {
         const rawDamage = Math.round(actor.effectiveStats.might * 1.5) + rollInt(this.rng, 1, 6);
         const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
         this.monster.takeDamage(damage);
-        this.log.push(`${actor.name} lands a Power Strike for ${damage} damage.`);
+        this.log.push(`${actor.name} lands a Power Strike for ${damage} damage${this.describeStatBonus(actor, "might")}.`);
         break;
       }
       case "rogue-precisionStrike": {
         const rawDamage = actor.effectiveStats.might + rollInt(this.rng, 1, 4) + 2;
         this.monster.takeDamage(rawDamage); // ignores resistance entirely -- that's the point
         this.monster.statusEffects.apply({ type: "bleed", turnsRemaining: BLEED_DURATION, tickDamage: BLEED_TICK_DAMAGE });
-        this.log.push(`${actor.name}'s Precision Strike finds a weak point for ${rawDamage} damage and draws blood!`);
+        this.log.push(
+          `${actor.name}'s Precision Strike finds a weak point for ${rawDamage} damage and draws blood${this.describeStatBonus(actor, "might")}!`,
+        );
         break;
       }
       case "rogue-feint": {
@@ -261,8 +263,8 @@ export class CombatEngine {
         this.monster.takeDamage(damage);
         this.log.push(
           isFirstStrike
-            ? `${actor.name} ambushes ${this.monster.name} before it can react for ${damage} damage!`
-            : `${actor.name} strikes for ${damage} damage — the moment for an ambush has passed.`,
+            ? `${actor.name} ambushes ${this.monster.name} before it can react for ${damage} damage${this.describeStatBonus(actor, "might")}!`
+            : `${actor.name} strikes for ${damage} damage${this.describeStatBonus(actor, "might")} — the moment for an ambush has passed.`,
         );
         break;
       }
@@ -270,7 +272,7 @@ export class CombatEngine {
         const rawDamage = actor.effectiveStats.focus + rollInt(this.rng, 1, 6);
         const damage = applyResistance(rawDamage, this.monster.resistances, "fire");
         this.monster.takeDamage(damage);
-        this.log.push(`${actor.name} hurls a Firebolt for ${damage} fire damage.`);
+        this.log.push(`${actor.name} hurls a Firebolt for ${damage} fire damage${this.describeStatBonus(actor, "focus")}.`);
         break;
       }
       case "mage-arcaneBarrier": {
@@ -283,14 +285,18 @@ export class CombatEngine {
         const damage = applyResistance(rawDamage, this.monster.resistances, "physical");
         this.monster.takeDamage(damage);
         this.monster.statusEffects.apply({ type: "stun", turnsRemaining: 1 });
-        this.log.push(`${actor.name}'s Frost Lance deals ${damage} damage and freezes ${this.monster.name} solid!`);
+        this.log.push(
+          `${actor.name}'s Frost Lance deals ${damage} damage${this.describeStatBonus(actor, "focus")} and freezes ${this.monster.name} solid!`,
+        );
         break;
       }
       case "mage-cinderNova": {
         const rawDamage = Math.round(actor.effectiveStats.focus * 1.5) + rollInt(this.rng, 1, 8);
         const damage = applyResistance(rawDamage, this.monster.resistances, "fire");
         this.monster.takeDamage(damage);
-        this.log.push(`${actor.name} unleashes a Cinder Nova, scorching ${this.monster.name} for ${damage} fire damage!`);
+        this.log.push(
+          `${actor.name} unleashes a Cinder Nova, scorching ${this.monster.name} for ${damage} fire damage${this.describeStatBonus(actor, "focus")}!`,
+        );
         break;
       }
       case "cleric-cleanse": {
@@ -306,14 +312,14 @@ export class CombatEngine {
         const rawDamage = Math.ceil(actor.effectiveStats.focus / 2) + rollInt(this.rng, 1, 4);
         const damage = applyResistance(rawDamage, this.monster.resistances, "holy");
         this.monster.takeDamage(damage);
-        this.log.push(`${actor.name} calls down a Radiant Spark for ${damage} holy damage.`);
+        this.log.push(`${actor.name} calls down a Radiant Spark for ${damage} holy damage${this.describeStatBonus(actor, "focus")}.`);
         break;
       }
       case "cleric-smite": {
         const rawDamage = actor.effectiveStats.focus + rollInt(this.rng, 1, 4);
         const damage = applyResistance(rawDamage, this.monster.resistances, "holy");
         this.monster.takeDamage(damage);
-        this.log.push(`${actor.name} smites ${this.monster.name} for ${damage} holy damage.`);
+        this.log.push(`${actor.name} smites ${this.monster.name} for ${damage} holy damage${this.describeStatBonus(actor, "focus")}.`);
         break;
       }
       case "cleric-ward": {
@@ -360,6 +366,49 @@ export class CombatEngine {
       this.monster.takeDamage(damage);
       this.log.push(`${actor.name} uses ${item.name} for ${damage} ${item.effect.damageType} damage.`);
     }
+  }
+
+  /**
+   * Attributes part of a might/focus-based damage roll to the specific
+   * equipped gear responsible ("+2 from a Rusted Sword") and marks any
+   * such item identified the moment its bonus actually lands a hit —
+   * not merely once worn (docs/06-items-and-equipment.md#discovery-not-explanation,
+   * on a player report that gear was showing its effect "as soon as
+   * they are equipped"). Empty string when nothing equipped
+   * contributes to `stat` (or there's no `inventory` to identify into
+   * — tests that build a bare `CombatEngine` with no fourth argument;
+   * `identify` is skipped there but the log text still renders).
+   */
+  private describeStatBonus(actor: Character, stat: keyof CharacterStats): string {
+    const contributions = actor.equipmentBonusFor(stat);
+    if (contributions.length === 0) return "";
+    const parts = contributions.map(({ item, amount }) => {
+      this.inventory?.identify(item.id);
+      return `${amount >= 0 ? "+" : ""}${amount} from ${item.name}`;
+    });
+    return ` (${parts.join(", ")})`;
+  }
+
+  /**
+   * Same idea as `describeStatBonus`, for the damage-taken side: how
+   * much of `baseDamage` a piece of worn armor/accessory actually
+   * blocked, compared to what `target` would have taken with none of
+   * its equipment's resistance bonus applied (its own base
+   * `resistances` still counted, so this isolates gear's own
+   * contribution specifically, not the character's innate resistance).
+   * Empty string when nothing equipped changes resistance to `type`, or
+   * the net effect isn't actually a reduction (a weakness multiplier,
+   * or rounding erases it).
+   */
+  private describeResistanceMitigation(target: Character, baseDamage: number, dealt: number, type: DamageType): string {
+    const contributions = target.equipmentResistanceFor(type);
+    if (contributions.length === 0) return "";
+    const withoutGear = applyResistance(baseDamage, target.resistances, type);
+    const blocked = withoutGear - dealt;
+    if (blocked <= 0) return "";
+    for (const { item } of contributions) this.inventory?.identify(item.id);
+    const names = contributions.map(({ item }) => item.name).join(", ");
+    return ` (${blocked} blocked by ${names})`;
   }
 
   private pickCleanseTarget(caster: Character): Character {
@@ -432,6 +481,16 @@ export class CombatEngine {
     scored.sort((a, b) => b.score - a.score);
     this.turnOrder = scored.map((entry) => entry.combatant);
     this.turnIndex = 0;
+
+    // Grace-boosting gear (a buckler, a ring) has no other combat-log
+    // moment to attach identification to -- it changes turn order, not
+    // a number in a damage line, but that's still a real, felt effect
+    // of actually fighting in it, not just wearing it (see
+    // describeStatBonus's doc comment for the might/focus case this
+    // mirrors).
+    for (const member of this.party.livingMembers()) {
+      for (const { item } of member.equipmentBonusFor("grace")) this.inventory?.identify(item.id);
+    }
   }
 
   /** Moves to the next combatant still able to act, rolling a new round (ticking status effects for the round that just ended) once the order is exhausted. */
@@ -480,12 +539,13 @@ export class CombatEngine {
     const baseDamage = defended ? Math.ceil(action.damage / 2) : action.damage;
     const dealt = applyResistance(baseDamage, target.effectiveResistances, "physical");
     target.takeDamage(dealt);
+    const mitigation = this.describeResistanceMitigation(target, baseDamage, dealt, "physical");
     // Player request: "list how much current HP they have left" --
     // `target` is always a party member here (the monster's own HP is
     // already shown persistently in CombatUI.statusEl, not repeated
     // per hit in the log).
     this.log.push(
-      `${target.name} takes ${dealt} damage${defended ? " (defended)" : ""} — ${target.hp}/${target.maxHp} HP left.`,
+      `${target.name} takes ${dealt} damage${defended ? " (defended)" : ""}${mitigation} — ${target.hp}/${target.maxHp} HP left.`,
     );
 
     if (action.statusEffect) {

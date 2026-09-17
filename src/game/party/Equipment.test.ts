@@ -81,6 +81,43 @@ describe("Character equipment", () => {
     character.equip(EQUIPMENT_ITEMS["old-buckler"]); // +1 grace
     expect(character.initiativeStat).toBe(before + 1);
   });
+
+  describe("equipmentBonusFor (docs/08-roadmap-phases.md Phase 7 -- CombatEngine's attribution of bonus damage to a specific piece of gear)", () => {
+    it("is empty for a stat nothing equipped bonuses", () => {
+      const character = newCharacter();
+      character.equip(EQUIPMENT_ITEMS["rusted-sword"]); // might only
+      expect(character.equipmentBonusFor("focus")).toEqual([]);
+    });
+
+    it("names the item and amount for a stat something equipped does bonus", () => {
+      const character = newCharacter();
+      character.equip(EQUIPMENT_ITEMS["rusted-sword"]);
+      expect(character.equipmentBonusFor("might")).toEqual([{ item: EQUIPMENT_ITEMS["rusted-sword"], amount: 2 }]);
+    });
+
+    it("lists every contributing slot when more than one bonuses the same stat", () => {
+      const character = newCharacter();
+      character.equip(EQUIPMENT_ITEMS["shadow-ring"]); // +2 grace
+      character.equip(EQUIPMENT_ITEMS["old-buckler"]); // +1 grace
+      expect(character.equipmentBonusFor("grace").map((c) => c.item.id).sort()).toEqual(["old-buckler", "shadow-ring"]);
+    });
+  });
+
+  describe("equipmentResistanceFor (same idea as equipmentBonusFor, for the damage-taken side)", () => {
+    it("is empty for a damage type nothing equipped resists", () => {
+      const character = newCharacter();
+      character.equip(EQUIPMENT_ITEMS["hardened-leather"]); // physical only
+      expect(character.equipmentResistanceFor("fire")).toEqual([]);
+    });
+
+    it("names the item and multiplier for a damage type something equipped resists", () => {
+      const character = newCharacter();
+      character.equip(EQUIPMENT_ITEMS["hardened-leather"]);
+      expect(character.equipmentResistanceFor("physical")).toEqual([
+        { item: EQUIPMENT_ITEMS["hardened-leather"], multiplier: 0.9 },
+      ]);
+    });
+  });
 });
 
 describe("describeEquipmentEffect (docs/08-roadmap-phases.md Phase 7, on a player request: \"I want non consumable inventory items to show their effect once identified also\")", () => {

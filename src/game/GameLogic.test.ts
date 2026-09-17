@@ -99,14 +99,15 @@ describe("equipItem", () => {
     expect(world.inventory.has("shadow-ring")).toBe(true); // never consumed
   });
 
-  it("identifies the item -- player request: \"I want non consumable inventory items to show their effect once identified also\"", () => {
+  it("does not identify the item merely by being worn -- player report: \"The items are showing their effects as soon as they are equipped. I only want to show the effect of the item once it has been triggered in combat.\"", () => {
     const world = newWorld();
     world.inventory.add("rusted-sword", "a Rusted Sword");
-    expect(world.inventory.isIdentified("rusted-sword")).toBe(false);
 
     equipItem(world, "Bram", "rusted-sword");
 
-    expect(world.inventory.isIdentified("rusted-sword")).toBe(true);
+    // CombatEngine (see its own tests) is what identifies it now, the
+    // instant its bonus actually lands a hit -- not this.
+    expect(world.inventory.isIdentified("rusted-sword")).toBe(false);
   });
 
   it("doesn't identify anything on a refused equip attempt", () => {
