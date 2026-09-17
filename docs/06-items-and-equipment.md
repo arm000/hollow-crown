@@ -80,11 +80,19 @@ consumables ship unidentified (`Inventory.ts`'s `UNIDENTIFIED_NAMES`)
 — so "identified" means something narrower there, but still true to
 "learned by using it": `GameLogic.equipItem` marks a piece of gear
 identified the moment it's actually worn for the first time, and from
-then on its Inventory entry shows `Equipment.describeEquipmentEffect`'s
+then on `InventoryUI` shows `Equipment.describeEquipmentEffect`'s
 plain-English rendering of its real `statBonus`/`resistanceBonus`/
 `cursed` data — computed from that data directly, unlike a
 consumable's hand-written `description`, so it can never drift from
 what equipping the item actually does.
+
+That description follows the item wherever it's currently sitting —
+its slot row while worn, its `Carried` entry once taken back off —
+not just one or the other. The first cut of this only handled
+`Carried`, which meant equipping something and never unequipping it
+again left its description with nowhere to show up at all (player
+report, after using a Rusted Sword: "it's effect still doesn't show" —
+a worn item has no `Carried` row left to attach one to).
 
 This changes how to read the rest of this document, including the table
 below: **every mechanical mapping here is our internal design

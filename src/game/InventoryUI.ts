@@ -95,7 +95,7 @@ export class InventoryUI {
   render(party: Party, inventory: Inventory): void {
     this.lastParty = party;
     this.lastInventory = inventory;
-    this.bodyEl.replaceChildren(this.buildCarriedSection(inventory), this.buildPartySection(party));
+    this.bodyEl.replaceChildren(this.buildCarriedSection(inventory), this.buildPartySection(party, inventory));
 
     // A visible reason to actually open the screen -- otherwise a
     // level-up's points would sit unspent indefinitely with nothing
@@ -178,7 +178,7 @@ export class InventoryUI {
     return section;
   }
 
-  private buildPartySection(party: Party): HTMLElement {
+  private buildPartySection(party: Party, inventory: Inventory): HTMLElement {
     const section = document.createElement("div");
     section.id = "inventory-party";
 
@@ -229,6 +229,23 @@ export class InventoryUI {
           this.handleSlotClick(character, slot, worn !== undefined);
         });
         card.appendChild(row);
+
+        // A worn item is never in `Carried` (it's in a slot instead),
+        // so it needs its own copy of the same "show the effect once
+        // identified" treatment `buildCarriedSection` gives an item
+        // still sitting in the bag -- without this, equipping
+        // something and never taking it back off meant its
+        // description never showed up anywhere at all (player report:
+        // "I used a rusted sword in combat and it's effect still
+        // doesn't show" -- equipping *is* what identifies a piece of
+        // gear, but a worn Rusted Sword has no `Carried` row left to
+        // attach that description to).
+        if (worn && inventory.isIdentified(worn.id)) {
+          const description = document.createElement("div");
+          description.className = "inventory-item-description";
+          description.textContent = describeEquipmentEffect(worn);
+          card.appendChild(description);
+        }
       }
       section.appendChild(card);
     }

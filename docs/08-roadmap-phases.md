@@ -2091,6 +2091,20 @@ true before shipping.
     `PartyCreationUI`/`LevelUpUI` into one shared place, now that
     `describeEquipmentEffect` needs the exact same labels too.
   - 462 tests passing (9 new).
+  - **Follow-up (player report): "I used a rusted sword in combat and
+    it's effect still doesn't show."** A worn item is never in
+    `Carried` (it's occupying a slot instead), and the original cut
+    above only ever showed a description on a `Carried` entry — so
+    equipping something and never taking it back off left its
+    description with nowhere to show up at all, even though
+    `GameLogic.equipItem` had already identified it correctly.
+    `InventoryUI.buildPartySection` now takes `inventory` too and
+    shows the same `describeEquipmentEffect` line under a slot's own
+    row whenever what's worn there is identified — the description
+    follows the item wherever it's actually sitting, worn or carried,
+    not just one of the two.
+  - 462 tests passing (unchanged — `InventoryUI` has no test file,
+    untested DOM glue per docs/11-testing-strategy.md).
 
 ---
 
