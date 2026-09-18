@@ -350,16 +350,25 @@ highest requirement of anything. A player report that a failed equip
 attempt "doesn't tell me why" turned up a real bug: the HUD's message
 line had no stacking order of its own, so it painted silently *behind*
 whichever full-screen menu happened to be open — Inventory included,
-which is exactly where an equip attempt happens. Most recently, a
-follow-up report on the fix itself ("the help text writes over the
-inventory if there are too many items... or the screen is too small
-vertically") caught the first cut's own overcorrection: raising the
-whole HUD to fix the message dragged its permanent, ever-present text
-(the control hints, the carried-item line) up with it, now
-permanently overlapping the inventory screen's own content instead.
-The real fix only elevates the HUD, and hides everything in it except
-the message itself, while a menu screen is actually open — synced
-every frame, so exploration is completely unaffected either way.
+which is exactly where an equip attempt happens. A follow-up report on
+that fix itself ("the help text writes over the inventory if there are
+too many items... or the screen is too small vertically") caught the
+first cut's own overcorrection: raising the whole HUD to fix the
+message dragged its permanent, ever-present text (the control hints,
+the carried-item line) up with it, now permanently overlapping the
+inventory screen's own content instead. The real fix only elevates the
+HUD, and hides everything in it except the message itself, while a
+menu screen is actually open — synced every frame, so exploration is
+completely unaffected either way. Most recently, the character sheet's
+own stat numbers learned the same "only once identified" rule
+everything else on that screen already follows: a stat an equipped
+item actually boosts now shows its real, current total — base plus
+every identified item's contribution — in a highlighted color the
+instant it's equipped, not the flat base number the sheet always used
+to show regardless of what was worn. An unidentified item's bonus
+still applies in a fight the moment it's worn, same as it's always
+been, but the number on the sheet only moves once that's actually been
+discovered.
 
 ## Scripts
 

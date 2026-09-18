@@ -1,5 +1,6 @@
 import type { ResistanceMap } from "../combat/DamageType";
-import { STAT_LABELS, type CharacterStats } from "./Character";
+import type { Inventory } from "../Inventory";
+import { STAT_LABELS, type Character, type CharacterStats } from "./Character";
 
 /**
  * Four slots, kept small on purpose (docs/06-items-and-equipment.md#equipment-slots).
@@ -189,6 +190,31 @@ export function meetsRequirement(stats: CharacterStats, item: EquipmentItem): bo
   return Object.entries(item.statRequirement).every(
     ([stat, amount]) => stats[stat as keyof CharacterStats] >= amount!,
   );
+}
+
+/**
+ * How much of `character`'s current `stat` comes from *identified*
+ * equipment specifically — the number `InventoryUI`'s stat rows
+ * actually display, and the one it colors differently to call out
+ * (player request: "when I've identified an item, the impact on
+ * attributes should be visible when I equip/unequip the item, the
+ * attribute value should change and change color to show it was
+ * modified by an item"). Deliberately narrower than
+ * `Character.equipmentBonusFor`, which doesn't know or care about
+ * identification (the bonus already applies in combat regardless of
+ * it) — this is the one place that intersects it with
+ * `Inventory.isIdentified` before anything gets shown, the same
+ * discovery gate every other mechanical effect on this page answers to
+ * (docs/06-items-and-equipment.md#discovery-not-explanation): an
+ * unidentified item's bonus is mechanically live but never counted
+ * here, so equipping something new never reveals its effect through
+ * this number either, only through actually triggering it in combat.
+ */
+export function identifiedStatBonus(character: Character, stat: keyof CharacterStats, inventory: Inventory): number {
+  return character
+    .equipmentBonusFor(stat)
+    .filter(({ item }) => inventory.isIdentified(item.id))
+    .reduce((sum, { amount }) => sum + amount, 0);
 }
 
 function capitalize(word: string): string {

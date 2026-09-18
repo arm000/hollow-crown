@@ -637,6 +637,27 @@
         padding: 4px 0;
         font-size: 13px;
       }
+      /* A stat's number once identified equipment actually changes it
+         (player request: "when I've identified an item, the impact on
+         attributes should be visible when I equip/unequip the item,
+         the attribute value should change and change color to show it
+         was modified by an item") -- green for a boost, the only
+         direction any real item in the game moves a stat today; red
+         reuses .inventory-btn-cancel's own tone, for whenever a
+         debuff/cursed stat penalty ever ships so this doesn't need
+         revisiting then. Unidentified equipment contributes nothing
+         here even though its bonus is already live in combat --
+         docs/06-items-and-equipment.md#discovery-not-explanation
+         applies to this number exactly like every other mechanical
+         effect on that page. */
+      .inventory-stat-boosted {
+        color: #8cc88c;
+        font-weight: 600;
+      }
+      .inventory-stat-reduced {
+        color: #cc8b8b;
+        font-weight: 600;
+      }
       /* Always-visible descriptive caption -- under a stat/skill row,
          or a carried/worn item -- player report: hover tooltips "don't
          work on mobile touch screen because I can't hover over." Same

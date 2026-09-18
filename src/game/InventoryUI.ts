@@ -1,5 +1,5 @@
 import { CONSUMABLE_ITEMS } from "./combat/Consumable";
-import { describeEquipmentEffect, EQUIPMENT_ITEMS, type EquipmentSlot } from "./party/Equipment";
+import { describeEquipmentEffect, EQUIPMENT_ITEMS, identifiedStatBonus, type EquipmentSlot } from "./party/Equipment";
 import { classLabel, STAT_DESCRIPTIONS, STAT_LABELS, type Character, type CharacterStats } from "./party/Character";
 import type { Party } from "./party/Party";
 import { SKILLS } from "./party/Skills";
@@ -195,7 +195,7 @@ export class InventoryUI {
     if (useRow) section.appendChild(useRow);
 
     section.appendChild(this.buildHeading("Stats"));
-    for (const stat of STAT_ORDER) section.appendChild(this.buildStatRow(character, stat));
+    for (const stat of STAT_ORDER) section.appendChild(this.buildStatRow(character, stat, inventory));
 
     section.appendChild(this.buildHeading("Skills"));
     for (const skill of SKILLS[character.classId]) section.appendChild(this.buildSkillRow(character, skill.id));
@@ -282,15 +282,41 @@ export class InventoryUI {
     return row;
   }
 
-  private buildStatRow(character: Character, stat: keyof CharacterStats): HTMLElement {
+  /**
+   * The stat's own displayed number reflects identified equipment's
+   * bonus (`Equipment.identifiedStatBonus`), colored to call it out
+   * (player request: "when I've identified an item, the impact on
+   * attributes should be visible when I equip/unequip the item, the
+   * attribute value should change and change color to show it was
+   * modified by an item"). Equip/unequip already calls `render()` (via
+   * `Game.handleEquip`/`handleUnequip`), so the number and its color
+   * update the instant either happens — no separate wiring needed here.
+   */
+  private buildStatRow(character: Character, stat: keyof CharacterStats, inventory: Inventory): HTMLElement {
     const wrapper = document.createElement("div");
 
     const row = document.createElement("div");
     row.className = "inventory-row";
 
+    // One flex child, not two -- `.inventory-row` is `justify-content:
+    // space-between` between exactly this and the `+1` button (when
+    // shown), so the label and its value have to share a single
+    // element or `space-between` would shove them apart from each
+    // other instead of just away from the button.
+    const labelWrap = document.createElement("span");
     const label = document.createElement("span");
-    label.textContent = `${STAT_LABELS[stat]}: ${character.stats[stat]}`;
-    row.appendChild(label);
+    label.textContent = `${STAT_LABELS[stat]}: `;
+    labelWrap.appendChild(label);
+
+    const identifiedBonus = identifiedStatBonus(character, stat, inventory);
+    const value = document.createElement("span");
+    value.textContent = `${character.stats[stat] + identifiedBonus}`;
+    if (identifiedBonus !== 0) {
+      value.className = identifiedBonus > 0 ? "inventory-stat-boosted" : "inventory-stat-reduced";
+      value.textContent += ` (${identifiedBonus > 0 ? "+" : ""}${identifiedBonus})`;
+    }
+    labelWrap.appendChild(value);
+    row.appendChild(labelWrap);
 
     if (this.editMode) {
       const button = document.createElement("button");

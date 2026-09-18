@@ -2467,6 +2467,38 @@ path, not just an intent stated in a comment).
     untested DOM/rendering glue per docs/11-testing-strategy.md, same
     as the original fix above).
 
+- ✅ Batch 4 — Identified stat bonuses shown, and colored, on the
+  character sheet (player request: "when I've identified an item, the
+  impact on attributes should be visible when I equip/unequip the
+  item, the attribute value should change and change color to show it
+  was modified by an item").
+  - `Equipment.identifiedStatBonus(character, stat, inventory)` (new):
+    sums an equipped item's `statBonus` contribution to `stat` across
+    every slot, same as `Character.equipmentBonusFor` already did, but
+    filtered to items `Inventory.isIdentified` actually returns true
+    for — the one intersection point between "what's mechanically true
+    right now" (which doesn't care about identification; the bonus is
+    live in combat the instant something's worn) and "what's
+    discoverable" (docs/06-items-and-equipment.md#discovery-not-explanation).
+  - `InventoryUI.buildStatRow` shows `base + identifiedStatBonus`
+    instead of the flat base number, with a `(+N)` suffix and a new
+    `.inventory-stat-boosted`/`.inventory-stat-reduced` color
+    (green/red, the latter unused by any real item yet but ready for
+    a future debuff) whenever the identified bonus isn't zero. No new
+    wiring needed for equip/unequip to update it live — `render()`
+    already runs after both, per `Game.handleEquip`/`handleUnequip`.
+  - An equipped-but-unidentified item never nudges the number — putting
+    on a mystery ring doesn't bump the sheet, only actually fighting
+    with it (or, for Grace, the next initiative roll) does, exactly
+    the same discovery moment `describeEquipmentEffect`'s own
+    description line already waits for elsewhere on this screen.
+  - 530 tests passing (5 new): `Equipment.test.ts` coverage for
+    `identifiedStatBonus` — zero with nothing equipped, zero for an
+    equipped-but-unidentified item despite `effectiveStats` already
+    reflecting it, the real total once identified, zero for a stat
+    nothing equipped touches, and summing only the identified half
+    when two different-slot items both bonus the same stat.
+
 ---
 
 ## Notes on sequencing

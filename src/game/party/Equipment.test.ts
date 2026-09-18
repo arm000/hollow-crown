@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { Inventory } from "../Inventory";
 import { Character, type CharacterStats } from "./Character";
-import { describeEquipmentEffect, describeRequirement, EQUIPMENT_ITEMS, meetsRequirement, type EquipmentItem } from "./Equipment";
+import {
+  describeEquipmentEffect,
+  describeRequirement,
+  EQUIPMENT_ITEMS,
+  identifiedStatBonus,
+  meetsRequirement,
+  type EquipmentItem,
+} from "./Equipment";
 
 function newCharacter(): Character {
   return new Character("Test", "warrior", "front", { might: 5, grace: 5, vitality: 5, focus: 5, resolve: 5 }, 20, 0);
@@ -220,5 +228,53 @@ describe("meetsRequirement/describeRequirement (player request: \"Items should h
       ...Object.values(EQUIPMENT_ITEMS).flatMap((item) => Object.values(item.statRequirement ?? {})),
     );
     expect(EQUIPMENT_ITEMS["ambition-ring"].statRequirement!.might).toBe(highest);
+  });
+});
+
+describe("identifiedStatBonus (player request: \"when I've identified an item, the impact on attributes should be visible when I equip/unequip the item, the attribute value should change and change color to show it was modified by an item\")", () => {
+  it("is zero with nothing equipped", () => {
+    const character = newCharacter();
+    expect(identifiedStatBonus(character, "might", new Inventory())).toBe(0);
+  });
+
+  it("is zero for an equipped-but-unidentified item -- its bonus is mechanically live but not yet discoverable", () => {
+    const character = newCharacter();
+    character.equip(EQUIPMENT_ITEMS["rusted-sword"]); // +2 might
+    const inventory = new Inventory();
+
+    expect(character.effectiveStats.might).toBe(7); // the bonus is real...
+    expect(identifiedStatBonus(character, "might", inventory)).toBe(0); // ...but not shown until identified
+  });
+
+  it("counts an item's bonus once it's identified", () => {
+    const character = newCharacter();
+    character.equip(EQUIPMENT_ITEMS["rusted-sword"]); // +2 might
+    const inventory = new Inventory();
+    inventory.add("rusted-sword", "a Rusted Sword");
+    inventory.identify("rusted-sword");
+
+    expect(identifiedStatBonus(character, "might", inventory)).toBe(2);
+  });
+
+  it("is zero for a stat nothing equipped bonuses, identified or not", () => {
+    const character = newCharacter();
+    character.equip(EQUIPMENT_ITEMS["rusted-sword"]); // might only
+    const inventory = new Inventory();
+    inventory.add("rusted-sword", "a Rusted Sword");
+    inventory.identify("rusted-sword");
+
+    expect(identifiedStatBonus(character, "focus", inventory)).toBe(0);
+  });
+
+  it("sums only the identified contributions when more than one item bonuses the same stat", () => {
+    const character = newCharacter();
+    character.equip(EQUIPMENT_ITEMS["ambition-ring"]); // +3 might, accessory
+    character.equip(EQUIPMENT_ITEMS["rusted-sword"]); // +2 might, weapon -- a different slot, stacks
+    const inventory = new Inventory();
+    inventory.add("rusted-sword", "a Rusted Sword");
+    inventory.identify("rusted-sword");
+    // ambition-ring deliberately left unidentified.
+
+    expect(identifiedStatBonus(character, "might", inventory)).toBe(2); // the sword's contribution only
   });
 });

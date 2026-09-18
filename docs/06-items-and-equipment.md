@@ -164,6 +164,23 @@ against what it actually did, so only equipment's own share of the
 mitigation is named (a character's base resistance, if any exists
 later, wouldn't be included).
 
+**The character sheet's own stat numbers follow the same rule, once
+identified** — a later player request: "when I've identified an item,
+the impact on attributes should be visible when I equip/unequip the
+item, the attribute value should change and change color to show it
+was modified by an item." `InventoryUI`'s stat rows show
+`Equipment.identifiedStatBonus`'s total — base plus every *identified*
+equipped item's contribution to that stat, colored (green for a boost)
+whenever it isn't zero — instead of the flat base number they showed
+before. An equipped-but-not-yet-identified item's bonus is mechanically
+live in combat the instant it's worn, same as it's always been, but
+never counted here until it's actually been identified: putting on an
+unidentified ring never bumps the number on the sheet, only fighting
+with it does. Unequipping (or an item never getting identified at all)
+just means the number stays at its own base value — there's no state
+left over to clear, since the display always recomputes from whatever
+is currently worn and known.
+
 This changes how to read the rest of this document, including the table
 below: **every mechanical mapping here is our internal design
 vocabulary for building the systems consistently — none of it is text
